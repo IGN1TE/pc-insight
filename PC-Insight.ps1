@@ -8,6 +8,7 @@ Add-Type -AssemblyName System.Windows.Forms
 . "$PSScriptRoot\Tuning.ps1"
 . "$PSScriptRoot\Profiles.ps1"
 . "$PSScriptRoot\Updates.ps1"
+. "$PSScriptRoot\Branding.ps1"
 $script:appVersion=Get-PCAppVersion
 . "$PSScriptRoot\Results.ps1"
 . "$PSScriptRoot\SessionExport.ps1"
@@ -36,12 +37,11 @@ try {
     $reader = [Xml.XmlNodeReader]::new($xaml)
     $script:window = [Windows.Markup.XamlReader]::Load($reader)
     $window.Title='PC Insight | Preview '+$script:appVersion
-    $window.Icon = [Windows.Media.Imaging.BitmapFrame]::Create([uri](Join-Path $PSScriptRoot 'PCInsight.ico'))
+    Set-PCWindowBranding -Window $window -Root $PSScriptRoot -Version $script:appVersion
     $script:ui = @{}
     'EnableOverlayHotkey','ToggleOverlay','OverlayStatus','LastFpsCapture','ExportFpsDetails','GuideDetect','GuideBaseline','GuideApply','GuideRestore','GuideKeep','GuideStop','GuideExport','GuideStage','GuideStatusCard','GuideNextAction','GuideResultTitle','GuideRecommendationLabel','GuideRecommendation','GuideBeforeScore','GuideAfterScore','GuideChange','GuideMessage','GuideDevice','GuideVerdict','GuideRecovery','SensorHistoryChart','SensorHistoryTitle','SensorHistoryScale','SensorHistoryTime','SessionSensorDetails','SessionCoverage','ExportSessionCsv','ExportSessionJson','SessionExportStatus','InstalledVersion','ReleaseNotes','LastUpdateCheck','UpdateFeed','CheckUpdate','DownloadUpdate','InstallUpdate','CancelUpdate','UpdateStatus','AccessStatus','ReopenAdmin','OpenAppFolder','OpenDataFolder','Scan','Export','ScanTime','Overview','Insights','Benchmark','Cancel','Results','PlansRefresh','Plans','Apply','Restore','PowerStatus','Status','SensorStart','MultiBenchmark','SensorReadings','SensorSummary','SensorCancel','SessionResults','CPUModel','GPUModel','RAMModel','CPUTemp','GPUTemp','RAMUsed','DashboardTest','ChartCaption','TemperatureChart','DashboardResult','CPUDetails','CPUReadingTime','GPUReadingTime','CPUPower','DashboardRecord','OpenResults','ResultPeak','ResultRate','ResultDelta','Navigation','MonitorStart','MonitorStop','RAMSampleLabel','UsageChart','LongCPU','MemoryTest','GPUTest','TestProgress','ProgressLabel','ResultRateLabel','DetectTuning','GPUDevice','PowerPreset','ApplyGPU','RestoreGPU','TuningStatus','CapabilityText','SaveBaseline','CompareBaseline','BaselineResult','RepeatCPU','RepeatRAM','RepeatGPU','BatchReport','SessionPicker','ProfileName','SaveProfile','ProfilePicker','LoadProfile','ProfileStatus' | ForEach-Object { $ui[$_] = $window.FindName($_) }
     'CompareSessionPicker','ComparisonRows','ComparisonStatus','ComparisonNotes','ExportComparison','ComparisonExportStatus' | ForEach-Object { $ui[$_] = $window.FindName($_) }
     . "$PSScriptRoot\SessionComparisonUI.ps1"
-    $ui.Navigation.Tag='AFTERBURN / PREVIEW '+$script:appVersion
     $ui.InstalledVersion.Text='Installed version: '+$script:appVersion
     $script:isAdministrator = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
     $ui.AccessStatus.Text = if ($script:isAdministrator) { 'Administrator access - sensor availability depends on hardware and drivers' } else { 'Standard access - some hardware sensors may be unavailable' }

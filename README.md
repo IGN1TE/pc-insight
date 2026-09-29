@@ -2,10 +2,10 @@
 
 [Download the latest release](https://github.com/IGN1TE/pc-insight/releases/latest) · [Development workflow](DEVELOPMENT.md)
 
-The repository now includes the complete v0.22.1 app source, tests and bundled dependencies. `main` holds released code; `develop` is for ongoing work. Install from the `PC-Insight-Windows-Preview.zip` release asset.
+The repository now includes the complete v0.22.2 app source, tests and bundled dependencies. `main` holds released code; `develop` is for ongoing work. Install from the `PC-Insight-Windows-Preview.zip` release asset.
 
 ---
-# PC Insight 0.22.1 - comparison export fix
+# PC Insight 0.22.2 - project branding
 
 CPU/GPU sensor readings are now collected inside PC Insight through the bundled official LibreHardwareMonitorLib 0.9.6. You no longer need the Libre Hardware Monitor desktop app, Log Sensors, a CSV file or its remote web server.
 
@@ -359,3 +359,8 @@ the disabled export button, which also has a tooltip.
 Windows tests exercise the real selection handlers, busy-state changes and export button,
 with a stubbed file picker and real JSON saving. Existing saved sessions were read only for
 diagnosis; no saved results or hardware settings were changed.
+## Version 0.22.2: project branding
+
+The new purple/cyan PC Insight logo appears in the sidebar and About page. About and the sidebar show the installed version. Desktop, Start menu, Installed Apps and the app window use the matching icon, with nine native sizes from 16 to 256 pixels. Installation uses a versioned icon filename to avoid stale Windows icon-cache entries. Branding loads from the app folder even when launched from another working directory.
+
+The v0.22.1 comparison export fix is retained. This release changes presentation and shortcut branding; it does not add hardware actions or change saved sessions. WPF integration, comparison export, updater and extracted-package checks were run on Windows. UI layouts were inspected at 1320x920 and 1000x720, with additional 150% and 200% raster rendering checks.
