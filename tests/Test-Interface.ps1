@@ -13,11 +13,20 @@ try {
  }
  . (Join-Path $root 'Updates.ps1')
  $nav=$window.FindName('Navigation')
- $nav.Tag='AFTERBURN / PREVIEW '+(Get-PCAppVersion $root)
+ . (Join-Path $root 'Branding.ps1')
+ Set-PCWindowBranding -Window $window -Root $root -Version (Get-PCAppVersion $root)
  $null=$nav.ApplyTemplate()
  $footer=$nav.Template.FindName('SidebarVersion',$nav)
  $footer.GetBindingExpression([Windows.Controls.TextBlock]::TextProperty).UpdateTarget()
  if($footer.Text -ne $nav.Tag){throw 'Sidebar did not display the installed version'}
+ $sidebarLogo=$nav.Template.FindName('SidebarLogo',$nav)
+ if(-not $sidebarLogo.Source -or $sidebarLogo.Source.PixelWidth -lt 1000){throw 'Sidebar branding did not load from the app folder'}
+ if($window.FindName('AboutLogo').Source -ne $sidebarLogo.Source){throw 'About and sidebar do not share the approved logo'}
+ if($window.FindName('AboutVersion').Text -ne ('Windows desktop preview '+(Get-PCAppVersion $root))){throw 'About version is incorrect'}
+ $decoder=[Windows.Media.Imaging.IconBitmapDecoder]::new([uri](Join-Path $root 'PCInsight.ico'),[Windows.Media.Imaging.BitmapCreateOptions]::PreservePixelFormat,[Windows.Media.Imaging.BitmapCacheOption]::OnLoad)
+ $sizes=@($decoder.Frames|ForEach-Object{$_.PixelWidth})
+ foreach($size in @(16,20,24,32,40,48,64,128,256)){if($size -notin $sizes){throw ('Missing Windows icon size: '+$size)}}
+ if(-not $window.Icon){throw 'The window icon did not load'}
  [xml]$overlayXaml=Get-Content (Join-Path $root 'GameOverlay.xaml') -Raw -Encoding UTF8
  $overlay=[Windows.Markup.XamlReader]::Load([Xml.XmlNodeReader]::new($overlayXaml))
  try{
@@ -36,5 +45,5 @@ try {
   # Create the hidden overlay HWND and verify native click-through/no-activation style read-back.
   [PCInsightOverlayNative]::MakePassive([Windows.Interop.WindowInteropHelper]::new($overlay).EnsureHandle())
  }finally{$overlay.Close()}
- 'PASS: WPF XAML loads and named controls bind. Visual scaling still needs manual inspection.'
+ 'PASS: WPF controls, sidebar/About branding, version labels, multi-size Windows icon and overlay native styles.'
 }finally{$window.Close()}
