@@ -1,0 +1,14 @@
+<Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" Title="PC Insight game overlay" Width="270" Height="170" Left="18" Top="18" WindowStyle="None" ResizeMode="NoResize" AllowsTransparency="True" Background="Transparent" Topmost="True" ShowInTaskbar="False" ShowActivated="False" Focusable="False" IsHitTestVisible="False" FontFamily="Segoe UI">
+ <Border Background="#DD10121B" CornerRadius="10" BorderBrush="#806F4AA4" BorderThickness="1" Padding="15,10">
+  <StackPanel>
+   <TextBlock Text="PC INSIGHT" Foreground="#C6AEFF" FontSize="10" FontWeight="SemiBold" Margin="0,0,0,6"/>
+   <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions><Grid.RowDefinitions><RowDefinition/><RowDefinition/><RowDefinition/></Grid.RowDefinitions>
+    <TextBlock Text="CPU" Foreground="#D5D8E5" FontSize="16"/><TextBlock Name="OverlayCpu" Grid.Column="1" Text="--" Foreground="White" FontSize="18" FontWeight="SemiBold"/>
+    <TextBlock Name="OverlayGpuLabel" Text="GPU" Grid.Row="1" Foreground="#D5D8E5" FontSize="16"/><TextBlock Name="OverlayGpu" Grid.Row="1" Grid.Column="1" Text="--" Foreground="White" FontSize="18" FontWeight="SemiBold"/>
+    <TextBlock Text="FPS" Grid.Row="2" Foreground="#D5D8E5" FontSize="16"/><TextBlock Name="OverlayFps" Grid.Row="2" Grid.Column="1" Text="--" Foreground="#84DFC3" FontSize="22" FontWeight="SemiBold"/>
+   </Grid>
+   <TextBlock Name="OverlayTarget" Text="Focus your game" Foreground="#ACB2C9" FontSize="10" TextTrimming="CharacterEllipsis" Margin="0,5,0,2"/>
+   <TextBlock Name="OverlayHint" Text="Ctrl+Alt+O to hide" Foreground="#ACB2C9" FontSize="10"/>
+  </StackPanel>
+ </Border>
+</Window>

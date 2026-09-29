@@ -1,0 +1,13 @@
+# Local development artifacts and user-generated data
+.vs/
+.vscode/
+tmp/
+outputs/
+*.log
+sessions.json
+restore.json
+settings.json
+profiles.json
+PC-Insight-*-diagnostic.json
+PC-Insight-Windows-Preview.zip
+PC-Insight-*-release-kit.zip
