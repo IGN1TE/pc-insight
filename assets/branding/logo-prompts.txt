@@ -1,0 +1,16 @@
+PC Insight logo — created using the built-in ImageGen tool.
+
+Use case: logo-brand
+Asset type: finished horizontal software brand logo, transparent PNG, intended for the PC Insight desktop application and its GitHub project.
+Primary request: Design a professional, distinctive identity for "PC Insight", a Windows PC performance monitoring and benchmark application. Sophisticated independent software brand, precise and calm.
+Composition: one horizontal lockup, emblem at the left and the exact wordmark "PC Insight" at right. Large clean artwork filling the canvas with sensible clear space; no presentation board.
+Emblem: simple compact geometric signal/insight symbol with a bold open rounded-square frame and an ascending angular signal cutout, a small cyan accent at the upper right; a strong recognizable silhouette suitable for an app icon at 32px. Carefully balanced strokes and negative space. Avoid a medical heartbeat.
+Typography: highly legible modern geometric sans serif, medium-to-semibold weight, refined kerning, exact capitalization "PC Insight". Solid vivid violet wordmark, aligned optically with the emblem.
+Palette: dominant violet #7945FF with a restrained cyan #38D9F5 accent. Flat solid fills, crisp vector-like edges, no rendering texture.
+Background: genuinely transparent alpha everywhere outside the logo and letters, not a simulated checkerboard.
+Constraints: one logo only. No tagline, extra labels, mockup, watermark, stock-logo clichés, shield, eye, lightning bolt, monitor drawing, bevel, 3D, drop shadow, glow or gradient. This is final usable artwork, not an example sheet.
+
+Matching icon edit prompt:
+Use case: precise-object-edit / logo-brand
+Edit target: the supplied PC Insight logo.
+Create the matching square icon asset by retaining only the purple and cyan emblem on the left of the supplied logo. Remove the wordmark entirely. Preserve the emblem's rounded-square open frame, three rising bars and separated cyan upper-right accent exactly; center it on a square transparent canvas, with 12% clear space on each side. Polish the edge quality so edges are perfectly smooth and clean with consistent solid flat purple and cyan fills, no speckles or stray pixels, no gradient or glow. Genuine transparent alpha; no white or black background, checkerboard, text, new shapes, mockup or watermark. Large usable app-brand icon artwork.
