@@ -2,7 +2,7 @@
 
 ## Branches
 
-- `main` contains the source of the released app, currently v0.22.1.
+- `main` contains the source of the released app, currently v0.22.2.
 - `develop` is the integration branch for ongoing work. It starts at the same source as `main`.
 - Create short-lived `feature/<name>` and `fix/<name>` branches from `develop`, then merge reviewed changes into `develop`.
 - For a release, validate `develop`, merge it into `main`, tag the release commit with `v<version>`, and publish the packaged app and update manifest.
@@ -35,4 +35,4 @@ Saved sessions, exported hardware reports, settings and recovery records belong 
 
 ## Branding
 
-The new PNG logo and matching icon are under `assets/branding/`. They are transparent raster assets generated with the built-in ImageGen tool. The prompt set is saved alongside them. The existing Windows launcher icon remains part of v0.22.1; changing installed app branding belongs in a future release.
+The PNG logo and matching icon are under `assets/branding/`. They are transparent raster assets generated with the built-in ImageGen tool. The prompt set is saved alongside them. `Branding.ps1` loads the logo into WPF using absolute paths so shortcuts can start from another working directory. `assets/branding/Build-Icon.ps1` creates the multi-size Windows icon; the installer uses a release-specific icon filename for Windows shell integration.

@@ -26,6 +26,10 @@ try {
     $release=Get-Content (Join-Path $stage 'version.json') -Raw|ConvertFrom-Json
     $releaseVersion=$null
     if($release.AppId -ne 'PCInsight.PerUser' -or -not [version]::TryParse([string]$release.Version,[ref]$releaseVersion)){throw 'Release version metadata is invalid.'}
+    # A release-specific filename prevents stale Windows shell icon-cache entries.
+    $shellIconName = 'PCInsight-' + $releaseVersion.ToString() + '.ico'
+    Copy-Item -LiteralPath (Join-Path $stage 'PCInsight.ico') -Destination (Join-Path $stage $shellIconName)
+    $shellIconPath = Join-Path $destination $shellIconName
     @{AppId='PCInsight.PerUser';Version=$release.Version;Installed=(Get-Date).ToString('o')}|ConvertTo-Json|Set-Content (Join-Path $stage 'pc-insight-install.json') -Encoding UTF8
     if(Test-Path $destination){Move-Item $destination $backup;$movedOld=$true}
     try{Move-Item $stage $destination;$installed=$true}catch{if($movedOld){Move-Item $backup $destination;$movedOld=$false};throw}
@@ -40,11 +44,11 @@ try {
         @{Path=(Join-Path ([Environment]::GetFolderPath('Desktop')) 'PC Insight.lnk');Script='Start-App.ps1'})){
         $link=$shell.CreateShortcut($shortcut.Path);$link.TargetPath=$exe
         $link.Arguments='-NoLogo -NoProfile -STA -WindowStyle Hidden -ExecutionPolicy Bypass -File "'+(Join-Path $destination $shortcut.Script)+'"'
-        $link.WindowStyle=7;$link.WorkingDirectory=$destination;$link.IconLocation=Join-Path $destination 'PCInsight.ico';$link.Save()
+        $link.WindowStyle=7;$link.WorkingDirectory=$destination;$link.IconLocation=$shellIconPath;$link.Save()
     }
     $key='HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\PCInsight'
     $null=New-Item $key -Force
-    $properties=@{DisplayName='PC Insight';DisplayVersion=$release.Version;InstallLocation=$destination;DisplayIcon=(Join-Path $destination 'PCInsight.ico');UninstallString=('"'+$exe+'" -NoProfile -STA -WindowStyle Hidden -ExecutionPolicy Bypass -File "'+(Join-Path $destination 'Uninstall.ps1')+'"')}
+    $properties=@{DisplayName='PC Insight';DisplayVersion=$release.Version;InstallLocation=$destination;DisplayIcon=$shellIconPath;UninstallString=('"'+$exe+'" -NoProfile -STA -WindowStyle Hidden -ExecutionPolicy Bypass -File "'+(Join-Path $destination 'Uninstall.ps1')+'"')}
     foreach($name in $properties.Keys){$null=New-ItemProperty $key -Name $name -Value $properties[$name] -PropertyType String -Force}
     if($movedOld){Remove-Item $backup -Recurse -Force;$movedOld=$false}
     if($LaunchAfterInstall){$mutex.ReleaseMutex();$locked=$false;Start-Process -FilePath $exe -WindowStyle Hidden -ArgumentList ('-NoLogo -NoProfile -STA -WindowStyle Hidden -ExecutionPolicy Bypass -File "'+(Join-Path $destination 'Start-App.ps1')+'" -WaitForPreviousInstance')}

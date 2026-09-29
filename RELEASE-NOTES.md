@@ -1,4 +1,11 @@
-﻿# PC Insight 0.22.1 - comparison export fix
+﻿# v0.22.2 - PC Insight branding
+
+- Added the purple/cyan PC Insight logo to the sidebar and About page.
+- Updated the app window and installed shortcuts with the matching multi-size Windows icon.
+- Version-specific shell icon filenames prevent reusing a cached old icon path.
+- About and sidebar version labels use the installed release metadata.
+- Retained v0.22.1's comparison export and session-selection fixes.
+# PC Insight 0.22.1 - comparison export fix
 
 - Export a loaded saved-session comparison while monitoring, tests or update checks run.
 - Freeze the displayed report before opening Save, so background refresh cannot change it.
