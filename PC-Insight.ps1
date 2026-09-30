@@ -325,6 +325,7 @@ try {
                     }
                 } finally { Close-PCNativeSensors }
             }
+            Refresh-PCGpuEnduranceUI
         } catch { Set-Busy $false; Show-Error $_.Exception.Message }
     }
     $ui.MonitorStart.Add_Click({ Start-Task 'monitor' })
@@ -628,6 +629,7 @@ try {
                 $ErrorActionPreference='Stop'; . (Join-Path $root 'Updates.ps1')
                 if($kind -eq 'check'){Get-PCUpdate $argument (Get-PCAppVersion)}else{Save-PCUpdate $argument (Join-Path $data 'updates')}
             }
+            Refresh-PCGpuEnduranceUI
         } catch {Set-Busy $false; $ui.CancelUpdate.IsEnabled=$false; Show-Error $_.Exception.Message}
     }
     $ui.CheckUpdate.Add_Click({

@@ -1,4 +1,8 @@
-﻿# v0.26.0 — GPU endurance observation
+﻿# v0.26.1 — Endurance Stop button fix
+
+Refresh endurance controls after the background job is assigned so Stop and save result enables during a run and duration buttons lock. Also refresh after starting an update. Cancel task already uses the same graceful partial-result path for endurance. Regression coverage now executes the actual Start-Task handler with mocked worker creation. Windows button interaction still needs user validation.
+
+# v0.26.0 — GPU endurance observation
 
 - Adds 5- and 10-minute GPU shader-load sessions under Benchmark, with progress and matched GPU temperature monitoring.
 - Stop saves a partial result with its stop reason. Interrupted runs are identified after restart.
