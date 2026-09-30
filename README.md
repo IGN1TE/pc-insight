@@ -464,3 +464,7 @@ References reviewed 2026-09-30:
 - AMD Ryzen Master: https://www.amd.com/en/products/software/ryzen-master.html
 
 Validation: read-only classification, missing/multiple/vendor cases, real UI-handler dispatch/locking/export with mocked controls, existing endurance and guided-clock handlers, repeated tests, updater, PowerShell parsing and XAML wiring checked on Linux. Actual Windows WPF layout and CPU-page interaction remain to be validated.
+
+## CPU page usability (0.27.1)
+
+Control descriptions use explicit wrapping in a vertical layout to avoid the clipping seen on Windows in 0.27.0. **Cancel CPU batch** is now available beside Run CPU baseline and only acts on a running three-test CPU batch. It uses the existing cancellation behavior, which discards that batch. The screenshot confirmed inventory display for an i7-13700K, ASUS ROG STRIX Z690-A GAMING WIFI D4 and BIOS 4505; CPU write support is still not established.

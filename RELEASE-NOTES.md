@@ -1,4 +1,10 @@
-﻿# v0.27.0 — CPU tuning readiness
+﻿# v0.27.1 — CPU page readability and cancellation
+
+Fixes clipped CPU control descriptions with explicit wrapping and stacked rows. Adds Cancel CPU batch directly to the CPU page, enabled only during the existing three-run CPU workload. Cancellation retains the existing batch-discard behavior. CPU overclocking/voltage/power-limit writes remain unavailable.
+
+The user screenshot confirmed that 0.27.0 correctly displayed the i7-13700K, ASUS ROG STRIX Z690-A GAMING WIFI D4 and BIOS 4505 inventory. Automated handler and updater checks cover this fix; native Windows layout verification remains pending.
+
+# v0.27.0 — CPU tuning readiness
 
 Adds a CPU tuning page with Windows-reported CPU, board and BIOS inventory, explicit per-control availability, vendor requirements, JSON export and direct access to the existing three-run CPU baseline. Intel model-pattern matches are candidates only; no BIOS or write capability is inferred. Direct CPU clock, voltage and power-limit changes are not implemented.
 

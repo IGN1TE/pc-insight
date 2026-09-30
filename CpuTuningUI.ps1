@@ -6,6 +6,7 @@ function Refresh-PCCpuTuningUI {
     $locked=$script:job -or $script:updateJob -or $script:clockActionBusy -or (Test-PCClockGuideLocked) -or ($script:guide -and $script:guide.Phase -in @('RunningBaseline','Review','Applying','RunningAfter','Decision','RecoveryRequired'))
     $ui.CpuReadinessScan.IsEnabled=-not $locked
     $ui.CpuBaselineRun.IsEnabled=-not $locked -and $script:cpuReadiness.CanBenchmark
+    $ui.CpuBaselineCancel.IsEnabled=$null -ne $script:job -and $script:jobKind -eq 'repeatcpu' -and -not $script:updateJob
     $ui.CpuReadinessExport.IsEnabled=$null -ne $script:snapshot
     $ui.CpuVendorHelp.IsEnabled=$null -ne $script:cpuReadiness.VendorRequirementsUrl
 }
@@ -21,6 +22,11 @@ function Select-PCCpuReadinessExportPath {
 }
 $ui.CpuReadinessScan.Add_Click({Refresh-PCCpuTuningUI;if($ui.CpuReadinessScan.IsEnabled){Start-Task 'scan'}})
 $ui.CpuBaselineRun.Add_Click({Start-PCCpuReadinessBaseline})
+$ui.CpuBaselineCancel.Add_Click({
+    Refresh-PCCpuTuningUI
+    if(-not $ui.CpuBaselineCancel.IsEnabled){return}
+    try{Cancel-Task}catch{Show-Error $_.Exception.Message}finally{Refresh-PCCpuTuningUI}
+})
 $ui.CpuReadinessExport.Add_Click({
     try{
         Refresh-PCCpuTuningUI;if(-not $ui.CpuReadinessExport.IsEnabled){return}
