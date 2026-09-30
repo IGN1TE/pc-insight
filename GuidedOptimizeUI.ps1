@@ -11,7 +11,7 @@ if(Test-Path -LiteralPath $script:guidePath){
     }catch{$script:guideLoadIssue=$_.Exception.Message}
 }
 function Refresh-GuideUI {
-    $busy=$null -ne $script:job -or $null -ne $script:updateJob
+    $busy=$null -ne $script:job -or $null -ne $script:updateJob -or $script:clockActionBusy
     $phase=if($script:guide){$script:guide.Phase}else{'Not started'}
     $locked=$phase -in @('RunningBaseline','Review','Applying','RunningAfter','Decision','RecoveryRequired')
     foreach($name in 'GuideDetect','GuideBaseline','GuideApply','GuideRestore','GuideKeep','GuideStop','GuideExport'){$ui[$name].IsEnabled=$false}
@@ -35,7 +35,7 @@ function Refresh-GuideUI {
     $ui.GuideStatusCard.BorderBrush=$brush
     $ui.GuideStage.Foreground=$brush
     $ui.GuideMessage.Text=if($script:guideLoadIssue){$script:guideLoadIssue}elseif($script:guide){$script:guide.Message}else{'Start with Scan PC, then check compatibility. Nothing is applied during detection or baseline tests.'}
-    $ui.GuideDevice.Text=if($script:guide){"$($script:guide.Device.Name) | Original $($script:guide.Device.Current) W | Proposed $($script:guide.TargetWatts) W (90%)"}else{'NVIDIA power-limit reduction only. CPU/GPU clock and voltage controls are not available.'}
+    $ui.GuideDevice.Text=if($script:guide){"$($script:guide.Device.Name) | Original $($script:guide.Device.Current) W | Proposed $($script:guide.TargetWatts) W (90%)"}else{'NVIDIA power-limit reduction only. This guided flow does not change clocks or voltage; manual NVIDIA offsets are on Tuning.'}
     $ui.GuideKeep.Content=if($script:guide){$view.KeepLabel}else{'Keep current limit'}
     $ui.GuideRestore.Content=if($script:guide){$view.RestoreLabel}else{'Restore original'}
     $ui.GuideResultTitle.Text=$view.ResultTitle
@@ -82,6 +82,7 @@ function Complete-GuideRun($records) {
 }
 $ui.GuideDetect.Add_Click({
     try{
+        if(Test-Path -LiteralPath (Join-Path $dataDir 'gpu-clock-restore.json')){throw 'Restore saved GPU clock offsets before starting guided power-limit optimization. Manual clock benchmarks remain available.'}
         if(-not $script:snapshot){throw 'Scan PC first to establish hardware details.'}
         Set-Busy $true
         $caps=Get-PCTuningCapabilities
@@ -93,6 +94,7 @@ $ui.GuideDetect.Add_Click({
 })
 $ui.GuideBaseline.Add_Click({
     try{
+        if(Test-Path -LiteralPath (Join-Path $dataDir 'gpu-clock-restore.json')){throw 'Restore saved GPU clock offsets before the guided baseline.'}
         if($script:guide.Phase -ne 'Ready'){return}
         if(-not(Confirm 'Run three monitored GPU shader tests at the current limit? Each has a 5-second warm-up and 30-second measurement, with 10-second cooldowns. Save other work and close competing GPU workloads. This creates GPU load; no settings change during the baseline.')){return}
         $null=Assert-PCGuideLiveState $script:guide $script:guide.Device.Current

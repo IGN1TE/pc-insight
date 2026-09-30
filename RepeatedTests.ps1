@@ -1,6 +1,9 @@
 ﻿function Get-PCPowerSignature($state) {
-    if (-not $state -or $state.Issue -or -not @($state.Devices).Count) { return 'GPU power limits unavailable' }
-    (@($state.Devices | Sort-Object UUID | ForEach-Object { "$($_.UUID)=$($_.Current)W" })) -join '; '
+    if(-not $state){return 'GPU power limits unavailable'}
+    $power=if($state.Issue -or -not @($state.Devices).Count){'GPU power limits unavailable'}else{(@($state.Devices | Sort-Object UUID | ForEach-Object { "$($_.UUID)=$($_.Current)W" })) -join '; '}
+    if(-not $state.PSObject.Properties['ClockOffsets']){return $power}
+    $clocks=if($state.ClockIssue -or -not @($state.ClockOffsets | Where-Object { $null -ne $_ }).Count){'unavailable'}else{(@($state.ClockOffsets|Sort-Object UUID|ForEach-Object{if($_.Available){"$($_.UUID):P0 core=$($_.CoreMHz)MHz memory=$($_.MemoryMHz)MHz"}else{"$($_.UUID):unavailable"}})) -join '; '}
+    $power+' | Clock offsets: '+$clocks
 }
 function Invoke-PCRepeatedTest([ValidateSet('longcpu','memory','gpu')][string]$Kind) {
     $batch=[guid]::NewGuid().ToString();$results=[Collections.Generic.List[object]]::new()
@@ -20,7 +23,7 @@ function Invoke-PCRepeatedTest([ValidateSet('longcpu','memory','gpu')][string]$K
         if(-not $result){throw 'No result from repeated test.'}
         $after=Get-PCTuningCapabilities;$endPlan=Get-ActivePlan
         if((Get-PCPowerSignature $before) -ne (Get-PCPowerSignature $after) -or $plan -ne $endPlan){
-            $result.Completed=$false;$result.StopReason='Reported power settings changed during this run. Batch stopped; score excluded.';$result.MiBPerSecond=$null
+            $result.Completed=$false;$result.StopReason='Reported power or clock settings changed during this run. Batch stopped; score excluded.';$result.MiBPerSecond=$null
             if($result.PSObject.Properties['GpuFramesPerSecond']){$result.GpuFramesPerSecond=$null}
         }
         $result | Add-Member NoteProperty BatchId $batch

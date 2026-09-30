@@ -55,6 +55,11 @@ function Get-PCSessionComparison($Before,$After) {
     $beforePower=Get-PCComparisonPowerContext $Before.PowerStateAtStart
     $afterPower=Get-PCComparisonPowerContext $After.PowerStateAtStart
     $notes.Add("GPU power limits at start: A $beforePower; B $afterPower.")
+    foreach($pair in @(@('A',$Before),@('B',$After))){
+        $state=$pair[1].PowerStateAtStart
+        $clockText=if(-not $state -or $state.ClockIssue -or -not @($state.ClockOffsets | Where-Object { $null -ne $_ }).Count){'unavailable'}else{(@($state.ClockOffsets|ForEach-Object{if($_.Available){"$($_.UUID): P0 core $($_.CoreMHz) MHz, memory $($_.MemoryMHz) MHz"}else{"$($_.UUID): unavailable"}})) -join '; '}
+        $notes.Add("Recorded clock offsets at start, $($pair[0]): $clockText.")
+    }
     $notes.Add('Change means B minus A. One pair of runs does not establish an improvement; repeat equivalent tests to check variation. Benchmark throughput is not game FPS.')
     $notes.Add('Sensor changes are descriptive sample statistics for matching sensor identities. Only retained samples count; missing readings and frames with issues are excluded. Averages are not time-weighted. Different workloads, durations or sample coverage can change the results.')
     $reasons=@($reasons|Select-Object -Unique)

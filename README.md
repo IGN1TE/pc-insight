@@ -2,10 +2,10 @@
 
 [Download the latest release](https://github.com/IGN1TE/pc-insight/releases/latest) · [Development workflow](DEVELOPMENT.md)
 
-The repository now includes the complete v0.22.2 app source, tests and bundled dependencies. `main` holds released code; `develop` is for ongoing work. Install from the `PC-Insight-Windows-Preview.zip` release asset.
+This development build contains v0.24.0 app source, tests and bundled dependencies. `main` holds released code; `develop` is for ongoing work. This GPU-controls candidate is on `feature/nvidia-clock-offsets` and has not been published. Install from the `PC-Insight-Windows-Preview.zip` release asset.
 
 ---
-# PC Insight 0.22.2 - project branding
+# PC Insight 0.24.0 - NVIDIA clock-offset preview
 
 CPU/GPU sensor readings are now collected inside PC Insight through the bundled official LibreHardwareMonitorLib 0.9.6. You no longer need the Libre Hardware Monitor desktop app, Log Sensors, a CSV file or its remote web server.
 
@@ -44,7 +44,7 @@ The original 15-second single-worker SHA-256 baseline remains on Benchmark. It d
 
 85 C is this preview's conservative test cutoff, not a manufacturer limit or a guarantee of safety. Direct hardware updates are requested for each query, but sensor-level timestamps are not supplied by the library. Hardware-level freshness and accuracy cannot be guaranteed. Temperatures are Celsius; clocks are reported MHz, not necessarily effective clocks. The app excludes Distance to TjMax/headroom readings from absolute CPU temperature and stop decisions.
 
-Tests measure their particular SHA-256 workload, not FPS or overall system health. Completion is not long-term stability certification. Compare the same test, CPU, runtime and worker count under equivalent conditions. GPU shader tests, RAM copy tests, guided NVIDIA power-limit reduction and the optional game FPS overlay are also available. Clock/voltage tuning, fan/BIOS/RAM writes, definitive thermal-throttling diagnosis and long-term stability certification are not implemented.
+Tests measure their particular SHA-256 workload, not FPS or overall system health. Completion is not long-term stability certification. Compare the same test, CPU, runtime and worker count under equivalent conditions. GPU shader tests, RAM copy tests, guided NVIDIA power-limit reduction and the optional game FPS overlay are also available. Voltage tuning, AMD/Intel clock control, fan/BIOS/RAM writes, definitive thermal-throttling diagnosis and long-term stability certification are not implemented.
 
 Older session summaries may still contain the pre-0.3.1 inflated temperature peaks. Raw samples remain available. New sessions use the corrected filter.
 
@@ -364,3 +364,66 @@ diagnosis; no saved results or hardware settings were changed.
 The new purple/cyan PC Insight logo appears in the sidebar and About page. About and the sidebar show the installed version. Desktop, Start menu, Installed Apps and the app window use the matching icon, with nine native sizes from 16 to 256 pixels. Installation uses a versioned icon filename to avoid stale Windows icon-cache entries. Branding loads from the app folder even when launched from another working directory.
 
 The v0.22.1 comparison export fix is retained. This release changes presentation and shortcut branding; it does not add hardware actions or change saved sessions. WPF integration, comparison export, updater and extracted-package checks were run on Windows. UI layouts were inspected at 1320x920 and 1000x720, with additional 150% and 200% raster rendering checks.
+## Readable comparison reports
+
+In Test results, select session B and a reference session A, then choose **Save
+readable report**. The standalone HTML file opens in a browser without an internet
+connection. Use the browser's Print command to print or save as PDF. The report
+includes the displayed measurements, sample coverage, both sessions' recorded
+configuration and comparison limits. It keeps missing values and blocked score
+comparisons explicit. **Export comparison JSON** remains available for data analysis.
+
+The report is frozen before the Save dialog opens, even if monitoring updates the
+session selectors. Cancelling saves nothing. Reports may contain hardware details
+and recorded settings; sharing is up to you. Nothing is uploaded automatically.
+
+## NVIDIA GPU overclocking preview (0.24.0)
+
+Tuning now includes **Detect clock support**, manual graphics/core and memory MHz
+offsets, **Review and apply offsets**, and **Restore saved clock offsets**. This
+first implementation uses NVIDIA's documented NVML clock-offset API for P0. It
+requires a 64-bit Windows process and a driver exposing those functions (introduced
+in R555). Actual availability is determined by read calls, not a GPU-name whitelist.
+RTX 5090 write support and behavior have NOT been verified on hardware here. An
+unsupported driver/device stays disabled; a read success does not guarantee writes.
+
+Detection is read-only. Applying requires administrator access, a current readable
+GPU temperature below the 85 C preview cutoff, whole-MHz values within the reported
+ranges, and explicit review of the GPU identity and requested values. The cutoff
+and driver ranges are not stability guarantees. P0 is the highest performance
+state; this preview does not claim control of every P-state. Memory values are raw
+NVML MHz offsets, not effective DDR data rates or another tool's slider units.
+
+Close games and other tuning tools and save work before a change. Unstable offsets
+can cause artifacts, driver resets, crashes and lost work. This is manual tuning,
+not automatic stability testing or an OC scanner. No voltage, fan, BIOS, driver
+installation, power-limit increase or startup profile is added.
+
+The original offsets (which may already be nonzero) are flushed to
+`%LOCALAPPDATA%\PCInsight\gpu-clock-restore.json` before writing. Both offsets are
+read back after apply. A rejected write or mismatch attempts both rollback domains
+independently, and retains the recovery record. Later edits never replace the
+original values. Restore is explicit, available after relaunch, and requires
+readback before the recovery file is removed. Temperature checks do not block
+restoration. A driver/system crash can prevent in-process recovery; no watchdog or
+automatic restoration after app exit is claimed. Do not delete a pending recovery
+record to bypass a blocked apply.
+
+Benchmark snapshots record reported P0 offsets when available. Repeated runs with
+different reported offsets are separated, and session comparison includes this
+context. Older sessions show it as unavailable. These snapshots cannot detect every
+external tuning change. Guided power-limit optimization requires restoring the
+saved manual clock changes first. Manual benchmarks remain available.
+
+Validation here covers mocked writes/failures/recovery, NVML structure layout,
+clock-context grouping, comparison and updater regressions. Windows PowerShell 5.1,
+WPF interaction, native detection and reviewed hardware writes remain validation
+requirements. `tests/Test-GpuOverclock.ps1` is mock-only;
+`tests/Test-GpuOverclockUI.ps1` requires Windows WPF and also mocks every GPU write.
+
+Implementation references:
+- https://docs.nvidia.com/deploy/nvml-api/change-log.html (R555 clock-offset functions)
+- https://docs.nvidia.com/deploy/nvml-api/latest/api/group__nvmlDeviceCommands.html
+- https://github.com/NVIDIA/go-nvml/blob/main/pkg/nvml/nvml.h (public ABI)
+No NVIDIA DLL is redistributed; the installed library is loaded from Windows
+System32 or the vendor NVSMI directory, never from the app working directory.
