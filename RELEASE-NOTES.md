@@ -1,4 +1,28 @@
-﻿# v0.22.2 - PC Insight branding
+﻿# v0.24.1 - Windows GPU controls preview
+
+- Integrated the v0.24.0 NVIDIA clock-offset controls and readable comparison reports.
+- Recheck current GPU temperature immediately before applying offsets; reject invalid temperature values.
+- Block uninstall while a clock-recovery record remains, including a corrupt record.
+- Windows PowerShell 5.1 mock apply/restore, WPF button, comparison/export and updater checks passed.
+- A read-only Windows probe successfully read offsets on an RTX 5090. Physical clock writes and stability remain unverified.
+# v0.24.0 - NVIDIA clock-offset preview
+
+- Adds read-only clock detection and reviewed manual P0 core/memory offsets on supported NVIDIA drivers.
+- Saves original offsets before writes, reads back both domains and attempts recovery after partial failures.
+- Restores saved offsets after relaunch, retaining recovery records until readback succeeds.
+- Records available clock offsets with benchmarks and displays them in session comparisons.
+- Retains the v0.23.0 readable comparison report feature and the working overlay.
+- GPU/driver write compatibility and Windows UI validation remain pending; this is not a validated RTX 5090 overclocking release.
+
+# v0.23.0 - Readable comparison reports
+
+- Save a standalone HTML report from Test results, alongside JSON export.
+- Includes benchmark and sensor changes, sample coverage, session details and comparison limits.
+- Opens offline in a browser; use Print to print or save as PDF.
+- Retains missing readings and blocked score comparisons exactly as displayed.
+- Freezes the report before Save opens; cancellation writes nothing.
+
+# v0.22.2 - PC Insight branding
 
 - Added the purple/cyan PC Insight logo to the sidebar and About page.
 - Updated the app window and installed shortcuts with the matching multi-size Windows icon.

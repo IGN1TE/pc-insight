@@ -23,9 +23,11 @@ function Refresh-PCComparisonReferences {
 function Update-PCComparisonExportState {
     # Export only serializes saved data; live jobs do not invalidate this snapshot.
     $ui.ExportComparison.IsEnabled=$null -ne $script:sessionComparison
+    $ui.ExportComparisonReport.IsEnabled=$null -ne $script:sessionComparison
     if(-not $script:sessionComparison){$ui.ComparisonExportStatus.Text=$ui.ComparisonStatus.Text}
     else{$ui.ComparisonExportStatus.Text='Ready to export these two sessions.'}
     $ui.ExportComparison.ToolTip=$ui.ComparisonExportStatus.Text
+    $ui.ExportComparisonReport.ToolTip=$ui.ComparisonExportStatus.Text
 }
 function Show-PCSessionComparison {
     if($script:comparisonReferencesRefreshing){return}
@@ -60,20 +62,23 @@ function Show-PCSessionComparison {
     Update-PCComparisonExportState
 }
 $ui.CompareSessionPicker.Add_SelectionChanged({Show-PCSessionComparison})
-function Select-PCComparisonExportPath {
+function Select-PCComparisonExportPath([ValidateSet('json','html')][string]$Format='json') {
     $dialog=[Microsoft.Win32.SaveFileDialog]::new()
-    $dialog.Filter='JSON comparison (*.json)|*.json'
-    $dialog.FileName='PC-Insight-comparison-'+(Get-Date -Format 'yyyyMMdd-HHmmss')+'.json'
+    $dialog.Filter=if($Format -eq 'html'){'Readable report (*.html)|*.html'}else{'JSON comparison (*.json)|*.json'}
+    $dialog.DefaultExt='.'+$Format
+    $dialog.FileName='PC-Insight-comparison-'+(Get-Date -Format 'yyyyMMdd-HHmmss')+'.'+$Format
     if($dialog.ShowDialog($window) -eq $true){$dialog.FileName}
 }
-$ui.ExportComparison.Add_Click({
+function Export-PCSessionComparison([ValidateSet('json','html')][string]$Format='json') {
     if(-not $script:sessionComparison){return}
     try{
         # WPF keeps dispatching while the dialog is open. A completed job may refresh the selectors.
         $snapshot=$script:sessionComparison|ConvertTo-Json -Depth 12|ConvertFrom-Json
-        $path=Select-PCComparisonExportPath
+        $path=Select-PCComparisonExportPath $Format
         if(-not $path){return}
-        Save-JsonAtomic $snapshot $path
+        if($Format -eq 'html'){Save-PCComparisonHtml $snapshot $path}else{Save-JsonAtomic $snapshot $path}
         $ui.ComparisonExportStatus.Text='Saved comparison to '+$path
     }catch{Show-Error $_.Exception.Message}
-})
+}
+$ui.ExportComparison.Add_Click({Export-PCSessionComparison 'json'})
+$ui.ExportComparisonReport.Add_Click({Export-PCSessionComparison 'html'})

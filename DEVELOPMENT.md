@@ -36,3 +36,9 @@ Saved sessions, exported hardware reports, settings and recovery records belong 
 ## Branding
 
 The PNG logo and matching icon are under `assets/branding/`. They are transparent raster assets generated with the built-in ImageGen tool. The prompt set is saved alongside them. `Branding.ps1` loads the logo into WPF using absolute paths so shortcuts can start from another working directory. `assets/branding/Build-Icon.ps1` creates the multi-size Windows icon; the installer uses a release-specific icon filename for Windows shell integration.
+
+## Current development preview
+
+`feature/nvidia-clock-offsets` contains the v0.24.1 candidate built from the supplied v0.24.0 preview. It adds Windows validation, a final temperature check before applying GPU clock offsets, and clock-recovery protection during uninstall. The public release remains v0.22.2 until a candidate is published.
+
+The Windows mock suites include `tests/Test-GpuOverclock.ps1`, `tests/Test-GpuOverclockUI.ps1`, `tests/Test-ClockComparisonContext.ps1`, `tests/Test-UninstallRecovery.ps1`, and the existing comparison/interface/updater regressions. The read-only probe loaded the installed NVIDIA library and read offsets on the target RTX 5090. This does not validate physical writes or overclock stability.

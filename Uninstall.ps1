@@ -1,4 +1,11 @@
 ﻿$ErrorActionPreference='Stop'
+function Assert-PCUninstallRecovery([string]$DataPath) {
+    foreach($name in @('gpu-clock-restore.json','gpu-power-restore.json','restore.json')){
+        if(Test-Path -LiteralPath (Join-Path $DataPath $name)){
+            throw 'A settings recovery record exists. Restore saved GPU clock offsets, GPU power limits and Windows power plans in PC Insight before uninstalling.'
+        }
+    }
+}
 Add-Type -AssemblyName PresentationFramework
 $mutex=$null;$locked=$false
 try{
@@ -9,7 +16,7 @@ try{
     $mutex=[Threading.Mutex]::new($false,'Local\PCInsightPreview01');$locked=$mutex.WaitOne(0)
     if(-not $locked){throw 'Close PC Insight before uninstalling.'}
     $data=Join-Path $env:LOCALAPPDATA 'PCInsight'
-    if((Test-Path (Join-Path $data 'gpu-power-restore.json')) -or (Test-Path (Join-Path $data 'restore.json'))){throw 'A settings recovery record exists. Restore the saved GPU limit and/or Windows power plan in PC Insight before uninstalling.'}
+    Assert-PCUninstallRecovery $data
     if([Windows.MessageBox]::Show('Remove PC Insight application files and shortcuts? Your reports, profiles and saved results will remain on this PC.','Uninstall PC Insight','YesNo','Question') -ne 'Yes'){return}
     $menu=Join-Path ([Environment]::GetFolderPath('Programs')) 'PC Insight'
     foreach($name in 'PC Insight.lnk','PC Insight (Administrator).lnk','Uninstall PC Insight.lnk'){Remove-Item (Join-Path $menu $name) -ErrorAction SilentlyContinue}

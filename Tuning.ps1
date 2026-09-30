@@ -30,7 +30,12 @@ function Get-PCPowerDevices {
 function Get-PCTuningCapabilities {
     $devices=@();$issue=$null
     try {$devices=@(Get-PCPowerDevices)}catch{$issue=$_.Exception.Message}
-    [pscustomobject]@{Timestamp=(Get-Date).ToString('o');Devices=$devices;Issue=$issue;CPU='Clock, voltage and CPU power writes: not implemented; BIOS support not inferred from CPU name.';GPU='NVIDIA power-limit reductions only. Clock and voltage controls: not implemented. AMD/Intel writes: not implemented.';RAM='XMP/EXPO and timing writes: not implemented.'}
+    $clocks=@();$clockIssue=$null
+    try{
+        if(-not (Get-Command Get-PCClockDevices -ErrorAction SilentlyContinue)){. (Join-Path $PSScriptRoot 'GpuOverclock.ps1')}
+        $clocks=@(Get-PCClockDevices|Select-Object UUID,Name,Driver,Available,CoreMHz,MemoryMHz,Issue)
+    }catch{$clockIssue=$_.Exception.Message}
+    [pscustomobject]@{Timestamp=(Get-Date).ToString('o');Devices=$devices;Issue=$issue;ClockOffsets=$clocks;ClockIssue=$clockIssue;CPU='Clock, voltage and CPU power writes: not implemented; BIOS support not inferred from CPU name.';GPU='NVIDIA power-limit reductions and capability-gated manual P0 clock offsets. Use Detect clock support separately. Voltage and AMD/Intel writes: not implemented.';RAM='XMP/EXPO and timing writes: not implemented.'}
 }
 function Get-PCDeviceById([string]$UUID) {
     if ($UUID -notmatch '^GPU-[a-fA-F0-9-]+$') { throw 'Invalid GPU identity.' }
@@ -126,7 +131,7 @@ function Get-PCBaselineComparison($Baseline,$History,$Sessions) {
         $lines.Add(("{0} — 3 baseline + 3 new runs`nMedian: {1:N1} → {2:N1} {3} ({4:+0.0;-0.0;0.0}%).`nSpread: {5:N1}% → {6:N1}%." -f $current.Test,$a.Median,$b.Median,(Get-PCResultUnit $current),$delta,$a.SpreadPercent,$b.SpreadPercent))
         $lines.Add('Baseline test settings: '+(Get-PCPowerSignature $prior.PowerStateAtStart))
         $lines.Add('New test settings: '+(Get-PCPowerSignature $current.PowerStateAtStart))
-        $unknown=(Get-PCPowerSignature $prior.PowerStateAtStart) -eq 'GPU power limits unavailable' -or (Get-PCPowerSignature $current.PowerStateAtStart) -eq 'GPU power limits unavailable'
+        $unknown=(Get-PCPowerSignature $prior.PowerStateAtStart) -like 'GPU power limits unavailable*' -or (Get-PCPowerSignature $current.PowerStateAtStart) -like 'GPU power limits unavailable*'
         if($a.SpreadPercent -gt 5 -or $b.SpreadPercent -gt 5){$lines.Add('INCONCLUSIVE: at least one batch exceeds the 5% variability heuristic. No tuning gain or loss is established.')}
         elseif($prior.Plan -ne $current.Plan){$lines.Add('INCONCLUSIVE FOR A SINGLE CHANGE: Windows power plans differ between batches.')}
         elseif($unknown){$lines.Add('SETTINGS COVERAGE INCOMPLETE: GPU power limits were unavailable for at least one batch. No controlled tuning conclusion is established.')}

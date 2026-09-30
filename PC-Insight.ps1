@@ -6,6 +6,7 @@ Add-Type -AssemblyName System.Windows.Forms
 . "$PSScriptRoot\Engine.ps1"
 . "$PSScriptRoot\Power.ps1"
 . "$PSScriptRoot\Tuning.ps1"
+. "$PSScriptRoot\GpuOverclock.ps1"
 . "$PSScriptRoot\Profiles.ps1"
 . "$PSScriptRoot\Updates.ps1"
 . "$PSScriptRoot\Branding.ps1"
@@ -14,6 +15,7 @@ $script:appVersion=Get-PCAppVersion
 . "$PSScriptRoot\SessionExport.ps1"
 . "$PSScriptRoot\SessionDetails.ps1"
 . "$PSScriptRoot\SessionComparison.ps1"
+. "$PSScriptRoot\ComparisonReport.ps1"
 . "$PSScriptRoot\SessionChart.ps1"
 . "$PSScriptRoot\GuidedOptimize.ps1"
 . "$PSScriptRoot\GuidePresentation.ps1"
@@ -40,7 +42,8 @@ try {
     Set-PCWindowBranding -Window $window -Root $PSScriptRoot -Version $script:appVersion
     $script:ui = @{}
     'EnableOverlayHotkey','ToggleOverlay','OverlayStatus','LastFpsCapture','ExportFpsDetails','GuideDetect','GuideBaseline','GuideApply','GuideRestore','GuideKeep','GuideStop','GuideExport','GuideStage','GuideStatusCard','GuideNextAction','GuideResultTitle','GuideRecommendationLabel','GuideRecommendation','GuideBeforeScore','GuideAfterScore','GuideChange','GuideMessage','GuideDevice','GuideVerdict','GuideRecovery','SensorHistoryChart','SensorHistoryTitle','SensorHistoryScale','SensorHistoryTime','SessionSensorDetails','SessionCoverage','ExportSessionCsv','ExportSessionJson','SessionExportStatus','InstalledVersion','ReleaseNotes','LastUpdateCheck','UpdateFeed','CheckUpdate','DownloadUpdate','InstallUpdate','CancelUpdate','UpdateStatus','AccessStatus','ReopenAdmin','OpenAppFolder','OpenDataFolder','Scan','Export','ScanTime','Overview','Insights','Benchmark','Cancel','Results','PlansRefresh','Plans','Apply','Restore','PowerStatus','Status','SensorStart','MultiBenchmark','SensorReadings','SensorSummary','SensorCancel','SessionResults','CPUModel','GPUModel','RAMModel','CPUTemp','GPUTemp','RAMUsed','DashboardTest','ChartCaption','TemperatureChart','DashboardResult','CPUDetails','CPUReadingTime','GPUReadingTime','CPUPower','DashboardRecord','OpenResults','ResultPeak','ResultRate','ResultDelta','Navigation','MonitorStart','MonitorStop','RAMSampleLabel','UsageChart','LongCPU','MemoryTest','GPUTest','TestProgress','ProgressLabel','ResultRateLabel','DetectTuning','GPUDevice','PowerPreset','ApplyGPU','RestoreGPU','TuningStatus','CapabilityText','SaveBaseline','CompareBaseline','BaselineResult','RepeatCPU','RepeatRAM','RepeatGPU','BatchReport','SessionPicker','ProfileName','SaveProfile','ProfilePicker','LoadProfile','ProfileStatus' | ForEach-Object { $ui[$_] = $window.FindName($_) }
-    'CompareSessionPicker','ComparisonRows','ComparisonStatus','ComparisonNotes','ExportComparison','ComparisonExportStatus' | ForEach-Object { $ui[$_] = $window.FindName($_) }
+    'DetectClocks','ClockGPU','ClockInfo','CoreOffset','MemoryOffset','ApplyClocks','RestoreClocks','ClockStatus' | ForEach-Object { $ui[$_] = $window.FindName($_) }
+    'CompareSessionPicker','ComparisonRows','ComparisonStatus','ComparisonNotes','ExportComparison','ExportComparisonReport','ComparisonExportStatus' | ForEach-Object { $ui[$_] = $window.FindName($_) }
     . "$PSScriptRoot\SessionComparisonUI.ps1"
     $ui.InstalledVersion.Text='Installed version: '+$script:appVersion
     $script:isAdministrator = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
@@ -233,6 +236,7 @@ try {
         $ui.DownloadUpdate.IsEnabled = -not $busy -and $null -ne $script:updateRelease
         $ui.InstallUpdate.IsEnabled = -not $busy -and $null -ne $script:updateSource
         if(Get-Command Refresh-GuideUI -ErrorAction SilentlyContinue){Refresh-GuideUI}
+        if(Get-Command Update-PCClockControlState -ErrorAction SilentlyContinue){Update-PCClockControlState $busy}
     }
     function Format-Snapshot($s) {
         $out = [System.Collections.Generic.List[string]]::new()
@@ -653,6 +657,7 @@ try {
     $updateTimer.Start()
     . "$PSScriptRoot\GuidedOptimizeUI.ps1"
     . "$PSScriptRoot\GameOverlayUI.ps1"
+    . "$PSScriptRoot\GpuOverclockUI.ps1"
     $window.Add_Closing({
         param($sender,$eventArgs)
         if($script:guide -and $script:guide.Phase -eq 'Decision'){
