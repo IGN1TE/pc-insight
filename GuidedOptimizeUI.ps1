@@ -11,6 +11,7 @@ if(Test-Path -LiteralPath $script:guidePath){
     }catch{$script:guideLoadIssue=$_.Exception.Message}
 }
 function Refresh-GuideUI {
+    if(Get-Command Update-PCCpuControls -ErrorAction SilentlyContinue){Update-PCCpuControls}
     $busy=$null -ne $script:job -or $null -ne $script:updateJob -or $script:clockActionBusy
     $phase=if($script:guide){$script:guide.Phase}else{'Not started'}
     $locked=$phase -in @('RunningBaseline','Review','Applying','RunningAfter','Decision','RecoveryRequired')

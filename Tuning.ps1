@@ -35,7 +35,7 @@ function Get-PCTuningCapabilities {
         if(-not (Get-Command Get-PCClockDevices -ErrorAction SilentlyContinue)){. (Join-Path $PSScriptRoot 'GpuOverclock.ps1')}
         $clocks=@(Get-PCClockDevices|Select-Object UUID,Name,Driver,Available,CoreMHz,MemoryMHz,Issue)
     }catch{$clockIssue=$_.Exception.Message}
-    [pscustomobject]@{Timestamp=(Get-Date).ToString('o');Devices=$devices;Issue=$issue;ClockOffsets=$clocks;ClockIssue=$clockIssue;CPU='Clock, voltage and CPU power writes: not implemented; BIOS support not inferred from CPU name.';GPU='NVIDIA power-limit reductions and capability-gated manual P0 clock offsets. Use Detect clock support separately. Voltage and AMD/Intel writes: not implemented.';RAM='XMP/EXPO and timing writes: not implemented.'}
+    [pscustomobject]@{Timestamp=(Get-Date).ToString('o');Devices=$devices;Issue=$issue;ClockOffsets=$clocks;ClockIssue=$clockIssue;CPU='CPU tuning tab: saved baseline and retest experiments for external BIOS/vendor changes. Clock, voltage and CPU power writes are not implemented; support is not inferred from CPU name.';GPU='NVIDIA power-limit reductions and capability-gated manual P0 clock offsets. Use Detect clock support separately. Voltage and AMD/Intel writes: not implemented.';RAM='XMP/EXPO and timing writes: not implemented.'}
 }
 function Get-PCDeviceById([string]$UUID) {
     if ($UUID -notmatch '^GPU-[a-fA-F0-9-]+$') { throw 'Invalid GPU identity.' }

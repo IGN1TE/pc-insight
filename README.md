@@ -2,10 +2,26 @@
 
 [Download the latest release](https://github.com/IGN1TE/pc-insight/releases/latest) · [Development workflow](DEVELOPMENT.md)
 
-This branch contains the v0.28.0 development preview. Source changes do not publish an app update. For the published app, use the `PC-Insight-Windows-Preview.zip` asset on the latest release.
+This branch contains the v0.29.0 development preview. Source changes do not publish an app update. For the published app, use the `PC-Insight-Windows-Preview.zip` asset on the latest release.
 ---
 
-## Development preview v0.28.0: recorded GPU sensor graphs
+## Development preview v0.29.0: CPU overclock experiments
+
+The new **CPU tuning** tab measures CPU changes that you make in a supported BIOS or vendor tool. **PC Insight does not apply or restore CPU ratios, voltage, CPU power limits or firmware settings.** CPU/board detection is read-only and does not certify overclocking support. Save your original BIOS/vendor profile externally before making changes. Intel XTU compatibility depends on the supported CPU and chipset ([Intel requirements](https://www.intel.com/content/www/us/en/download/17881/intel-extreme-tuning-utility-intel-xtu.html)); AMD's public Ryzen Master Monitoring SDK exposes read-only monitoring calls ([AMD documentation](https://www.amd.com/en/developer/ryzen-master-monitoring-sdk.html)). A validated CPU-write backend remains future work.
+
+1. Choose **Detect CPU platform**, describe the current settings, then **Review and collect baseline**. The app runs three 60-second SHA-256 tests separated by 10-second cooldowns. It reserves one logical processor when possible and caps the workload at 16 workers. This workload is not a game benchmark or stability test.
+2. Make your supported CPU change externally, reboot if needed, and reopen PC Insight. Select the saved baseline, describe the change and choose **Review and retest selected baseline**. Notes are user reported, never interpreted as commands or treated as verified settings. Each retest has a separate record; the original baseline remains intact.
+3. Review per-run scores, starting/peak sampled CPU temperatures, medians and variability, or export the selected experiment as JSON. Exports contain hardware details and notes; review them before sharing.
+
+Measurements stop at the 85 C preview cutoff, missing/invalid CPU temperature readings, failed/slow sensor queries, cancellation or context drift. This cutoff is a conservative app rule, not a processor-specific thermal limit or a guarantee against overheating. Cooling and sensor freshness remain hardware dependent. CPU workloads have an independent 60-second deadline; the worker also checks for app shutdown. Stop requests are cooperative, with a fallback for a stuck worker. Closing during a task requests cancellation; close again after it ends. Completed runs are checkpointed, while an unfinished run may have no retained result.
+
+Comparisons require three completed runs on each side with the same reported CPU/topology, motherboard, BIOS version, configured memory inventory, Windows version, runtime, worker count and active power-plan GUID. Context is checked before and after each run. CPU settings, voltage, memory timings, power-plan subsettings, background activity and transient changes between those checks are not verified. A BIOS update or changed memory configuration requires a new baseline. The app cannot establish causation from matching metadata.
+
+A baseline with more than 5% score spread cannot be used for retesting. Retest variability above 5%, overlapping ranges or median starting temperatures more than 5 C apart produce an **inconclusive** comparison. These are heuristics, not statistical significance tests. Keep ambient conditions, cooling, power and background applications consistent; ten seconds of cooldown does not guarantee equivalent temperatures. No settings are ranked as safe or stable.
+
+Records live in `%LOCALAPPDATA%\PCInsight\cpu-tuning-trials`. The picker loads the latest 50 readable records and retains older files. Interrupted records remain visible and cannot be used as finished baselines. Corrupt records are isolated with an explanation. Saved measurements, browsing and exports make no hardware-setting writes. **Hardware acceptance testing remains pending.** Tests use simulated hardware, including actual WPF button/job handlers on Windows PowerShell 5.1.
+
+## Recorded GPU sensor graphs (introduced in v0.28.0)
 
 Under **Saved clock trials**, select a trial and expand **Recorded GPU sensor graphs**. Choose any recorded baseline or retest, then a GPU temperature, clock, power or load sensor. The graph shows the original sampled readings, elapsed time, coverage and min/mean/max. Sensor names and identifiers distinguish equally named readings; temperature headroom is labelled separately. An excluded run can still be inspected without making its score eligible.
 
