@@ -1,6 +1,7 @@
 # A reviewed, temporary clock change. Always restores after the retest; never keeps
 # offsets automatically. Hardware calls are injected through GpuOverclock.ps1.
 . (Join-Path $PSScriptRoot 'GpuClockTrialHistory.ps1')
+. (Join-Path $PSScriptRoot 'GpuClockTrialTelemetry.ps1')
 function Assert-PCClockTrialRunning([string]$StopPath,[int]$OwnerId=0,[long]$OwnerStart=0) {
     if($StopPath -and (Test-Path -LiteralPath $StopPath)){throw 'GPU clock trial cancelled.'}
     if($OwnerId -gt 0){
@@ -28,7 +29,7 @@ function ConvertTo-PCClockTrialMeasurement($Result) {
         Test=$Result.Test;Timestamp=$Result.Timestamp;Seconds=$Result.Seconds;Runtime=$Result.Runtime
         Renderer=$Result.Renderer;GPUName=$Result.GPUName;WarmupSeconds=$Result.WarmupSeconds
         Completed=$Result.Completed;StopReason=$Result.StopReason;DrawsPerSecond=$Result.GpuFramesPerSecond
-        PeakGpuC=$peak;TemperatureSamples=$temps.Count
+        PeakGpuC=$peak;TemperatureSamples=$temps.Count;Telemetry=(ConvertTo-PCClockTrialTelemetry $Result)
     }
 }
 function Assert-PCClockTrialMeasurement($Measurement,$Device) {

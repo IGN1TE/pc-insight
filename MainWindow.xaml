@@ -132,6 +132,16 @@
      <WrapPanel><Button Name="LoadClockTrialOffsets" Content="Load offsets into controls" IsEnabled="False"/><Button Name="ExportSavedClockTrial" Content="Export selected trial" Background="#28233D" IsEnabled="False"/></WrapPanel>
      <TextBlock Name="ClockTrialHistoryStatus" Text="No saved trials yet." Foreground="#B195FF"/>
      <Expander Header="Selected saved trial details" Margin="0,8"><TextBlock Name="ClockTrialSavedResult" Text="No saved trial selected."/></Expander>
+     <Expander Header="Recorded GPU sensor graphs" Margin="0,8"><StackPanel>
+      <TextBlock Text="Inspect each baseline or retest from the selected saved trial. Reported clocks are sensor readings, not the configured offsets or effective memory data rate. Sensor names identify which power or load reading is shown." Foreground="#B0B5CC"/>
+      <TextBlock Text="Run"/><ComboBox Name="ClockTrialTelemetryRun" DisplayMemberPath="Label" Margin="0,8" Padding="10" IsEnabled="False" AutomationProperties.Name="Saved trial telemetry run"/>
+      <TextBlock Text="Sensor"/><ComboBox Name="ClockTrialTelemetrySensor" DisplayMemberPath="Label" Margin="0,8" Padding="10" IsEnabled="False" AutomationProperties.Name="Saved trial telemetry sensor"/>
+      <TextBlock Name="ClockTrialTelemetrySummary" Text="Select a saved trial to inspect its recorded readings."/>
+      <TextBlock Name="ClockTrialTelemetryScale" Foreground="#B195FF"/>
+      <Viewbox Stretch="Uniform" HorizontalAlignment="Stretch"><Canvas Name="ClockTrialTelemetryChart" Width="800" Height="150" Background="#121522" ClipToBounds="True" AutomationProperties.Name="Recorded GPU sensor graph"/></Viewbox>
+      <TextBlock Name="ClockTrialTelemetryTime" Foreground="#B0B5CC"/>
+      <TextBlock Text="Readings reuse the original workload samples. Missing, invalid, duplicate or failed-query readings leave gaps. Sample peaks may miss transients; sensor freshness is not guaranteed. These graphs do not establish stability, throttling or whole-system power." Foreground="#929BB5"/>
+     </StackPanel></Expander>
      <TextBlock Text="Compare with trial A"/><ComboBox Name="ClockTrialReference" DisplayMemberPath="Label" Margin="0,8" Padding="10" AutomationProperties.Name="Reference clock trial A"/>
      <TextBlock Name="ClockTrialComparisonResult" Text="Choose two saved trials to compare."/>
      <Button Name="ExportClockTrialComparison" Content="Export trial comparison" HorizontalAlignment="Left" Background="#28233D" IsEnabled="False"/>

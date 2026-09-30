@@ -1,4 +1,14 @@
-﻿# v0.27.0 - Saved GPU experiments (development preview)
+﻿# v0.28.0 - Recorded GPU sensor graphs (development preview)
+
+- Retains bounded GPU temperature, clock, power and load samples from the existing workload, with full sensor identities and explicit missing readings.
+- Adds run/sensor selectors, per-run graphs, coverage and min/mean/max to saved trials. Graph browsing stays available during an active trial.
+- Separates equally named sensors and GPUs; labels temperature headroom. Invalid/duplicate readings, query errors, slow queries and timestamp gaps do not become continuous lines.
+- Preserves telemetry through checkpoints, history and JSON exports. Older reports explicitly show unavailable timelines and clear stale graphs.
+- Adds pure-data and actual Windows WPF regression coverage. No new hardware queries or clock writes are introduced by telemetry capture or browsing.
+
+This source preview remains pending target-PC acceptance and does not publish an updater release.
+
+# v0.27.0 - Saved GPU experiments (development preview)
 
 - Archives each finished clock trial and preserves the previous checkpoint before it can be overwritten. Keeps stopped/interrupted results and isolates corrupt archives without deleting them.
 - Adds a saved-trial browser, source report export, and A/B comparison export with both experiments included.

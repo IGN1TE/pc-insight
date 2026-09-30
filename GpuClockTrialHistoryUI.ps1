@@ -29,6 +29,7 @@ function Show-PCClockTrialHistorySelection {
         $ui.ClockTrialSavedResult.Text=if($b){'Saved experiment; not a current hardware check.'+"`n"+(Format-PCClockTrialReport $b.Report)}else{'No saved trial selected.'}
     }finally{$script:clockTrialHistoryRefreshing=$false}
     Show-PCClockTrialHistoryComparison
+    if(Get-Command Show-PCClockTrialTelemetry -ErrorAction SilentlyContinue){Show-PCClockTrialTelemetry}
 }
 function Refresh-PCClockTrialHistory([string]$SelectId) {
     $keep=$ui.ClockTrialHistory.SelectedItem.Id;if($SelectId){$keep=$SelectId}

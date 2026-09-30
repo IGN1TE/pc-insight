@@ -2,10 +2,20 @@
 
 [Download the latest release](https://github.com/IGN1TE/pc-insight/releases/latest) · [Development workflow](DEVELOPMENT.md)
 
-This branch contains the v0.27.0 development preview. Source changes do not publish an app update. For the published app, use the `PC-Insight-Windows-Preview.zip` asset on the latest release.
+This branch contains the v0.28.0 development preview. Source changes do not publish an app update. For the published app, use the `PC-Insight-Windows-Preview.zip` asset on the latest release.
 ---
 
-## Development preview v0.27.0: saved GPU experiments
+## Development preview v0.28.0: recorded GPU sensor graphs
+
+Under **Saved clock trials**, select a trial and expand **Recorded GPU sensor graphs**. Choose any recorded baseline or retest, then a GPU temperature, clock, power or load sensor. The graph shows the original sampled readings, elapsed time, coverage and min/mean/max. Sensor names and identifiers distinguish equally named readings; temperature headroom is labelled separately. An excluded run can still be inspected without making its score eligible.
+
+The app copies samples already collected by the workload; this feature adds no sensor query, benchmark or tuning write. Data is bounded to the first 64 frames and 16 identified GPU channels per run, with any truncation reported. Missing, duplicate, invalid, failed/slow-query or non-increasing-timestamp readings leave gaps. Larger timestamp gaps also break the line. Zero readings remain zero. The timeline includes preparation and warm-up and does not imply that every point belongs to the scored interval.
+
+Telemetry survives report/history saves and is included in trial and comparison JSON exports. Older reports show an explicit unavailable message. Browsing saved graphs remains available during an active trial and does not change the current inputs. A run that ends before returning a result may have no retained timeline; previously completed runs remain in its checkpoint.
+
+Reported clock readings are distinct from configured offsets and effective memory data rate. Power readings describe the selected sensor, not whole-system power or energy use. Sample means are not time-weighted; peaks can miss transients and sensor freshness is not guaranteed. Graphs do not establish thermal throttling, artifact detection or stability. Hardware acceptance remains pending.
+
+## Saved GPU experiments (introduced in v0.27.0)
 
 **Saved clock trials** on Tuning keeps completed, stopped and interrupted experiments on this PC. Every finished trial is archived separately. The previous last-run checkpoint is also preserved before another trial can replace it; unreadable or unwritable prior history stops a new trial before any clock change. An archive failure after testing never skips restoration, and the app reports the save problem. The picker shows up to fifty recent records; older archives are retained. A corrupt record is skipped with an explanation, leaving other records available.
 
