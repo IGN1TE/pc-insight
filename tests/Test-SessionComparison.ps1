@@ -60,4 +60,14 @@ $result=Get-PCSessionComparison $a $b
 $copy=$result|ConvertTo-Json -Depth 12|ConvertFrom-Json
 Assert ($copy.Rows.Count -eq $result.Rows.Count -and $copy.Before.Test -eq $a.Test -and $copy.Reasons.Count -gt 0) 'Export round-trip lost evidence'
 Assert ($null -eq (Get-PCSessionComparison $null $b)) 'No-session handling failed'
-'PASS: session comparison direction, compatibility, incomplete/malformed scores, separate sensor identities, missing/zero readings, coverage, metadata and export'
+$a=Run 100 'cpu-a';$b=Run 110 'cpu-b'
+$state=[pscustomobject]@{CpuPower=[pscustomobject]@{Available=$true;Identity='cpu-13700k';RawLimitHex='0000806400008064';RawUnitsHex='0000000000000003';PL1Watts=125.0;PL2Watts=253.0;PL1Enabled=$true;PL2Enabled=$true;Locked=$false}}
+$a|Add-Member PowerStateAtStart $state;$a|Add-Member PowerStateAtEnd $state
+$result=Get-PCSessionComparison $a $b
+Assert (($result.Notes -join ' ') -match 'start, A: CPU limits: PL1 125.0 W.*PL2 253.0 W') 'CPU start watts omitted'
+Assert (($result.Notes -join ' ') -match 'end, A: CPU limits: PL1 125.0 W') 'CPU end watts omitted'
+Assert (($result.Notes -join ' ') -match 'start, B: CPU limits unavailable' -and ($result.Notes -join ' ') -match 'end, B: CPU limits unavailable') 'Old comparison metadata invented CPU limits'
+Assert (($result.Notes -join ' ') -match 'not continuously') 'Boundary-only observation limitation omitted'
+$copy=$result|ConvertTo-Json -Depth 20|ConvertFrom-Json
+Assert ($copy.Before.PowerStateAtStart.CpuPower.RawLimitHex -eq $state.CpuPower.RawLimitHex -and $copy.Before.PowerStateAtEnd.CpuPower.Identity -eq 'cpu-13700k') 'Comparison export dropped original CPU register/identity metadata'
+'PASS: session comparison direction, compatibility, incomplete/malformed scores, sensor identities, coverage, CPU power context and metadata export'

@@ -10,18 +10,21 @@ $folder=Join-Path ([IO.Path]::GetTempPath()) ('pc-uninstall-recovery-'+[guid]::N
 $null=New-Item -ItemType Directory -Path $folder
 try{
     Assert-PCUninstallRecovery $folder
-    foreach($name in @('gpu-clock-restore.json','gpu-power-restore.json','restore.json')){
+    foreach($name in @('cpu-power-restore.json','gpu-clock-restore.json','gpu-power-restore.json','restore.json')){
         $record=Join-Path $folder $name
-        # Even a corrupt journal must block removal of the recovery UI.
-        [IO.File]::WriteAllText($record,'{invalid recovery record')
-        $blocked=$false
-        try{Assert-PCUninstallRecovery $folder}catch{$blocked=$_.Exception.Message -like '*recovery record*'}
-        if(-not $blocked -or -not [IO.File]::Exists($record)){throw ('Uninstall did not preserve and block '+$name)}
+        # Valid and corrupt journals must both block removal of the recovery UI.
+        foreach($contents in @('{"Schema":1,"State":"Applied"}','{invalid recovery record')){
+            [IO.File]::WriteAllText($record,$contents)
+            $blocked=$false;$message=''
+            try{Assert-PCUninstallRecovery $folder}catch{$message=$_.Exception.Message;$blocked=$message -like '*recovery record*'}
+            if(-not $blocked -or [IO.File]::ReadAllText($record) -cne $contents){throw ('Uninstall did not preserve and block '+$name)}
+            if($name -eq 'cpu-power-restore.json' -and $message -notlike '*Restore saved CPU limits*'){throw 'CPU recovery block does not explain how to continue'}
+        }
         [IO.File]::Delete($record)
     }
     [IO.File]::WriteAllText((Join-Path $folder 'sessions.json'),'[]')
     Assert-PCUninstallRecovery $folder
-    'PASS: pending clock, GPU power and Windows plan recovery block uninstall; corrupt records remain; ordinary sessions do not block.'
+    'PASS: pending CPU power, GPU clock, GPU power and Windows plan recovery block uninstall; corrupt records remain; ordinary sessions do not block.'
 }finally{
     foreach($file in [IO.Directory]::GetFiles($folder)){[IO.File]::Delete($file)}
     [IO.Directory]::Delete($folder,$false)

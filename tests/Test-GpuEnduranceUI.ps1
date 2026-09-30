@@ -1,4 +1,4 @@
-$ErrorActionPreference='Stop'
+﻿$ErrorActionPreference='Stop'
 function Assert($ok,$message){if(-not $ok){throw $message}}
 function Test-PCClockGuideLocked {$script:locked}
 function Confirm($message){$true}
@@ -12,6 +12,7 @@ try{
  $script:snapshot=[pscustomobject]@{};$script:locked=$false;$script:job=$null;$script:updateJob=$null;$script:guide=$null;$script:clockActionBusy=$false
  . "$PSScriptRoot/../GpuEnduranceUI.ps1"
  Assert $ui.Endurance5.IsEnabled 'Idle scanned app cannot start'
+ $script:cpuPowerBusy=$true;Start-PCGpuEnduranceUI 5;Assert (-not $script:started) 'CPU power operation lock bypassed';$script:cpuPowerBusy=$false
  $script:locked=$true;Start-PCGpuEnduranceUI 5;Assert (-not $script:started) 'Guided lock bypassed'
  $script:locked=$false;Start-PCGpuEnduranceUI 5;Assert ($script:started -eq 'endurance5') 'Wrong task dispatched'
  Assert ((Get-Content $script:endurancePath -Raw|ConvertFrom-Json).State -eq 'Running') 'Running journal missing'
@@ -26,6 +27,7 @@ try{
  $start=$ast.Find({param($n) $n -is [Management.Automation.Language.FunctionDefinitionAst] -and $n.Name -eq 'Start-Task'},$true)
  Invoke-Expression $start.Extent.Text
  function Refresh-PCCpuTuningUI {}
+ function Refresh-PCCpuPowerUI {}
  function Set-Busy($busy){Refresh-PCGpuEnduranceUI}
  function Get-PCTuningCapabilities {$null}
  function Start-Job {param($ArgumentList,$ScriptBlock);[pscustomobject]@{State='Running'}}
