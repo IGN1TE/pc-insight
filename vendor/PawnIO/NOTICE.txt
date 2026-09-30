@@ -1,0 +1,3 @@
+PC Insight CPU package-power module
+
+Component files, full upstream source and LGPL notices are added together before release publication.
