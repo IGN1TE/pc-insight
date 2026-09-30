@@ -1,7 +1,7 @@
 ﻿# Real WPF selectors and click handler with synthetic saved sessions; no hardware or app startup.
 $ErrorActionPreference='Stop'
 $root=Split-Path $PSScriptRoot
-foreach($module in 'Power','Results','SessionExport','SessionDetails','SessionComparison'){. "$root/$module.ps1"}
+foreach($module in 'Power','Results','SessionExport','SessionDetails','SessionComparison','ComparisonReport'){. "$root/$module.ps1"}
 function Assert($ok,$message){if(-not $ok){throw $message}}
 function Show-SensorHistory {}
 function Show-Error($message){throw $message}
@@ -54,13 +54,31 @@ try{
     $prior=(Get-FileHash $exportPath).Hash
     $ui.ExportComparison.RaiseEvent([Windows.RoutedEventArgs]::new([Windows.Controls.Button]::ClickEvent))
     Assert ((Get-FileHash $exportPath).Hash -eq $prior) 'Cancel changed exported file'
+    Show-PCSessionComparison
+    Assert $ui.ExportComparisonReport.IsEnabled 'Readable report was not enabled for a saved comparison'
+    $script:testComparisonPath=$exportPath+'.html'
+    $originalTime=$script:sessionComparison.Before.Timestamp
+    function Select-PCComparisonExportPath($Format) {
+        Assert ($Format -eq 'html') 'Readable report requested wrong dialog type'
+        $script:sessionComparison.Before.Timestamp='changed while HTML dialog open'
+        $script:testComparisonPath
+    }
+    $ui.ExportComparisonReport.RaiseEvent([Windows.RoutedEventArgs]::new([Windows.Controls.Button]::ClickEvent))
+    $savedHtml=Get-Content $script:testComparisonPath -Raw -Encoding UTF8
+    Assert ($savedHtml.Contains($originalTime) -and -not $savedHtml.Contains('changed while HTML dialog open')) 'HTML button did not freeze report before save'
+    function Select-PCComparisonExportPath {return}
+    $prior=(Get-FileHash $script:testComparisonPath).Hash
+    $ui.ExportComparisonReport.RaiseEvent([Windows.RoutedEventArgs]::new([Windows.Controls.Button]::ClickEvent))
+    Assert ((Get-FileHash $script:testComparisonPath).Hash -eq $prior) 'HTML cancel changed the file'
     $script:sessions=@($script:sessions[0]);Refresh-SessionPicker
     Assert (-not $ui.ExportComparison.IsEnabled -and $ui.ComparisonExportStatus.Text -like 'Save at least two*') 'Single-session state failed to explain unavailable export'
     $script:sessions=@();Refresh-SessionPicker
     Assert (-not $ui.ExportComparison.IsEnabled -and $ui.ComparisonExportStatus.Text -like 'Choose a saved session*') 'Empty state retained stale export'
+    Assert (-not $ui.ExportComparisonReport.IsEnabled) 'Empty selection left HTML export enabled'
     'PASS: full selector workflow, reference preservation, monitoring/update export, actual button save, immutable dialog snapshot, cancellation and empty states'
 }finally{
     $window.Close()
+    if(Test-Path -LiteralPath ($exportPath+'.html')){Remove-Item -LiteralPath ($exportPath+'.html') -Force}
     if(Test-Path -LiteralPath $exportPath){Remove-Item -LiteralPath $exportPath -Force}
     if(Test-Path -LiteralPath ($exportPath+'.tmp')){Remove-Item -LiteralPath ($exportPath+'.tmp') -Force}
 }

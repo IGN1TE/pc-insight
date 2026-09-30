@@ -6,11 +6,12 @@ $root=Split-Path $PSScriptRoot
 . "$root/SessionExport.ps1"
 . "$root/SessionDetails.ps1"
 . "$root/SessionComparison.ps1"
+. "$root/ComparisonReport.ps1"
 [xml]$xaml=Get-Content "$root/MainWindow.xaml" -Raw -Encoding UTF8
 $window=[Windows.Markup.XamlReader]::Load([Xml.XmlNodeReader]::new($xaml))
 try{
     $script:ui=@{}
-    foreach($name in @('SessionPicker','CompareSessionPicker','ComparisonRows','ComparisonStatus','ComparisonNotes','ExportComparison','ComparisonExportStatus')){$ui[$name]=$window.FindName($name);if(-not $ui[$name]){throw "Missing $name"}}
+    foreach($name in @('SessionPicker','CompareSessionPicker','ComparisonRows','ComparisonStatus','ComparisonNotes','ExportComparison','ExportComparisonReport','ComparisonExportStatus')){$ui[$name]=$window.FindName($name);if(-not $ui[$name]){throw "Missing $name"}}
     $script:job=$null;$script:updateJob=$null
     . "$root/SessionComparisonUI.ps1"
     $a=[pscustomobject]@{Test='SHA256-1MiB-parallel-v2';CPUName='Test CPU';Workers=8;Runtime='4.0';Completed=$true;MiBPerSecond=100;Seconds=20;Frames=@();Timestamp='A'}
