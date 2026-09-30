@@ -1,4 +1,13 @@
-﻿# v0.25.0 - Guided core trial and dashboard candidate
+﻿# v0.26.0 — GPU endurance observation
+
+- Adds 5- and 10-minute GPU shader-load sessions under Benchmark, with progress and matched GPU temperature monitoring.
+- Stop saves a partial result with its stop reason. Interrupted runs are identified after restart.
+- Stops on sampled 85 C CPU/GPU temperatures, invalid/missing/slow GPU telemetry, workload errors or stalled progress. Native sensor heartbeat expires between rendering batches.
+- Uses current settings without clock writes or automatic restoration. Use Tuning to restore saved offsets. Completion does not prove stability and does not produce a comparable benchmark score.
+
+Validation: Linux mocked hardware tests and existing guided-clock, updater, repeatability and results regression checks passed. Native Windows/WPF rendering, physical GPU endurance and installation of this release are not yet validated. A driver hang can delay stopping. No pixel, VRAM integrity, WHEA, driver-reset-log or game validation is performed.
+
+# v0.25.0 - Guided core trial and dashboard candidate
 
 - Restyles Overview around the supplied reference: navy surfaces, purple navigation, CPU/GPU/memory illustrations, larger readings and a combined latest-session/chart card. All existing navigation and controls remain available.
 - Adds a reviewed +15 MHz NVIDIA core trial: three baseline runs, three retests, then Keep or Restore. Memory offset stays unchanged.

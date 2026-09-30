@@ -34,6 +34,7 @@ function Get-PCComparison($latest, $history) {
 }
 function Get-PCSessionSummary($session, $history) {
     if (-not $session) { return 'Run a monitored CPU test or record sensors to see a summary here.' }
+    if($session.Test -like 'GPU-endurance-*'){return ("GPU ENDURANCE | $($session.EnduranceOutcome)`n$($session.Timestamp)`nMeasured: $([math]::Round($session.Seconds,1)) / $($session.RequestedSeconds) seconds, plus warm-up`nGPU: $($session.GPUName)`nPeak matched GPU temperature: $(Format-PCValue $session.PeakGPU 'C')`nRetained sensor queries: $(@($session.Frames).Count)`n$($session.Limitations)")}
     $frames = @($session.Frames)
     $temps = @(); $powers = @(); $gpu = @()
     foreach ($frame in $frames) {

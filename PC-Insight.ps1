@@ -46,6 +46,7 @@ try {
     'DetectClocks','ClockGPU','ClockInfo','CoreOffset','MemoryOffset','ApplyClocks','RestoreClocks','ClockStatus' | ForEach-Object { $ui[$_] = $window.FindName($_) }
     'CoreTrialStart','CoreTrialApply','CoreTrialKeep','CoreTrialRestore','CoreTrialCancel','CoreTrialStatus' | ForEach-Object { $ui[$_] = $window.FindName($_) }
     'CompareSessionPicker','ComparisonRows','ComparisonStatus','ComparisonNotes','ExportComparison','ExportComparisonReport','ComparisonExportStatus' | ForEach-Object { $ui[$_] = $window.FindName($_) }
+    'Endurance5','Endurance10','EnduranceStop','EnduranceStatus' | ForEach-Object { $ui[$_] = $window.FindName($_) }
     . "$PSScriptRoot\SessionComparisonUI.ps1"
     $ui.InstalledVersion.Text='Installed version: '+$script:appVersion
     $script:isAdministrator = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
@@ -240,6 +241,7 @@ try {
         if(Get-Command Refresh-GuideUI -ErrorAction SilentlyContinue){Refresh-GuideUI}
         if(Get-Command Update-PCClockControlState -ErrorAction SilentlyContinue){Update-PCClockControlState $busy}
         if(Get-Command Refresh-PCClockGuideUI -ErrorAction SilentlyContinue){Refresh-PCClockGuideUI}
+        if(Get-Command Refresh-PCGpuEnduranceUI -ErrorAction SilentlyContinue){Refresh-PCGpuEnduranceUI}
     }
     function Format-Snapshot($s) {
         $out = [System.Collections.Generic.List[string]]::new()
@@ -281,7 +283,7 @@ try {
     function Start-Task($kind) {
         if ($script:job -or $script:updateJob) { return }
         if((Get-Command Test-PCClockGuideLocked -ErrorAction SilentlyContinue) -and (Test-PCClockGuideLocked) -and -not $script:clockGuideRun){return}
-        if ($kind -in @('sensors','multicore','monitor','longcpu','memory','gpu','repeatcpu','repeatram','repeatgpu')) { $script:chartFrames = @(); $ui.TemperatureChart.Children.Clear(); $ui.UsageChart.Children.Clear() }
+        if ($kind -in @('sensors','multicore','monitor','longcpu','memory','gpu','repeatcpu','repeatram','repeatgpu','endurance5','endurance10')) { $script:chartFrames = @(); $ui.TemperatureChart.Children.Clear(); $ui.UsageChart.Children.Clear() }
         Remove-Item -LiteralPath $script:stopPath -ErrorAction SilentlyContinue
         $script:lastFrameTime = Get-Date
         $ui.TestProgress.Value = 0; $ui.ProgressLabel.Text = 'Preparing ' + $kind
@@ -290,8 +292,9 @@ try {
         $script:pendingResult = $null
         Set-Busy $true
         $script:testPowerState=$null
-        if ($kind -in @('benchmark','multicore','longcpu','memory','gpu','repeatcpu','repeatram','repeatgpu')) { $script:testPowerState=Get-PCTuningCapabilities }
-        $ui.Status.Text = if ($kind -eq 'scan') { 'Reading hardware. This can take up to a minute...' } elseif ($kind -eq 'monitor') { 'Live monitoring active. Use Stop and save when finished.' } elseif ($kind -eq 'longcpu') { 'Running 60-second monitored CPU test...' } elseif ($kind -eq 'gpu') { 'GPU: 5-second warm-up, then 30-second measurement...' } elseif ($kind -eq 'memory') { 'Preparing 20-second memory test...' } elseif ($kind -like 'repeat*') { 'Starting a three-run batch with 10-second cooldowns...' } elseif ($kind -eq 'benchmark') { 'Running 15-second single-worker CPU test...' } else { 'Recording sensors for 20 seconds...' }
+        if ($kind -in @('benchmark','multicore','longcpu','memory','gpu','repeatcpu','repeatram','repeatgpu','endurance5','endurance10')) { $script:testPowerState=Get-PCTuningCapabilities }
+        $ui.Status.Text = if ($kind -eq 'scan') { 'Reading hardware. This can take up to a minute...' } elseif ($kind -eq 'monitor') { 'Live monitoring active. Use Stop and save when finished.' } elseif ($kind -eq 'longcpu') { 'Running 60-second monitored CPU test...' } elseif ($kind -eq 'gpu') { 'GPU: 5-second warm-up, then 30-second measurement...' } elseif ($kind -eq 'memory') { 'Preparing 20-second memory test...' } elseif ($kind -like 'endurance*') { 'Preparing GPU endurance test...' }
+                        elseif ($kind -like 'repeat*') { 'Starting a three-run batch with 10-second cooldowns...' } elseif ($kind -eq 'benchmark') { 'Running 15-second single-worker CPU test...' } else { 'Recording sensors for 20 seconds...' }
         try {
             $script:job = Start-Job -ArgumentList "$PSScriptRoot\Engine.ps1",$kind,$script:SensorLogPath,$script:stopPath -ScriptBlock {
                 param($engine,$kind,$logPath,$stopPath)
@@ -300,6 +303,7 @@ try {
                 . (Join-Path (Split-Path $engine) 'Monitor.ps1')
                 . (Join-Path (Split-Path $engine) 'LiveMonitor.ps1')
                 . (Join-Path (Split-Path $engine) 'ExtendedTests.ps1')
+                . (Join-Path (Split-Path $engine) 'GpuEndurance.ps1')
                 . (Join-Path (Split-Path $engine) 'Power.ps1')
                 . (Join-Path (Split-Path $engine) 'Tuning.ps1')
                 . (Join-Path (Split-Path $engine) 'RepeatedTests.ps1')
@@ -312,6 +316,7 @@ try {
                     else {
                         Initialize-PCNativeSensors
                         if ($kind -eq 'monitor') { Invoke-PCContinuousSession -StopPath $stopPath }
+                        elseif ($kind -like 'endurance*') { $duration=if($kind -eq 'endurance5'){300}else{600}; Invoke-PCGpuEndurance -DurationSeconds $duration -StopPath $stopPath }
                         elseif ($kind -like 'repeat*') { $type=switch($kind){'repeatcpu'{'longcpu'} 'repeatram'{'memory'} 'repeatgpu'{'gpu'}}; Invoke-PCRepeatedTest $type }
                         elseif ($kind -eq 'longcpu') { Invoke-PCSensorSession -WithLoad -DurationSeconds 60 }
                         elseif ($kind -in @('memory','gpu')) { Invoke-PCExtendedTest -Kind $kind }
@@ -373,7 +378,15 @@ try {
         if ($null -ne $frame.SampleAgeSeconds) { $freshness = "Log sample age: $($frame.SampleAgeSeconds) seconds" }
         $ui.SensorSummary.Text = "Query: $($frame.Timestamp) | CPU: $temp | $freshness | $($frame.Provider)"
     }
-    function Cancel-Task {
+    function Cancel-Task([switch]$Force) {
+        if($script:job -and $script:jobKind -like 'endurance*'){
+            if(-not $Force){
+                Set-Content -LiteralPath $script:stopPath -Value 'stop'
+                Save-PCGpuEnduranceStatus 'Stopping' 'Stopping GPU load; partial result will be saved when the worker responds.'
+                return
+            }
+            Save-PCGpuEnduranceStatus 'Interrupted' 'Endurance test interrupted by close, timeout or unresponsive worker. No completed result was saved. Check Tuning to restore any saved offsets.'
+        }
         if ($script:job) {
             Stop-Job $script:job -ErrorAction SilentlyContinue
             Remove-Job $script:job -Force -ErrorAction SilentlyContinue
@@ -389,15 +402,17 @@ try {
     $timer.Add_Tick({
         if (-not $script:job) { return }
         if ($script:jobKind -eq 'monitor' -and ((Get-Date) - $script:lastFrameTime).TotalSeconds -gt 30) { Cancel-Task; $ui.Status.Text = 'Monitoring stopped: no sensor response for 30 seconds. No session was saved.'; return }
-        if ($script:jobKind -ne 'monitor' -and ((Get-Date) - $script:taskStarted).TotalSeconds -gt $(if($script:jobKind -like 'repeat*'){360}else{100})) { Cancel-Task; $ui.Status.Text = 'Task timed out. Try again or inspect Windows management services.'; return }
+        if ($script:jobKind -like 'endurance*' -and ((Get-Date)-$script:lastFrameTime).TotalSeconds -gt 30) { Cancel-Task -Force; $ui.Status.Text='GPU endurance stopped: no sensor response for 30 seconds.'; return }
+        if ($script:jobKind -ne 'monitor' -and ((Get-Date) - $script:taskStarted).TotalSeconds -gt $(if($script:jobKind -eq 'endurance5'){360}elseif($script:jobKind -eq 'endurance10'){660}elseif($script:jobKind -like 'repeat*'){360}else{100})) { Cancel-Task -Force; $ui.Status.Text = 'Task timed out. Try again or inspect Windows management services.'; return }
         $finish = $false
         $guideCompleted=$null;$clockGuideCompleted=$null
         $terminal = $script:job.State -in @('Completed','Failed','Stopped')
         try {
             $incoming = @(Receive-Job $script:job -ErrorAction Stop)
             foreach ($item in $incoming) {
-                if ($script:jobKind -in @('sensors','multicore','monitor','longcpu','memory','gpu','repeatcpu','repeatram','repeatgpu')) {
+                if ($script:jobKind -in @('sensors','multicore','monitor','longcpu','memory','gpu','repeatcpu','repeatram','repeatgpu','endurance5','endurance10')) {
                     if ($item.Kind -eq 'Frame') { Show-SensorFrame $item.Value }
+                    elseif ($item.Kind -eq 'EnduranceProgress') { $ui.EnduranceStatus.Text=$item.Value; $ui.ProgressLabel.Text=$item.Value }
                     elseif ($item.Kind -eq 'Phase') { $ui.ProgressLabel.Text = $script:jobKind + ': ' + $item.Value }
                     elseif ($item.Kind -eq 'BatchStatus') { $ui.Status.Text=$item.Value; $script:chartFrames=@() }
                     elseif ($item.Kind -eq 'Progress') { $ui.TestProgress.Value = $item.Value; $ui.ProgressLabel.Text = ('{0}: {1:N0}% of measurement interval' -f $script:jobKind,$item.Value) }
@@ -424,9 +439,9 @@ try {
                 Show-MeasuredInsights
                 $ui.ScanTime.Text = 'Snapshot: ' + (Get-Date).ToString('HH:mm:ss')
                 $ui.Status.Text = 'Scan complete. Open Insights for findings.'
-            } elseif ($script:jobKind -in @('sensors','multicore','monitor','longcpu','memory','gpu','repeatcpu','repeatram','repeatgpu')) {
+            } elseif ($script:jobKind -in @('sensors','multicore','monitor','longcpu','memory','gpu','repeatcpu','repeatram','repeatgpu','endurance5','endurance10')) {
                 $value | Add-Member -NotePropertyName CPUName -NotePropertyValue (($script:snapshot.CPU.Name) -join '; ')
-                if(-not $value.PSObject.Properties['Plan']) { $value | Add-Member -NotePropertyName Plan -NotePropertyValue $(if ($script:jobKind -in @('multicore','longcpu','memory','gpu','repeatcpu','repeatram','repeatgpu')) { $script:testPlan } else { $null }) }
+                if(-not $value.PSObject.Properties['Plan']) { $value | Add-Member -NotePropertyName Plan -NotePropertyValue $(if ($script:jobKind -in @('multicore','longcpu','memory','gpu','repeatcpu','repeatram','repeatgpu','endurance5','endurance10')) { $script:testPlan } else { $null }) }
                 if(-not $value.PSObject.Properties['PowerStateAtStart']) { $value | Add-Member -NotePropertyName PowerStateAtStart -NotePropertyValue $script:testPowerState }
                 $value | Add-Member -NotePropertyName DriverVersion -NotePropertyValue (($script:snapshot.GPU.DriverVersion) -join '; ')
                 $value | Add-Member -NotePropertyName MemoryConfig -NotePropertyValue (($script:snapshot.RAM | ForEach-Object { "$($_.Capacity):$($_.ConfiguredClockSpeed)" }) -join ';')
@@ -437,6 +452,7 @@ try {
                 if ($null -eq $value.PeakCPU) { $summary = 'Recording completed without CPU temperatures. Check sensor setup.' }
                 if ($value.StopReason) { $summary = 'Test stopped: ' + $value.StopReason + ' No comparable score was recorded.' }
                 elseif ($null -ne (Get-PCResultRate $value)) { $summary += " Throughput: $(Format-PCValue (Get-PCResultRate $value) (Get-PCResultUnit $value))." }
+                if($value.EnduranceOutcome){$summary=$value.EnduranceOutcome+' GPU peak: '+(Format-PCValue $value.PeakGPU 'C');Save-PCGpuEnduranceStatus $(if($value.Completed){'Completed'}else{'Stopped'}) $summary}
                 $ui.SensorSummary.Text = $summary
                 $ui.Status.Text = $summary
                 if ($null -ne (Get-PCResultRate $value)) {
@@ -463,6 +479,7 @@ try {
             if($script:clockGuideRun){$clockGuideCompleted=@($values)}
         } catch {
             $finish = $true
+            if($script:jobKind -like 'endurance*'){Save-PCGpuEnduranceStatus 'Interrupted' ('Endurance worker failed: '+$_.Exception.Message)}
             Stop-Job $script:job -ErrorAction SilentlyContinue
             if($script:guideRun){Interrupt-GuideRun $_.Exception.Message}
             if($script:clockGuideRun){Interrupt-PCClockGuide $_.Exception.Message}
@@ -667,6 +684,7 @@ try {
     . "$PSScriptRoot\GameOverlayUI.ps1"
     . "$PSScriptRoot\GpuOverclockUI.ps1"
     . "$PSScriptRoot\GuidedClocksUI.ps1"
+    . "$PSScriptRoot\GpuEnduranceUI.ps1"
     $window.Add_Closing({
         param($sender,$eventArgs)
         if($script:clockGuide -and $script:clockGuide.Phase -eq 'Decision'){
@@ -678,7 +696,7 @@ try {
             try{Restore-PCGuide $script:guide $script:gpuJournalPath $script:guidePath}
             catch{$eventArgs.Cancel=$true;Show-Error $_.Exception.Message;return}
         }
-        $updateTimer.Stop(); if($script:updateJob){Stop-UpdateTask}; $timer.Stop(); Cancel-Task
+        $updateTimer.Stop(); if($script:updateJob){Stop-UpdateTask}; $timer.Stop(); Cancel-Task -Force
         if($script:clockGuide -and $script:clockGuide.Phase -eq 'RecoveryRequired'){[Windows.MessageBox]::Show('Clock restoration could not be verified. Saved originals remain available on Tuning after relaunch.','PC Insight recovery')|Out-Null}
         if($script:guide -and $script:guide.Phase -eq 'RecoveryRequired'){[Windows.MessageBox]::Show('GPU restoration could not be verified. The recovery record is retained. Open Guided optimization or Tuning to restore it on the next launch.','PC Insight recovery')|Out-Null}
     })

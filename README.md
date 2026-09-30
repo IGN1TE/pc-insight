@@ -2,7 +2,7 @@
 
 [Download the latest release](https://github.com/IGN1TE/pc-insight/releases/latest) · [Development workflow](DEVELOPMENT.md)
 
-This development build contains the v0.25.0 guided core trial candidate, tests and bundled dependencies. The candidate is on `feature/guided-core-trial` and has not been published. Windows validation is required before publishing the `PC-Insight-Windows-Preview.zip` release asset.
+Version 0.26.0 adds GPU endurance observation to the published 0.25.0 guided core trial and dashboard. Native Windows and physical GPU endurance validation remain pending; Linux checks use mocked hardware.
 
 ---
 # PC Insight 0.24.0 - NVIDIA clock-offset preview
@@ -441,3 +441,11 @@ Validation scope: the user previously observed successful +15 MHz core apply/rea
 The Overview now follows the user-supplied dark navy/purple concept with a slim sidebar, large processor card, stacked graphics/memory cards and a combined latest-session summary and temperature chart. Hardware art is generic vector decoration, not a product identification or sensor reading. Model names, readings and charts retain the existing live/saved-data bindings; unavailable readings remain unavailable. Existing pages and Windows title-bar controls remain accessible. The utilization chart is under its own expander.
 
 Validate on Windows before publishing: run tests/Test-Interface.ps1, inspect 1320x920 and 1000x720 sizes plus 125–150% display scaling, long device names and missing readings, sidebar scrolling, keyboard focus, all Overview buttons, populated session values/charts, and tuning recovery controls. Linux validation only confirms XML structure, resource references and unchanged named controls; it does not establish WPF rendering or pixel fidelity.
+
+## GPU endurance (0.26.0)
+
+After a hardware scan, open **Benchmark** and choose **GPU · 5 minutes** or **GPU · 10 minutes**. These run the existing offscreen shader workload continuously, with a five-second warm-up and live progress. Save work and close games first. **Stop and save result** retains the partial observation and stop reason. Open **Test results** for elapsed time, matched GPU peak temperature and limits. Endurance sessions do not create comparable benchmark scores.
+
+The test uses current clock settings and makes no tuning changes. It does not automatically restore offsets; use **Tuning → Restore original** for that. A successful interval is not proof of stability: there is no pixel-correctness, VRAM integrity, WHEA, driver-reset-log or game validation. Missing/invalid/slow sensors, sampled 85 C CPU or GPU temperatures, API errors and stalled progress stop the test. Native workload checks a six-second sensor heartbeat between rendering batches; a blocked graphics driver can delay cancellation. Interrupted tests are marked at the next app startup, never claimed as completed.
+
+Validation: mocked 300/600-second orchestration, partial cancellation, temperature/sensor/native failures, cleanup and native heartbeat checks passed under PowerShell 7 on Linux. Existing guided-clock, repeatability, result/comparison and updater checks passed. Windows PowerShell 5.1, WPF layout, physical GPU duration, driver cancellation and updater installation still require target-machine validation.
