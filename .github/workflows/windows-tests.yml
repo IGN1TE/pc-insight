@@ -28,7 +28,7 @@ jobs:
           $ErrorActionPreference = 'Stop'
           $suites = @(
             'Test-GpuOverclock', 'Test-GpuOverclockUI', 'Test-GpuClockTrial',
-            'Test-GpuTrialWorkloadGuard', 'Test-GpuClockTrialHistory', 'Test-GpuClockTrialUI',
+            'Test-GpuTrialWorkloadGuard', 'Test-GpuClockTrialHistory', 'Test-GpuClockTrialTelemetry', 'Test-GpuClockTrialUI',
             'Test-ClockComparisonContext', 'Test-UninstallRecovery',
             'Test-SessionComparison', 'Test-SessionComparisonUI',
             'Test-ComparisonReport', 'Test-ComparisonWorkflow', 'Test-Interface', 'Test-Updates'
