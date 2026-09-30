@@ -1,0 +1,39 @@
+name: Windows validation
+on:
+  push:
+    branches: [develop, 'feature/**', 'fix/**']
+  pull_request:
+    branches: [develop, main]
+permissions:
+  contents: read
+jobs:
+  powershell-51:
+    runs-on: windows-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Parse PowerShell and validate XAML
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          Get-ChildItem -Recurse -Filter *.ps1 | ForEach-Object {
+            $tokens = $null; $errors = $null
+            $null = [Management.Automation.Language.Parser]::ParseFile($_.FullName, [ref]$tokens, [ref]$errors)
+            if ($errors.Count) { throw ($errors | Out-String) }
+          }
+          [xml]$xaml = Get-Content MainWindow.xaml -Raw -Encoding UTF8
+      - name: GPU recovery, trial and comparison regressions (mock hardware)
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $suites = @(
+            'Test-GpuOverclock', 'Test-GpuOverclockUI', 'Test-GpuClockTrial',
+            'Test-GpuTrialWorkloadGuard', 'Test-GpuClockTrialUI',
+            'Test-ClockComparisonContext', 'Test-UninstallRecovery',
+            'Test-SessionComparison', 'Test-SessionComparisonUI',
+            'Test-ComparisonReport', 'Test-ComparisonWorkflow', 'Test-Interface', 'Test-Updates'
+          )
+          foreach ($suite in $suites) {
+            & powershell.exe -NoProfile -STA -ExecutionPolicy Bypass -File "tests/$suite.ps1"
+            if ($LASTEXITCODE -ne 0) { throw "$suite failed ($LASTEXITCODE)" }
+          }
