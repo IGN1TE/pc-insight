@@ -74,7 +74,7 @@ function Invoke-PCClockTrialMeasurement($Expected,$StopPath,$OwnerId,$OwnerStart
     [pscustomobject]@{Kind='Result';Value=[pscustomobject]@{
         Test='OpenGL-1280x720-256shader-b8-w5-30s-v2';Timestamp=[datetimeoffset]::Now.ToString('o');Seconds=30;Runtime='4.0';Renderer=$renderer;GPUName=$name;WarmupSeconds=5
         Completed=($script:mode -ne 'incomplete');StopReason=$(if($script:mode -eq 'incomplete'){'GPU stopped'}else{$null});GpuFramesPerSecond=$rate
-        Frames=@([pscustomobject]@{Sensors=@([pscustomobject]@{Parent='/gpu-nvidia/0';Type='Temperature';Name='GPU Core';HardwareName=$name;Value=65})})
+        Frames=@([pscustomobject]@{Timestamp='2026-01-01T12:00:00Z';QuerySeconds=0.1;Issue=$null;Sensors=@([pscustomobject]@{Parent='/gpu-nvidia/0';Identifier='/gpu/temperature/0';Type='Temperature';Name='GPU Core';HardwareName=$name;Value=65})})
     }}
 }
 function Run-Trial([int]$Count=1) {
@@ -87,10 +87,12 @@ function Run-Trial([int]$Count=1) {
 try{
     Reset-Mock
     $r=Run-Trial
-    Assert ($r.State -eq 'Completed' -and $r.Restoration -eq 'Verified' -and $r.ChangePercent -eq 10) "Successful comparison/restoration failed: $($r|ConvertTo-Json -Depth 5 -Compress)"
+    Assert ($r.State -eq 'Completed' -and $r.Restoration -eq 'Verified' -and $r.ChangePercent -eq 10) "Successful comparison/restoration failed: $($r|ConvertTo-Json -Depth 10 -Compress)"
     Assert ($script:runs -eq 2 -and $script:live.CoreMHz -eq 30 -and $script:live.MemoryMHz -eq 40 -and -not (Test-Path $script:trialJournal)) 'Successful trial left offsets applied'
     Assert ($r.BeforeRuns[0].PeakGpuC -eq 65 -and $r.BeforeRuns[0].TemperatureSamples -eq 1) 'Temperature summary missing'
     Assert ((Get-Content $reportPath -Raw|ConvertFrom-Json).Restoration -eq 'Verified') 'Saved report missed restoration'
+    $recorded=Get-Content $reportPath -Raw|ConvertFrom-Json
+    Assert ($recorded.BeforeRuns[0].Telemetry.Samples[0].Values[0] -eq 65 -and $recorded.AfterRuns[0].Telemetry.Channels[0].Type -eq 'Temperature') 'Trial checkpoint lost recorded sensor readings'
     Assert ((Format-PCClockTrialReport $r) -match '\+10.00%' ) 'Readable results missing change'
     foreach($mode in 'cancel-baseline','baseline-stale','wrong-gpu','incomplete'){
         Reset-Mock $mode;$r=Run-Trial
