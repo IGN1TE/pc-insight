@@ -59,7 +59,7 @@ Reject {Open-PCUpdateResponse 'https://example.com/loop'} 'Redirect limit not en
 Assert ($script:requested.Count -eq 6) 'Wrong redirect limit'
 'PASS: network helper uses request response, follows HTTPS redirects, blocks downgrade and redirect loops'
 # Version source and optional release notes must stay backward compatible.
-Assert ((Get-PCAppVersion (Join-Path $PSScriptRoot '..')) -eq '0.26.0') 'Runtime version did not come from metadata'
+Assert ((Get-PCAppVersion (Join-Path $PSScriptRoot '..')) -eq '0.26.1') 'Runtime version did not come from metadata'
 $manifest=[pscustomobject]@{appId='PCInsight.PerUser';schema=1;version='0.17.0';downloadUrl='https://example.com/app.zip';sha256=('a'*64);sizeBytes=123;releaseNotes='New release'}
 Assert ((Read-PCUpdateManifest $manifest '0.16.0').ReleaseNotes -eq 'New release') 'Notes were not returned'
 $manifest.releaseNotes='x'*13000
