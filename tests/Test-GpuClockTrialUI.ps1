@@ -10,7 +10,7 @@ $window=[Windows.Markup.XamlReader]::Load([Xml.XmlNodeReader]::new($xaml))
 $dataDir=Join-Path ([IO.Path]::GetTempPath()) ('pc-trial-ui-'+[guid]::NewGuid().ToString('N'))
 $null=New-Item -ItemType Directory $dataDir
 $script:ui=@{}
-foreach($name in 'DetectClocks','ClockGPU','ClockInfo','CoreOffset','MemoryOffset','ApplyClocks','RestoreClocks','ClockStatus','StartClockTrial','StopClockTrial','ExportClockTrial','ClockTrialStage','ClockTrialProgress','ClockTrialResult','Cancel','SensorCancel'){
+foreach($name in 'DetectClocks','ClockGPU','ClockInfo','CoreOffset','MemoryOffset','ApplyClocks','RestoreClocks','ClockStatus','ClockTrialMode','StartClockTrial','StopClockTrial','ExportClockTrial','ClockTrialStage','ClockTrialProgress','ClockTrialResult','Cancel','SensorCancel'){
     $ui[$name]=$window.FindName($name);Assert ($null -ne $ui[$name]) "Missing $name"
 }
 $script:job=$null;$script:updateJob=$null;$script:guide=$null;$script:isAdministrator=$true
@@ -23,7 +23,7 @@ function Set-PCClockOffset($UUID,$Domain,$MHz){$script:writeCount++;if($Domain -
 function Set-Busy($Busy){Update-PCClockControlState $Busy}
 function Confirm($message){$script:review=$message;$script:allow}
 function Show-Error($message){$script:lastError=$message}
-function Start-Job {param($ArgumentList,$ScriptBlock);$script:starts++;[pscustomobject]@{State='Running';ChildJobs=@([pscustomobject]@{Error=@()})}}
+function Start-Job {param($ArgumentList,$ScriptBlock);$script:starts++;$script:workerArgs=$ArgumentList;[pscustomobject]@{State='Running';ChildJobs=@([pscustomobject]@{Error=@()})}}
 function Receive-Job {param($Job,$ErrorAction);$script:records;$script:records=@()}
 function Remove-Job {param($Job,[switch]$Force,$ErrorAction)}
 function Click($Name){$ui[$Name].RaiseEvent([Windows.RoutedEventArgs]::new([Windows.Controls.Button]::ClickEvent))}
@@ -36,8 +36,10 @@ try{
     $ui.CoreOffset.Text='50';$ui.MemoryOffset.Text='100';Click 'StartClockTrial'
     Assert ($script:starts -eq 0 -and -not $script:clockActionBusy) 'Cancelled review started job or stayed busy'
     Assert ($script:review.Contains($script:device.UUID) -and $script:review.Contains('50 MHz') -and $script:review.Contains('restores the originals')) 'Review omitted target or automatic restoration'
+    Assert ($script:review.Contains('3 baseline run(s)') -and $script:review.Contains('about 5 minutes')) 'Default repeated trial not reviewed'
     $script:allow=$true;Click 'StartClockTrial'
     Assert ($script:starts -eq 1 -and $script:clockTrialJob -and $ui.StopClockTrial.IsEnabled -and -not $ui.ApplyClocks.IsEnabled -and -not $ui.StartClockTrial.IsEnabled -and -not $ui.Cancel.IsEnabled) 'Running trial gates failed'
+    Assert ($script:workerArgs[-1] -eq 3 -and -not $ui.ClockTrialMode.IsEnabled) 'Repeated mode not passed to worker or editable while running'
     Click 'ApplyClocks';Assert ($script:writeCount -eq 0) 'Manual apply raced trial'
     Click 'StopClockTrial';Assert ((Test-Path $script:clockTrialStopPath) -and -not $ui.StopClockTrial.IsEnabled) 'Stop did not request cooperative cancellation'
     # A failed child after apply must use the retained journal to recover.
@@ -46,6 +48,9 @@ try{
     $script:clockTrialJob.State='Failed';Receive-PCClockTrial
     Assert (-not $script:clockTrialJob -and -not $script:clockActionBusy -and -not (Test-Path $script:clockJournalPath) -and $script:device.CoreMHz -eq 0 -and $script:device.MemoryMHz -eq 0) 'Failed worker recovery failed'
     Assert ($ui.StartClockTrial.IsEnabled -and -not $ui.StopClockTrial.IsEnabled -and $ui.ClockTrialResult.Text -match 'Restored') 'Interrupted result/control state incorrect'
+    $ui.ClockTrialMode.SelectedIndex=1;$ui.CoreOffset.Text='50';$ui.MemoryOffset.Text='100';Click 'StartClockTrial'
+    Assert ($script:workerArgs[-1] -eq 1 -and $script:review.Contains('about 90 seconds')) 'Quick trial mode was not honored'
+    $script:clockTrialJob.State='Completed';Receive-PCClockTrial
     $script:isAdministrator=$false;Update-PCClockControlState
     Assert (-not $ui.StartClockTrial.IsEnabled) 'Nonadmin trial enabled'
     $script:isAdministrator=$true;Save-PCClockJournal $j $script:clockJournalPath;Update-PCClockControlState
