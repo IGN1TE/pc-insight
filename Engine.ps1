@@ -66,7 +66,7 @@ function Get-PCInsights($s) {
         }
     }
     $items.Add('[RAM] Configured memory speed is reported by firmware. This build cannot confirm XMP/EXPO support or whether a profile is enabled. Check motherboard documentation before making BIOS changes.')
-    $items.Add('[TUNING] CPU/GPU overclocking, undervolting and RAM writes are unavailable in this build. CPU model alone cannot establish motherboard, firmware or driver support.')
+    $items.Add('[TUNING] CPU tuning provides saved baseline/retest experiments for external changes. CPU clock/voltage and RAM writes are unavailable. Supported NVIDIA GPU controls are on Tuning; compatibility must be detected.')
     $items.Add('[NEXT STEP] Run three CPU baseline tests with the same background applications, power source and cooling conditions. Change one supported setting, then repeat and compare.')
     @($items)
 }

@@ -1,4 +1,48 @@
-﻿# v0.24.1 - Windows GPU controls preview
+﻿# v0.28.0 - Recorded GPU sensor graphs (development preview)
+
+- Retains bounded GPU temperature, clock, power and load samples from the existing workload, with full sensor identities and explicit missing readings.
+- Adds run/sensor selectors, per-run graphs, coverage and min/mean/max to saved trials. Graph browsing stays available during an active trial.
+- Separates equally named sensors and GPUs; labels temperature headroom. Invalid/duplicate readings, query errors, slow queries and timestamp gaps do not become continuous lines.
+- Preserves telemetry through checkpoints, history and JSON exports. Older reports explicitly show unavailable timelines and clear stale graphs.
+- Adds pure-data and actual Windows WPF regression coverage. No new hardware queries or clock writes are introduced by telemetry capture or browsing.
+
+This source preview remains pending target-PC acceptance and does not publish an updater release.
+
+# v0.27.0 - Saved GPU experiments (development preview)
+
+- Archives each finished clock trial and preserves the previous checkpoint before it can be overwritten. Keeps stopped/interrupted results and isolates corrupt archives without deleting them.
+- Adds a saved-trial browser, source report export, and A/B comparison export with both experiments included.
+- Recalculates medians from individual runs; requires matching GPU, driver, original offsets, power settings and workloads. Flags baseline drift, noise, temperature differences and overlapping ranges as inconclusive.
+- Loads requested offsets into the controls after fresh device/range checks. Loading never applies settings or starts a trial and is blocked during active tasks or pending recovery.
+- Keeps history browsing/export available during a trial. Freezes exports before the file dialog so a background completion cannot change the chosen report.
+- Preserves v0.25/v0.26 reports. History and comparison actions are read-only with respect to hardware.
+
+Target-PC clock writes, real thermal response and stability still need acceptance. This source preview does not publish an updater release.
+
+# v0.26.0 - Repeated GPU clock trials (development preview)
+
+- Makes three baseline runs and three retests the default, with a quick one-pair option.
+- Blocks clock application when baseline spread exceeds 5% of the median.
+- Reports median, range, spread and every run's start/peak GPU temperature. Noisy, overlapping or temperature-mismatched groups are marked inconclusive; quick pairs cannot establish repeatability.
+- Requires consistent GPU power limit and Windows power plan at run boundaries and before applying. Lost or changed settings stop the comparison and trigger clock restoration after an apply.
+- Checkpoints individual results after each completed run; partial and excluded results remain available. Supports legacy v0.25.0 report display.
+- Extends simulated recovery, report and Windows UI coverage for repeated runs, late cancellation, power changes and run-quality gates.
+
+Three runs are descriptive, not statistical significance, a stability certificate or a game FPS prediction. The 5% spread and 5 C starting-temperature cutoffs are comparison heuristics. Real GPU writes and thermal behavior remain unverified. This branch does not publish an updater release.
+
+# v0.25.0 - Measured GPU overclock trials (development preview)
+
+- Adds a reviewed baseline/apply/retest/restore workflow for NVIDIA P0 core and memory offsets.
+- Runs the same 5-second warm-up and 30-second shader workload before and after the change, with a 10-second cooldown. Reports throughput, sampled peak temperature and the measured change.
+- Automatically attempts to restore original offsets after completion, cancellation or failure, and verifies both domains. Unresolved recovery remains on disk and blocks another trial.
+- Checks GPU identity, clock offsets, driver and temperature during the trial. Requires one NVIDIA GPU and a matching OpenGL renderer/temperature sensor.
+- Runs in a background worker. Stop requests are cooperative; closing the window requests cancellation and keeps it open while restoration finishes.
+- Saves the last trial report locally, restores its display after relaunch and supports JSON export. Saved results are clearly distinguished from a current hardware check.
+- Adds automated Windows PowerShell 5.1/WPF regression validation on GitHub.
+
+A single short comparison is not stability certification, artifact detection, VRAM testing or a game FPS prediction. Physical clock writes and performance still require validation on the target GPU. App termination, driver hangs or power loss can prevent restoration; use the saved recovery controls on the next launch. This source preview does not update the public release feed.
+
+# v0.24.1 - Windows GPU controls preview
 
 - Integrated the v0.24.0 NVIDIA clock-offset controls and readable comparison reports.
 - Recheck current GPU temperature immediately before applying offsets; reject invalid temperature values.

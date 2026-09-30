@@ -2,10 +2,60 @@
 
 [Download the latest release](https://github.com/IGN1TE/pc-insight/releases/latest) · [Development workflow](DEVELOPMENT.md)
 
-This development build contains v0.24.0 app source, tests and bundled dependencies. `main` holds released code; `develop` is for ongoing work. This GPU-controls candidate is on `feature/nvidia-clock-offsets` and has not been published. Install from the `PC-Insight-Windows-Preview.zip` release asset.
-
+This branch contains the v0.29.0 development preview. Source changes do not publish an app update. For the published app, use the `PC-Insight-Windows-Preview.zip` asset on the latest release.
 ---
-# PC Insight 0.24.0 - NVIDIA clock-offset preview
+
+## Development preview v0.29.0: CPU overclock experiments
+
+The new **CPU tuning** tab measures CPU changes that you make in a supported BIOS or vendor tool. **PC Insight does not apply or restore CPU ratios, voltage, CPU power limits or firmware settings.** CPU/board detection is read-only and does not certify overclocking support. Save your original BIOS/vendor profile externally before making changes. Intel XTU compatibility depends on the supported CPU and chipset ([Intel requirements](https://www.intel.com/content/www/us/en/download/17881/intel-extreme-tuning-utility-intel-xtu.html)); AMD's public Ryzen Master Monitoring SDK exposes read-only monitoring calls ([AMD documentation](https://www.amd.com/en/developer/ryzen-master-monitoring-sdk.html)). A validated CPU-write backend remains future work.
+
+1. Choose **Detect CPU platform**, describe the current settings, then **Review and collect baseline**. The app runs three 60-second SHA-256 tests separated by 10-second cooldowns. It reserves one logical processor when possible and caps the workload at 16 workers. This workload is not a game benchmark or stability test.
+2. Make your supported CPU change externally, reboot if needed, and reopen PC Insight. Select the saved baseline, describe the change and choose **Review and retest selected baseline**. Notes are user reported, never interpreted as commands or treated as verified settings. Each retest has a separate record; the original baseline remains intact.
+3. Review per-run scores, starting/peak sampled CPU temperatures, medians and variability, or export the selected experiment as JSON. Exports contain hardware details and notes; review them before sharing.
+
+Measurements stop at the 85 C preview cutoff, missing/invalid CPU temperature readings, failed/slow sensor queries, cancellation or context drift. This cutoff is a conservative app rule, not a processor-specific thermal limit or a guarantee against overheating. Cooling and sensor freshness remain hardware dependent. CPU workloads have an independent 60-second deadline; the worker also checks for app shutdown. Stop requests are cooperative, with a fallback for a stuck worker. Closing during a task requests cancellation; close again after it ends. Completed runs are checkpointed, while an unfinished run may have no retained result.
+
+Comparisons require three completed runs on each side with the same reported CPU/topology, motherboard, BIOS version, configured memory inventory, Windows version, runtime, worker count and active power-plan GUID. Context is checked before and after each run. CPU settings, voltage, memory timings, power-plan subsettings, background activity and transient changes between those checks are not verified. A BIOS update or changed memory configuration requires a new baseline. The app cannot establish causation from matching metadata.
+
+A baseline with more than 5% score spread cannot be used for retesting. Retest variability above 5%, overlapping ranges or median starting temperatures more than 5 C apart produce an **inconclusive** comparison. These are heuristics, not statistical significance tests. Keep ambient conditions, cooling, power and background applications consistent; ten seconds of cooldown does not guarantee equivalent temperatures. No settings are ranked as safe or stable.
+
+Records live in `%LOCALAPPDATA%\PCInsight\cpu-tuning-trials`. The picker loads the latest 50 readable records and retains older files. Interrupted records remain visible and cannot be used as finished baselines. Corrupt records are isolated with an explanation. Saved measurements, browsing and exports make no hardware-setting writes. **Hardware acceptance testing remains pending.** Tests use simulated hardware, including actual WPF button/job handlers on Windows PowerShell 5.1.
+
+## Recorded GPU sensor graphs (introduced in v0.28.0)
+
+Under **Saved clock trials**, select a trial and expand **Recorded GPU sensor graphs**. Choose any recorded baseline or retest, then a GPU temperature, clock, power or load sensor. The graph shows the original sampled readings, elapsed time, coverage and min/mean/max. Sensor names and identifiers distinguish equally named readings; temperature headroom is labelled separately. An excluded run can still be inspected without making its score eligible.
+
+The app copies samples already collected by the workload; this feature adds no sensor query, benchmark or tuning write. Data is bounded to the first 64 frames and 16 identified GPU channels per run, with any truncation reported. Missing, duplicate, invalid, failed/slow-query or non-increasing-timestamp readings leave gaps. Larger timestamp gaps also break the line. Zero readings remain zero. The timeline includes preparation and warm-up and does not imply that every point belongs to the scored interval.
+
+Telemetry survives report/history saves and is included in trial and comparison JSON exports. Older reports show an explicit unavailable message. Browsing saved graphs remains available during an active trial and does not change the current inputs. A run that ends before returning a result may have no retained timeline; previously completed runs remain in its checkpoint.
+
+Reported clock readings are distinct from configured offsets and effective memory data rate. Power readings describe the selected sensor, not whole-system power or energy use. Sample means are not time-weighted; peaks can miss transients and sensor freshness is not guaranteed. Graphs do not establish thermal throttling, artifact detection or stability. Hardware acceptance remains pending.
+
+## Saved GPU experiments (introduced in v0.27.0)
+
+**Saved clock trials** on Tuning keeps completed, stopped and interrupted experiments on this PC. Every finished trial is archived separately. The previous last-run checkpoint is also preserved before another trial can replace it; unreadable or unwritable prior history stops a new trial before any clock change. An archive failure after testing never skips restoration, and the app reports the save problem. The picker shows up to fifty recent records; older archives are retained. A corrupt record is skipped with an explanation, leaving other records available.
+
+Select **Trial B** and **Compare with trial A** to compare requested offsets and retest medians. Comparisons require two distinct completed three-run experiments with recorded verified restoration, the same GPU/driver, original baseline offsets, power plan, power limit and compatible workloads. Summaries are recalculated from the individual runs. Noisy trials, overlapping retest ranges, a >5% shift in original-setting medians, or >5 C difference in retest starting temperatures are inconclusive. Identical requested offsets are labelled a repeatability comparison. These thresholds are heuristics; no setting is ranked as best or guaranteed stable.
+
+**Load offsets into controls** only fills the inputs after refreshing GPU identity, driver and ranges. It does not apply clocks or start a test. A driver change, unsupported range, interrupted/failed trial or pending recovery prevents loading. Use **Review and run trial** for a separate deliberate test. **Export selected trial** and **Export trial comparison** save JSON snapshots; comparison exports include both source experiments and any incompatibility reasons. Browsing and exporting remain available during a running trial, while loading inputs is blocked.
+
+History is stored in `%LOCALAPPDATA%\PCInsight\gpu-clock-trials`; it is separate from the active recovery journal. Loading, comparing, startup and exporting do not write hardware settings. Saved restoration status describes that past trial, not the GPU's current state. Real hardware acceptance remains pending.
+
+## Repeated GPU clock trials (introduced in v0.26.0)
+
+On **Tuning**, detect clock support, select your NVIDIA GPU and enter the desired absolute core/memory offsets. The default **Repeated trial** measures three baseline runs, applies your reviewed offsets, measures three retests and restores the originals. Each run uses the same five-second warm-up and thirty-second OpenGL workload, with ten-second cooldowns between runs. Allow about five minutes. **Quick trial** keeps the one-pair option (about ninety seconds), explicitly marked inconclusive for repeatability.
+
+A baseline spread above 5% of its median stops the trial before offsets are applied. Completed groups show median throughput, min/max, spread, individual scores, starting temperatures and sampled peak temperatures. A retest spread above 5%, overlapping run ranges, or median starting temperatures differing by more than 5 C makes the comparison **Inconclusive**. These are app heuristics, not statistical significance or manufacturer limits. The descriptive median difference remains visible when all runs are compatible; there is no automatic keep or recommendation to increase offsets.
+
+Trials require exactly one NVIDIA GPU, a matching OpenGL renderer/temperature sensor, administrator access, readable GPU power limits and a Windows power-plan identifier. Driver/clock changes, missing readings, the 85 C preview cutoff and incomplete tests stop the trial. GPU power limit and Windows power plan are checked before and after each run, and again before applying offsets. Changes or lost readings stop the comparison. These checks run outside the scored workload and may miss transient changes between queries. No voltage or power-limit changes are made.
+
+**Stop trial and restore** cancels cooperatively. Closing during a trial requests cancellation and keeps the window open while restoration runs. Both offset domains are read back. Failed recovery remains on disk and blocks another trial until **Restore saved clock offsets** succeeds. Force termination, driver hangs or power loss can prevent restoration; inspect recovery on the next launch.
+
+Every finished run is checkpointed in the local report, including excluded results and their reason. **Export trial report** saves JSON with both groups, comparison quality, power-setting snapshots and restoration status. The last result returns after relaunch as a saved result, not a current hardware check. Older v0.25.0 reports remain readable. Manual apply remains available and persists until explicitly restored; trials always attempt restoration.
+
+These tests measure shader throughput, not game FPS, artifact detection, VRAM integrity or long-term stability. Physical clock writes and real thermal behavior still need target-PC acceptance before a release.
+
+# PC Insight - Windows desktop preview
 
 CPU/GPU sensor readings are now collected inside PC Insight through the bundled official LibreHardwareMonitorLib 0.9.6. You no longer need the Libre Hardware Monitor desktop app, Log Sensors, a CSV file or its remote web server.
 

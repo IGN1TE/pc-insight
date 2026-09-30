@@ -32,7 +32,7 @@ function Assert-PCClockApplyTemperature($Device) {
 function Save-PCClockJournal($Journal,[string]$Path) {
     $full=[IO.Path]::GetFullPath($Path);$temporary=Join-Path ([IO.Path]::GetDirectoryName($full)) ([IO.Path]::GetRandomFileName())
     try{
-        $bytes=[Text.UTF8Encoding]::new($false).GetBytes(($Journal|ConvertTo-Json -Depth 6))
+        $bytes=[Text.UTF8Encoding]::new($false).GetBytes(($Journal|ConvertTo-Json -Depth 10))
         $stream=[IO.File]::Open($temporary,[IO.FileMode]::CreateNew,[IO.FileAccess]::Write,[IO.FileShare]::None)
         try{$stream.Write($bytes,0,$bytes.Length);$stream.Flush($true)}finally{$stream.Dispose()}
         if([IO.File]::Exists($full)){[IO.File]::Replace($temporary,$full,[NullString]::Value)}else{[IO.File]::Move($temporary,$full)}

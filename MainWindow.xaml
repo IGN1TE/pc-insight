@@ -115,6 +115,37 @@
      <WrapPanel><Button Name="ApplyClocks" Content="Review and apply offsets" IsEnabled="False"/><Button Name="RestoreClocks" Content="Restore saved clock offsets" Background="#28233D" IsEnabled="False"/></WrapPanel>
      <TextBlock Name="ClockStatus" Text="No clock changes made. Changes may remain after closing the app; restore is explicit." Foreground="#B195FF"/>
     </StackPanel></Border>
+    <Border Style="{StaticResource Card}"><StackPanel>
+     <TextBlock Text="Measured overclock trial" FontSize="20"/>
+     <TextBlock Text="Compare three baseline runs with three retests at your reviewed offsets. Each run has a 5-second warm-up and 30-second shader measurement, with 10-second cooldowns. Original offsets are restored after the trial or cancellation. Allow about 5 minutes." Foreground="#B0B5CC"/>
+     <TextBlock Text="Requires one NVIDIA GPU, matching OpenGL/temperature readings and readable power settings. A baseline spread above 5% stops before applying. Results show median, spread and starting temperatures; noisy or overlapping results are inconclusive. A completed trial is not long-term stability or artifact detection. If the app or PC crashes, use Restore saved clock offsets on the next launch." Foreground="#929BB5"/>
+     <ComboBox Name="ClockTrialMode" SelectedIndex="0" Margin="0,8" Padding="10" AutomationProperties.Name="GPU trial length"><ComboBoxItem Tag="3" Content="Repeated trial: 3 runs per setting (about 5 min)"/><ComboBoxItem Tag="1" Content="Quick trial: 1 run per setting (about 90 sec)"/></ComboBox>
+     <WrapPanel><Button Name="StartClockTrial" Content="Review and run trial" IsEnabled="False"/><Button Name="StopClockTrial" Content="Stop trial and restore" Background="#28233D" IsEnabled="False"/><Button Name="ExportClockTrial" Content="Export trial report" Background="#28233D" IsEnabled="False"/></WrapPanel>
+     <TextBlock Name="ClockTrialStage" Text="Ready after clock detection. Restore any pending clock change first." Foreground="#B195FF"/>
+     <ProgressBar Name="ClockTrialProgress" Minimum="0" Maximum="100" Value="0" Height="8" Margin="0,10" AutomationProperties.Name="Current GPU trial test progress"/>
+     <TextBlock Name="ClockTrialResult" Text="Per-run results, median change, comparison quality and restoration status will appear here."/>
+    </StackPanel></Border>
+    <Border Style="{StaticResource Card}"><StackPanel>
+     <TextBlock Text="Saved clock trials" FontSize="20"/>
+     <TextBlock Text="Review past experiments and compare compatible repeated trials. Loading saved offset inputs does not apply them; run a new reviewed trial to test them again." Foreground="#B0B5CC"/>
+     <TextBlock Text="Trial B"/><ComboBox Name="ClockTrialHistory" DisplayMemberPath="Label" Margin="0,8" Padding="10" AutomationProperties.Name="Saved clock trial B"/>
+     <WrapPanel><Button Name="LoadClockTrialOffsets" Content="Load offsets into controls" IsEnabled="False"/><Button Name="ExportSavedClockTrial" Content="Export selected trial" Background="#28233D" IsEnabled="False"/></WrapPanel>
+     <TextBlock Name="ClockTrialHistoryStatus" Text="No saved trials yet." Foreground="#B195FF"/>
+     <Expander Header="Selected saved trial details" Margin="0,8"><TextBlock Name="ClockTrialSavedResult" Text="No saved trial selected."/></Expander>
+     <Expander Header="Recorded GPU sensor graphs" Margin="0,8"><StackPanel>
+      <TextBlock Text="Inspect each baseline or retest from the selected saved trial. Reported clocks are sensor readings, not the configured offsets or effective memory data rate. Sensor names identify which power or load reading is shown." Foreground="#B0B5CC"/>
+      <TextBlock Text="Run"/><ComboBox Name="ClockTrialTelemetryRun" DisplayMemberPath="Label" Margin="0,8" Padding="10" IsEnabled="False" AutomationProperties.Name="Saved trial telemetry run"/>
+      <TextBlock Text="Sensor"/><ComboBox Name="ClockTrialTelemetrySensor" DisplayMemberPath="Label" Margin="0,8" Padding="10" IsEnabled="False" AutomationProperties.Name="Saved trial telemetry sensor"/>
+      <TextBlock Name="ClockTrialTelemetrySummary" Text="Select a saved trial to inspect its recorded readings."/>
+      <TextBlock Name="ClockTrialTelemetryScale" Foreground="#B195FF"/>
+      <Viewbox Stretch="Uniform" HorizontalAlignment="Stretch"><Canvas Name="ClockTrialTelemetryChart" Width="800" Height="150" Background="#121522" ClipToBounds="True" AutomationProperties.Name="Recorded GPU sensor graph"/></Viewbox>
+      <TextBlock Name="ClockTrialTelemetryTime" Foreground="#B0B5CC"/>
+      <TextBlock Text="Readings reuse the original workload samples. Missing, invalid, duplicate or failed-query readings leave gaps. Sample peaks may miss transients; sensor freshness is not guaranteed. These graphs do not establish stability, throttling or whole-system power." Foreground="#929BB5"/>
+     </StackPanel></Expander>
+     <TextBlock Text="Compare with trial A"/><ComboBox Name="ClockTrialReference" DisplayMemberPath="Label" Margin="0,8" Padding="10" AutomationProperties.Name="Reference clock trial A"/>
+     <TextBlock Name="ClockTrialComparisonResult" Text="Choose two saved trials to compare."/>
+     <Button Name="ExportClockTrialComparison" Content="Export trial comparison" HorizontalAlignment="Left" Background="#28233D" IsEnabled="False"/>
+    </StackPanel></Border>
     <Border Style="{StaticResource Card}"><StackPanel><TextBlock Text="Before / after" FontSize="20"/><TextBlock Name="BaselineResult" Text="Save a baseline containing a complete three-run batch. Repeat the same batch after a reviewed change. Comparisons require three matching successful runs on each side."/></StackPanel></Border>
    </StackPanel></ScrollViewer></TabItem>
    <TabItem Header="Repeated results" Tag="&#xE9D9;"><Grid Margin="20"><TextBox Name="BatchReport" Text="Start a three-run batch from Benchmark. Median and spread will appear here."/></Grid></TabItem>
@@ -175,6 +206,27 @@
 <TextBlock Text="Use windowed or borderless mode; exclusive fullscreen may hide the panel. The overlay follows the foreground app and appears on that screen. Press the hotkey again to stop capture and hide it." Foreground="#B0B5CC"/>
 <TextBlock Text="Missing readings show --. If temperatures or FPS are unavailable, try Reopen as administrator. CPU shows the highest reported CPU temperature; GPU max means the hottest GPU core when more than one GPU reports a reading." Foreground="#929BB5"/>
 <TextBlock Text="FPS is the app presentation rate over about two seconds, not a benchmark score or a count of generated/displayed frames. It may be unavailable in some games. The overlay pauses for PC Insight tests, tuning actions and updates. No game files are modified." Foreground="#929BB5"/>
+</StackPanel></ScrollViewer></TabItem>
+   <TabItem Header="CPU tuning" Tag="&#xE950;"><ScrollViewer VerticalScrollBarVisibility="Auto"><StackPanel Margin="20">
+<TextBlock Text="CPU overclock experiments" FontSize="25" FontWeight="SemiBold"/>
+<TextBlock Text="Measure a baseline, change CPU settings externally, then retest after restarting if needed." Foreground="#B0B5CC"/>
+<TextBlock Text="PC Insight does not write or restore CPU clocks, voltage, power limits, or BIOS settings. Use only controls supported by your CPU, board and vendor tool. Save your original BIOS/profile settings externally before changing them. Passing this short workload does not establish stability." Foreground="#DBBC7D" Margin="0,8,0,14"/>
+<TextBlock Text="1. Detect your platform" FontSize="17" FontWeight="SemiBold"/>
+<Button Name="CpuDetect" Content="Detect CPU platform" HorizontalAlignment="Left"/>
+<TextBlock Name="CpuPlatform" Text="Read-only detection checks CPU, motherboard, BIOS, configured memory, Windows and active power plan. Overclocking support is not inferred from the CPU name." Foreground="#B0B5CC"/>
+<TextBlock Text="2. Record settings and measure" FontSize="17" FontWeight="SemiBold" Margin="0,16,0,4"/>
+<TextBlock Text="For a baseline, describe your current BIOS/vendor profile. For a retest, describe the one change you made. These notes are user reported; CPU settings are not read back or verified."/>
+<TextBox Name="CpuNote" IsReadOnly="False" MaxLength="500" MinHeight="58" AcceptsReturn="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" AutomationProperties.Name="User reported CPU settings or change"/>
+<WrapPanel><Button Name="CpuBaseline" Content="Review and collect baseline" IsEnabled="False"/><Button Name="CpuRetest" Content="Review and retest selected baseline" IsEnabled="False"/><Button Name="CpuStop" Content="Stop CPU measurement" IsEnabled="False"/></WrapPanel>
+<TextBlock Text="Each measurement uses 3 x 60-second SHA-256 runs with 10-second cooldowns. Keep cooling, power and background tasks consistent. Missing/slow temperature readings or the 85 C preview cutoff stop the test. A cooldown does not guarantee equal starting temperatures." Foreground="#929BB5"/>
+<ProgressBar Name="CpuProgress" Minimum="0" Maximum="100" Height="6" Margin="0,10,0,4"/>
+<TextBlock Name="CpuStage" Text="Ready. No CPU settings have been changed by this app."/>
+<TextBlock Text="3. Review saved experiments" FontSize="17" FontWeight="SemiBold" Margin="0,20,0,4"/>
+<TextBlock Text="The latest 50 experiments appear here; older files are retained. Retests create a new record and preserve the selected baseline. Noisy baselines must be repeated. Changed platform context blocks comparison; high variability, overlapping ranges or unequal starting temperatures are inconclusive." Foreground="#929BB5"/>
+<ComboBox Name="CpuHistory" DisplayMemberPath="Label" AutomationProperties.Name="Saved CPU experiment" Margin="0,8,0,4"/>
+<Button Name="CpuExport" Content="Export selected CPU experiment" HorizontalAlignment="Left" IsEnabled="False"/>
+<TextBlock Name="CpuHistoryStatus" Foreground="#DBBC7D"/>
+<TextBox Name="CpuResult" MinHeight="220" MaxHeight="560" VerticalScrollBarVisibility="Auto" TextWrapping="Wrap"/>
 </StackPanel></ScrollViewer></TabItem>
    <TabItem Header="About" Tag="&#xE897;"><DockPanel Margin="20"><StackPanel DockPanel.Dock="Top" Margin="0,0,0,16"><Image Name="AboutLogo" Source="{DynamicResource PCInsightLogo}" MaxWidth="420" Height="140" Stretch="Uniform" HorizontalAlignment="Left" RenderOptions.BitmapScalingMode="HighQuality" AutomationProperties.Name="PC Insight"/><TextBlock Name="AboutVersion" Foreground="#B0B5CC" FontSize="14" Margin="0,4,0,12"/></StackPanel><WrapPanel DockPanel.Dock="Top"><Button Name="OpenAppFolder" Content="Open app folder"/><Button Name="OpenDataFolder" Content="Open saved data folder"/></WrapPanel><TextBox Text="PC Insight - Windows desktop preview&#10;&#10;Reads Windows hardware information using CIM. NVIDIA live utilization, temperature and power are collected when nvidia-smi is already installed in a known vendor location. GPU sensor availability depends on vendor and driver support. CPU temperature and reported clocks are read through the bundled LibreHardwareMonitorLib on the Live sensors tab. CPU, RAM copy and GPU shader benchmarks are included. The optional Game overlay shows application presentation FPS and CPU/GPU temperatures. Effective-clock analysis and definitive thermal-throttling diagnosis are not implemented.&#10;&#10;Overview scans are snapshots. Live sensors offers short recordings and continuous monitoring. Continuous sessions retain the latest 300 samples. Sampling is subject to query latency. Missing data stays unavailable. There are no population rankings or invented bottleneck scores.&#10;&#10;All processing and saved results stay on this PC. No account, telemetry upload, downloaded drivers or background service. Exported reports contain hardware models and driver versions; review before sharing.&#10;&#10;System changes include installed Windows power plans and supported NVIDIA GPU power-limit reductions and manual P0 clock offsets after review. GPU originals are saved before writes and read back after apply/restore. Closing the app does not restore settings. Use Restore previous plan for Windows power plans or Restore saved GPU limit or Restore saved clock offsets on Tuning for the corresponding GPU changes. Recovery information survives app restarts.&#10;&#10;This preview is unsigned. Hardware support varies. Administrator access alone does not guarantee readings. See README.md for setup, limitations, recovery and the development roadmap."/></DockPanel></TabItem>
   </TabControl>

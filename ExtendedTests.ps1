@@ -1,7 +1,10 @@
 ﻿function Get-PCGpuStopReason($frame, [string]$HardwareName) {
+    if ($frame.Issue) { return 'GPU sensor query reported an error.' }
+    if ($null -eq $frame.QuerySeconds -or [double]::IsNaN([double]$frame.QuerySeconds) -or [double]::IsInfinity([double]$frame.QuerySeconds) -or $frame.QuerySeconds -lt 0) { return 'GPU sensor query duration is invalid.' }
     if ($frame.QuerySeconds -gt 3) { return 'Sensor query exceeded 3 seconds.' }
     $temps = @($frame.Sensors | Where-Object { $_.Parent -match '^/gpu' -and $_.Name -eq 'GPU Core' -and $_.Type -eq 'Temperature' -and $_.HardwareName -eq $HardwareName -and $null -ne $_.Value })
     if (-not $temps.Count) { return 'No temperature reading for the selected OpenGL GPU.' }
+    foreach($temp in $temps){if([double]::IsNaN([double]$temp.Value) -or [double]::IsInfinity([double]$temp.Value) -or [double]$temp.Value -le 0){return 'GPU temperature reading is invalid.'}}
     if (($temps | Measure-Object Value -Maximum).Maximum -ge 85) { return 'GPU core reached the 85 C preview cutoff.' }
     if ($null -ne $frame.CPUCelsius -and $frame.CPUCelsius -ge 85) { return 'CPU reached the 85 C preview cutoff.' }
     return $null
@@ -14,7 +17,16 @@ function Find-PCGpuSensorName($frame,[string]$Renderer) {
     }
     return $null
 }
-function Invoke-PCExtendedTest([ValidateSet('memory','gpu')][string]$Kind) {
+function New-PCGpuTestWorkload {
+    if (-not ('PCInsightGpuWorkload' -as [type])) { Add-Type -Path "$PSScriptRoot\GpuWorkload.cs" }
+    [PCInsightGpuWorkload]::new()
+}
+function Assert-PCExtendedTestContinue([string]$StopPath,[scriptblock]$Guard) {
+    if($StopPath -and (Test-Path -LiteralPath $StopPath)){throw 'GPU clock trial cancelled.'}
+    if($Guard){$null=& $Guard}
+}
+function Invoke-PCExtendedTest([ValidateSet('memory','gpu')][string]$Kind,[string]$StopPath,[string]$ExpectedGpuName,[scriptblock]$Guard) {
+    Assert-PCExtendedTestContinue $StopPath $Guard
     $rates = [Collections.Generic.List[object]]::new(); $previousSeconds=0.0; $previousFrames=0L
     $frames = [Collections.Generic.List[object]]::new();$worker=$null;$reason=$null;$rate=$null;$gpuRate=$null;$gpuName=$null
     $first=Add-PCMemorySample (Get-PCSensorFrame);$frames.Add($first)
@@ -27,25 +39,28 @@ function Invoke-PCExtendedTest([ValidateSet('memory','gpu')][string]$Kind) {
         if (-not ('PCInsightMemoryWorkload' -as [type])) { Add-Type -Path "$PSScriptRoot\MemoryWorkload.cs" }
         $worker=[PCInsightMemoryWorkload]::new()
     } else {
-        if (-not ('PCInsightGpuWorkload' -as [type])) { Add-Type -Path "$PSScriptRoot\GpuWorkload.cs" }
-        $worker=[PCInsightGpuWorkload]::new()
+        $worker=New-PCGpuTestWorkload
     }
     try {
         if ($Kind -eq 'gpu') {
             $worker.Prepare(30);$init=[Diagnostics.Stopwatch]::StartNew()
-            while (-not $worker.Ready -and -not $worker.Done -and $init.Elapsed.TotalSeconds -lt 15) { Start-Sleep -Milliseconds 100 }
+            while (-not $worker.Ready -and -not $worker.Done -and $init.Elapsed.TotalSeconds -lt 15) { Assert-PCExtendedTestContinue $StopPath $Guard; Start-Sleep -Milliseconds 100 }
             if ($worker.Error) { throw $worker.Error }
             if (-not $worker.Ready) { throw 'GPU initialization timed out.' }
             $gpuName=Find-PCGpuSensorName $first $worker.Renderer
             if (-not $gpuName) { throw "GPU test unavailable: cannot match renderer '$($worker.Renderer)' to a GPU temperature sensor." }
+            if($ExpectedGpuName -and $gpuName -ne $ExpectedGpuName){throw 'OpenGL selected a different GPU. No clock trial workload was started.'}
             $fresh=Get-PCSensorFrame
             $reason=Get-PCGpuStopReason $fresh $gpuName
             if($reason){throw "GPU test was not started: $reason"}
+            Assert-PCExtendedTestContinue $StopPath $Guard
             $worker.Begin()
         } else { $worker.Start() }
         $watch=[Diagnostics.Stopwatch]::StartNew()
         while (-not $worker.Done -and $watch.Elapsed.TotalSeconds -lt 45) {
+            Assert-PCExtendedTestContinue $StopPath $Guard
             Start-Sleep -Milliseconds 1000
+            Assert-PCExtendedTestContinue $StopPath $Guard
             $frame=Add-PCMemorySample (Get-PCSensorFrame);$frames.Add($frame)
             [pscustomobject]@{Kind='Frame';Value=$frame}
             $duration=20; if($Kind -eq 'gpu'){$duration=30}

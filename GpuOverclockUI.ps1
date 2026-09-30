@@ -2,7 +2,7 @@
 $script:clockJournalPath=Join-Path $dataDir 'gpu-clock-restore.json'
 $script:clockActionBusy=$false
 function Test-PCClockUiBusy {
-    $script:clockActionBusy -or $script:job -or $script:updateJob -or ($script:guide -and $script:guide.Phase -in @('RunningBaseline','Review','Applying','RunningAfter','Decision','RecoveryRequired'))
+    $script:clockActionBusy -or $script:clockTrialJob -or $script:job -or $script:updateJob -or ($script:guide -and $script:guide.Phase -in @('RunningBaseline','Review','Applying','RunningAfter','Decision','RecoveryRequired'))
 }
 function Update-PCClockControlState([bool]$Busy=$false) {
     $blocked=$Busy -or (Test-PCClockUiBusy)
@@ -13,6 +13,7 @@ function Update-PCClockControlState([bool]$Busy=$false) {
     $ui.RestoreClocks.IsEnabled=-not $blocked -and $script:isAdministrator -and (Test-Path -LiteralPath $script:clockJournalPath)
     $ui.CoreOffset.IsEnabled=-not $blocked -and $selected -and $selected.Available
     $ui.MemoryOffset.IsEnabled=$ui.CoreOffset.IsEnabled
+    if(Get-Command Update-PCClockTrialControls -ErrorAction SilentlyContinue){Update-PCClockTrialControls $blocked}
 }
 function Show-PCClockSelection {
     $selected=$ui.ClockGPU.SelectedItem

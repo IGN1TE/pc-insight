@@ -3,7 +3,7 @@
 ## Branches
 
 - `main` contains the source of the released app, currently v0.22.2.
-- `develop` is the integration branch for ongoing work. It starts at the same source as `main`.
+- `develop` is the integration branch for ongoing work. It includes the unreleased GPU clock controls and comparison-report work.
 - Create short-lived `feature/<name>` and `fix/<name>` branches from `develop`, then merge reviewed changes into `develop`.
 - For a release, validate `develop`, merge it into `main`, tag the release commit with `v<version>`, and publish the packaged app and update manifest.
 
@@ -39,6 +39,16 @@ The PNG logo and matching icon are under `assets/branding/`. They are transparen
 
 ## Current development preview
 
-`feature/nvidia-clock-offsets` contains the v0.24.1 candidate built from the supplied v0.24.0 preview. It adds Windows validation, a final temperature check before applying GPU clock offsets, and clock-recovery protection during uninstall. The public release remains v0.22.2 until a candidate is published.
+`feature/gpu-oc-trials` builds v0.28.0 on `develop` (v0.24.1). The public release is v0.24.1. This branch adds repeated measured clock trials and automatic restoration; pushing the branch is not a release.
 
-The Windows mock suites include `tests/Test-GpuOverclock.ps1`, `tests/Test-GpuOverclockUI.ps1`, `tests/Test-ClockComparisonContext.ps1`, `tests/Test-UninstallRecovery.ps1`, and the existing comparison/interface/updater regressions. The read-only probe loaded the installed NVIDIA library and read offsets on the target RTX 5090. This does not validate physical writes or overclock stability.
+Run `tests/Test-GpuClockTrial.ps1`, `tests/Test-GpuTrialWorkloadGuard.ps1` and `tests/Test-GpuClockTrialUI.ps1` alongside the existing GPU/recovery suites. The Windows workflow runs PowerShell 5.1 and real hidden WPF handlers with simulated jobs and GPU calls. It never changes host clocks. Linux checks cover the workflow/journal logic and simulated workload guards but do not validate WPF or Windows driver behavior.
+
+The earlier read-only probe loaded the installed NVIDIA library and read offsets on the target RTX 5090. Physical writes, artifact behavior, real thermal response and overclock stability remain unverified. Before publishing, validate a small reviewed change on the target PC, cancel during the retest, confirm both original offsets, exercise close/relaunch and inspect the saved report. Do not infer hardware compatibility from mock CI results.
+
+Trial recovery is owned by `gpu-clock-restore.json`. The last result is saved separately in `gpu-clock-trial.json`. A failed or cancelled baseline performs no clock writes. A trial never starts with an existing recovery record. Normal close requests cooperative cancellation and waits; force termination/driver hangs/power loss can leave recovery pending. Startup only displays saved state and never writes clocks automatically.
+
+The default trial uses three runs at each setting. Schema 2 saves `BeforeRuns`/`AfterRuns`, eligible-run summaries, power-setting snapshots, and comparison reasons. Run boundaries check the Windows plan and selected GPU power limit; management queries are outside the scored workload. A >5% baseline spread aborts before any write. Retest spread, range overlap and >5 C median starting-temperature difference label completed comparisons inconclusive. Quick one-pair mode is also inconclusive for repeatability. Prior schema-1 reports remain displayable; no migration writes hardware.
+
+Trial history is implemented in `GpuClockTrialHistory.ps1` and `GpuClockTrialHistoryUI.ps1`. Archives use the trial GUID as their filename under `gpu-clock-trials/`, outside the recovery journal. Archival never writes GPU settings or deletes old experiments. Startup/import normalizes unfinished checkpoints to Interrupted/Unverified and never overwrites a final archived outcome with that older checkpoint. A failed pre-start archive aborts before clocks change; a failed post-trial archive cannot bypass restoration. Run `tests/Test-GpuClockTrialHistory.ps1` for archive and comparison regression coverage; `Test-GpuClockTrialUI.ps1` also exercises actual history selectors, input-only loading and export snapshots under WPF.
+
+`GpuClockTrialTelemetry.ps1` copies workload result frames into per-run telemetry schema 1: up to 16 fully identified GPU channels plus 64 timestamped value vectors. The existing trial schema 2 remains readable; telemetry is optional. `GpuClockTrialTelemetryUI.ps1` renders only the selected saved experiment. Source queries are not repeated, and these handlers never call a driver or workload. Identically named GPU sensor parents are rejected rather than merged; query issues and invalid values become gaps. Trial persistence uses JSON depth 10 to preserve the nested vectors. Run `tests/Test-GpuClockTrialTelemetry.ps1`; the workflow also exercises real WPF selection/redraw/legacy clearing in `Test-GpuClockTrialUI.ps1`. Mock validation is not physical sensor accuracy or OC stability validation.

@@ -6,7 +6,9 @@ Add-Type -AssemblyName System.Windows.Forms
 . "$PSScriptRoot\Engine.ps1"
 . "$PSScriptRoot\Power.ps1"
 . "$PSScriptRoot\Tuning.ps1"
+. "$PSScriptRoot\CpuTuning.ps1"
 . "$PSScriptRoot\GpuOverclock.ps1"
+. "$PSScriptRoot\GpuClockTrial.ps1"
 . "$PSScriptRoot\Profiles.ps1"
 . "$PSScriptRoot\Updates.ps1"
 . "$PSScriptRoot\Branding.ps1"
@@ -42,8 +44,9 @@ try {
     Set-PCWindowBranding -Window $window -Root $PSScriptRoot -Version $script:appVersion
     $script:ui = @{}
     'EnableOverlayHotkey','ToggleOverlay','OverlayStatus','LastFpsCapture','ExportFpsDetails','GuideDetect','GuideBaseline','GuideApply','GuideRestore','GuideKeep','GuideStop','GuideExport','GuideStage','GuideStatusCard','GuideNextAction','GuideResultTitle','GuideRecommendationLabel','GuideRecommendation','GuideBeforeScore','GuideAfterScore','GuideChange','GuideMessage','GuideDevice','GuideVerdict','GuideRecovery','SensorHistoryChart','SensorHistoryTitle','SensorHistoryScale','SensorHistoryTime','SessionSensorDetails','SessionCoverage','ExportSessionCsv','ExportSessionJson','SessionExportStatus','InstalledVersion','ReleaseNotes','LastUpdateCheck','UpdateFeed','CheckUpdate','DownloadUpdate','InstallUpdate','CancelUpdate','UpdateStatus','AccessStatus','ReopenAdmin','OpenAppFolder','OpenDataFolder','Scan','Export','ScanTime','Overview','Insights','Benchmark','Cancel','Results','PlansRefresh','Plans','Apply','Restore','PowerStatus','Status','SensorStart','MultiBenchmark','SensorReadings','SensorSummary','SensorCancel','SessionResults','CPUModel','GPUModel','RAMModel','CPUTemp','GPUTemp','RAMUsed','DashboardTest','ChartCaption','TemperatureChart','DashboardResult','CPUDetails','CPUReadingTime','GPUReadingTime','CPUPower','DashboardRecord','OpenResults','ResultPeak','ResultRate','ResultDelta','Navigation','MonitorStart','MonitorStop','RAMSampleLabel','UsageChart','LongCPU','MemoryTest','GPUTest','TestProgress','ProgressLabel','ResultRateLabel','DetectTuning','GPUDevice','PowerPreset','ApplyGPU','RestoreGPU','TuningStatus','CapabilityText','SaveBaseline','CompareBaseline','BaselineResult','RepeatCPU','RepeatRAM','RepeatGPU','BatchReport','SessionPicker','ProfileName','SaveProfile','ProfilePicker','LoadProfile','ProfileStatus' | ForEach-Object { $ui[$_] = $window.FindName($_) }
-    'DetectClocks','ClockGPU','ClockInfo','CoreOffset','MemoryOffset','ApplyClocks','RestoreClocks','ClockStatus' | ForEach-Object { $ui[$_] = $window.FindName($_) }
+    'ClockTrialTelemetryRun','ClockTrialTelemetrySensor','ClockTrialTelemetryChart','ClockTrialTelemetryScale','ClockTrialTelemetryTime','ClockTrialTelemetrySummary','ClockTrialHistory','ClockTrialReference','LoadClockTrialOffsets','ExportSavedClockTrial','ExportClockTrialComparison','ClockTrialHistoryStatus','ClockTrialSavedResult','ClockTrialComparisonResult','ClockTrialMode','StartClockTrial','StopClockTrial','ExportClockTrial','ClockTrialStage','ClockTrialProgress','ClockTrialResult','DetectClocks','ClockGPU','ClockInfo','CoreOffset','MemoryOffset','ApplyClocks','RestoreClocks','ClockStatus' | ForEach-Object { $ui[$_] = $window.FindName($_) }
     'CompareSessionPicker','ComparisonRows','ComparisonStatus','ComparisonNotes','ExportComparison','ExportComparisonReport','ComparisonExportStatus' | ForEach-Object { $ui[$_] = $window.FindName($_) }
+    'CpuDetect','CpuBaseline','CpuRetest','CpuStop','CpuExport','CpuNote','CpuHistory','CpuHistoryStatus','CpuPlatform','CpuStage','CpuProgress','CpuResult' | ForEach-Object { $ui[$_] = $window.FindName($_) }
     . "$PSScriptRoot\SessionComparisonUI.ps1"
     $ui.InstalledVersion.Text='Installed version: '+$script:appVersion
     $script:isAdministrator = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
@@ -220,6 +223,7 @@ try {
     }
     function Confirm($message) { [Windows.MessageBox]::Show($message, 'Review change', 'YesNo', 'Question') -eq 'Yes' }
     function Set-Busy($busy) {
+        if($script:clockTrialJob){$busy=$true}
         if($busy -and $script:overlayWindow -and $script:overlayWindow.IsVisible){Hide-PCGameOverlay 'Overlay paused for the app task. Use the hotkey to resume after it finishes.'}
         foreach ($n in 'CheckUpdate','ReopenAdmin','Scan','Benchmark','PlansRefresh','Apply','Restore','Export','SensorStart','MultiBenchmark','DashboardTest','DashboardRecord','MonitorStart','LongCPU','MemoryTest','GPUTest','DetectTuning','ApplyGPU','RestoreGPU','SaveBaseline','CompareBaseline','RepeatCPU','RepeatRAM','RepeatGPU','SaveProfile','LoadProfile') { $ui[$n].IsEnabled = -not $busy }
         if (-not $busy) { $ui.DashboardTest.IsEnabled = $null -ne $script:snapshot; $ui.Benchmark.IsEnabled = $null -ne $script:snapshot; $ui.MultiBenchmark.IsEnabled = $null -ne $script:snapshot; $ui.Export.IsEnabled = $null -ne $script:snapshot }
@@ -235,6 +239,7 @@ try {
         $ui.UpdateFeed.IsEnabled = -not $busy
         $ui.DownloadUpdate.IsEnabled = -not $busy -and $null -ne $script:updateRelease
         $ui.InstallUpdate.IsEnabled = -not $busy -and $null -ne $script:updateSource
+        if(Get-Command Update-PCCpuControls -ErrorAction SilentlyContinue){Update-PCCpuControls}
         if(Get-Command Refresh-GuideUI -ErrorAction SilentlyContinue){Refresh-GuideUI}
         if(Get-Command Update-PCClockControlState -ErrorAction SilentlyContinue){Update-PCClockControlState $busy}
     }
@@ -276,7 +281,7 @@ try {
     Show-DashboardResult
     if (Test-Path $restorePath) { $ui.PowerStatus.Text = 'A previous plan is saved. Use Restore previous plan to recover it.' }
     function Start-Task($kind) {
-        if ($script:job -or $script:updateJob) { return }
+        if ($script:job -or $script:updateJob -or $script:clockActionBusy -or $script:clockTrialJob) { return }
         if ($kind -in @('sensors','multicore','monitor','longcpu','memory','gpu','repeatcpu','repeatram','repeatgpu')) { $script:chartFrames = @(); $ui.TemperatureChart.Children.Clear(); $ui.UsageChart.Children.Clear() }
         Remove-Item -LiteralPath $script:stopPath -ErrorAction SilentlyContinue
         $script:lastFrameTime = Get-Date
@@ -370,6 +375,7 @@ try {
         $ui.SensorSummary.Text = "Query: $($frame.Timestamp) | CPU: $temp | $freshness | $($frame.Provider)"
     }
     function Cancel-Task {
+        if($script:job -and $script:jobKind -eq 'cpu-tuning'){Stop-PCCpuTask;return}
         if ($script:job) {
             Stop-Job $script:job -ErrorAction SilentlyContinue
             Remove-Job $script:job -Force -ErrorAction SilentlyContinue
@@ -383,6 +389,7 @@ try {
     $timer.Interval = [TimeSpan]::FromMilliseconds(400)
     $timer.Add_Tick({
         if (-not $script:job) { return }
+        if ($script:jobKind -eq 'cpu-tuning') { Receive-PCCpuTask; return }
         if ($script:jobKind -eq 'monitor' -and ((Get-Date) - $script:lastFrameTime).TotalSeconds -gt 30) { Cancel-Task; $ui.Status.Text = 'Monitoring stopped: no sensor response for 30 seconds. No session was saved.'; return }
         if ($script:jobKind -ne 'monitor' -and ((Get-Date) - $script:taskStarted).TotalSeconds -gt $(if($script:jobKind -like 'repeat*'){360}else{100})) { Cancel-Task; $ui.Status.Text = 'Task timed out. Try again or inspect Windows management services.'; return }
         $finish = $false
@@ -592,7 +599,7 @@ try {
         try{$ui.UpdateFeed.Text=[string](Get-Content $script:updateConfig -Raw|ConvertFrom-Json).Url;$ui.UpdateStatus.Text='Release feed saved. Choose Save feed and check to look for updates.'}catch{$ui.UpdateStatus.Text='Saved feed could not be read. Enter a trusted release URL.'}
     }
     function Start-UpdateTask([string]$kind,$argument) {
-        if($script:job -or $script:updateJob){return}
+        if($script:job -or $script:updateJob -or $script:clockActionBusy -or $script:clockTrialJob){return}
         $script:updateKind=$kind; $script:jobKind='update'
         Set-Busy $true; $ui.Cancel.IsEnabled=$false; $ui.SensorCancel.IsEnabled=$false; $ui.CancelUpdate.IsEnabled=$true
         $ui.UpdateStatus.Text=if($kind -eq 'check'){'Checking release feed...'}else{'Downloading and verifying update...'}
@@ -658,13 +665,28 @@ try {
     . "$PSScriptRoot\GuidedOptimizeUI.ps1"
     . "$PSScriptRoot\GameOverlayUI.ps1"
     . "$PSScriptRoot\GpuOverclockUI.ps1"
+    . "$PSScriptRoot\GpuClockTrialUI.ps1"
+    . "$PSScriptRoot\GpuClockTrialHistoryUI.ps1"
+    . "$PSScriptRoot\GpuClockTrialTelemetryUI.ps1"
+    . "$PSScriptRoot\CpuTuningUI.ps1"
     $window.Add_Closing({
         param($sender,$eventArgs)
+        if($script:job -and $script:jobKind -eq 'cpu-tuning'){
+            $eventArgs.Cancel=$true
+            try{Stop-PCCpuTask}catch{Show-Error $_.Exception.Message}
+            return
+        }
+        if($script:clockTrialJob){
+            $eventArgs.Cancel=$true
+            try{Stop-PCClockTrial}catch{Show-Error $_.Exception.Message}
+            return
+        }
         if($script:guide -and $script:guide.Phase -eq 'Decision'){
             if(-not(Confirm 'A guided GPU change is awaiting your decision. Restore the original limit before closing? Choose No to return and select Keep or Restore.')){$eventArgs.Cancel=$true;return}
             try{Restore-PCGuide $script:guide $script:gpuJournalPath $script:guidePath}
             catch{$eventArgs.Cancel=$true;Show-Error $_.Exception.Message;return}
         }
+        $script:clockTrialTimer.Stop()
         $updateTimer.Stop(); if($script:updateJob){Stop-UpdateTask}; $timer.Stop(); Cancel-Task
         if($script:guide -and $script:guide.Phase -eq 'RecoveryRequired'){[Windows.MessageBox]::Show('GPU restoration could not be verified. The recovery record is retained. Open Guided optimization or Tuning to restore it on the next launch.','PC Insight recovery')|Out-Null}
     })
