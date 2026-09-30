@@ -154,5 +154,13 @@ try{
     $legacy=[pscustomobject]@{Schema=1;Kind='PCInsight.GpuClockTrial';State='Completed';Device=$script:original;Requested=$r.Requested;Before=$r.BeforeRuns[0];After=$r.AfterRuns[0];ChangePercent=10;Restoration='Verified';Message='Legacy';Limitations='One pair'}
     Assert ((Format-PCClockTrialReport $legacy) -match 'one pair' -and (Format-PCClockTrialReport $legacy) -match 'Baseline:') 'Legacy report no longer readable'
     Save-PCClockJournal $legacy $reportPath;Assert ((Read-PCClockTrialReport $reportPath).Schema -eq 1) 'Legacy report loading failed'
+    # History errors must never prevent restoration, or silently discard the prior result.
+    $realArchive=${function:Save-PCClockTrialHistory}
+    function Save-PCClockTrialHistory($Report,$Folder){throw 'Simulated history write error'}
+    Reset-Mock;$r=Run-Trial
+    Assert ($r.State -eq 'Completed' -and $r.Restoration -eq 'Verified' -and $r.Message -match 'history could not be saved' -and -not (Test-Path $script:trialJournal)) 'Archive failure bypassed recovery or was hidden'
+    $script:writes.Clear();Reject {Run-Trial} 'Prior report overwritten when archive failed'
+    Assert ($script:writes.Count -eq 0 -and (Read-PCClockTrialReport $reportPath).Id -eq $r.Id) 'Archive error changed clocks or lost prior report'
+    Set-Item Function:Save-PCClockTrialHistory $realArchive
     'PASS: repeated medians/spread, noise/overlap/temperature gates, run checkpoints, power-setting changes/loss, legacy reports, baseline/retest comparison, selected adapter, cancellation before/during apply and retest, temperature loss/cutoff, external changes, partial writes, failed recovery, report errors and retained journals (mock hardware).'
 }finally{Remove-Item $dir -Recurse -Force}
