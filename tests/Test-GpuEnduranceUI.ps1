@@ -25,6 +25,7 @@ try{
  $ast=[Management.Automation.Language.Parser]::ParseFile((Join-Path $PSScriptRoot '../PC-Insight.ps1'),[ref]$null,[ref]$null)
  $start=$ast.Find({param($n) $n -is [Management.Automation.Language.FunctionDefinitionAst] -and $n.Name -eq 'Start-Task'},$true)
  Invoke-Expression $start.Extent.Text
+ function Refresh-PCCpuTuningUI {}
  function Set-Busy($busy){Refresh-PCGpuEnduranceUI}
  function Get-PCTuningCapabilities {$null}
  function Start-Job {param($ArgumentList,$ScriptBlock);[pscustomobject]@{State='Running'}}
