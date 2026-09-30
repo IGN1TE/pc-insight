@@ -1,8 +1,8 @@
-$script:clockGuide=$null;$script:clockGuideRun=$false;$script:clockGuideIssue=''
+﻿$script:clockGuide=$null;$script:clockGuideRun=$false;$script:clockGuideIssue=''
 $script:clockGuidePath=Join-Path $dataDir 'guided-core-trial.json'
 function Test-PCClockGuideLocked {$script:clockGuide -and $script:clockGuide.Phase -in @('RunningBaseline','Review','Applying','RunningAfter','Decision','RecoveryRequired')}
 function Refresh-PCClockGuideUI {
-    $busy=$script:job -or $script:updateJob -or $script:clockActionBusy
+    $busy=$script:job -or $script:updateJob -or $script:clockActionBusy -or $script:cpuPowerBusy
     $phase=if($script:clockGuide){$script:clockGuide.Phase}else{''}
     $powerLocked=$script:guide -and $script:guide.Phase -in @('RunningBaseline','Review','Applying','RunningAfter','Decision','RecoveryRequired')
     foreach($n in 'CoreTrialStart','CoreTrialApply','CoreTrialKeep','CoreTrialRestore','CoreTrialCancel'){$ui[$n].IsEnabled=$false}

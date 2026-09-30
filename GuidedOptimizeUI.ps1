@@ -11,7 +11,7 @@ if(Test-Path -LiteralPath $script:guidePath){
     }catch{$script:guideLoadIssue=$_.Exception.Message}
 }
 function Refresh-GuideUI {
-    $busy=$null -ne $script:job -or $null -ne $script:updateJob -or $script:clockActionBusy
+    $busy=$null -ne $script:job -or $null -ne $script:updateJob -or $script:clockActionBusy -or $script:cpuPowerBusy
     $phase=if($script:guide){$script:guide.Phase}else{'Not started'}
     $locked=$phase -in @('RunningBaseline','Review','Applying','RunningAfter','Decision','RecoveryRequired')
     foreach($name in 'GuideDetect','GuideBaseline','GuideApply','GuideRestore','GuideKeep','GuideStop','GuideExport'){$ui[$name].IsEnabled=$false}

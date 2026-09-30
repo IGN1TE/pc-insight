@@ -7,6 +7,8 @@ Add-Type -AssemblyName System.Windows.Forms
 . "$PSScriptRoot\Power.ps1"
 . "$PSScriptRoot\Tuning.ps1"
 . "$PSScriptRoot\GpuOverclock.ps1"
+. "$PSScriptRoot\CpuPowerNative.ps1"
+. "$PSScriptRoot\CpuPower.ps1"
 . "$PSScriptRoot\Profiles.ps1"
 . "$PSScriptRoot\Updates.ps1"
 . "$PSScriptRoot\Branding.ps1"
@@ -48,13 +50,14 @@ try {
     'CompareSessionPicker','ComparisonRows','ComparisonStatus','ComparisonNotes','ExportComparison','ExportComparisonReport','ComparisonExportStatus' | ForEach-Object { $ui[$_] = $window.FindName($_) }
     'Endurance5','Endurance10','EnduranceStop','EnduranceStatus' | ForEach-Object { $ui[$_] = $window.FindName($_) }
     'CpuReadinessText','CpuControlTable','CpuReadinessScan','CpuBaselineRun','CpuBaselineCancel','CpuReadinessExport','CpuVendorHelp' | ForEach-Object { $ui[$_] = $window.FindName($_) }
+    'CpuPowerDetect','CpuPowerInfo','CpuPL1','CpuPL2','CpuPowerApply','CpuPowerRestore','CpuPowerStatus' | ForEach-Object { $ui[$_] = $window.FindName($_) }
     . "$PSScriptRoot\SessionComparisonUI.ps1"
     $ui.InstalledVersion.Text='Installed version: '+$script:appVersion
     $script:isAdministrator = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
     $ui.AccessStatus.Text = if ($script:isAdministrator) { 'Administrator access - sensor availability depends on hardware and drivers' } else { 'Standard access - some hardware sensors may be unavailable' }
     $ui.ReopenAdmin.Visibility = if ($script:isAdministrator) { 'Collapsed' } else { 'Visible' }
     $ui.ReopenAdmin.Add_Click({
-        if ($script:job) { return }
+        if ($script:job -or $script:cpuPowerBusy) { return }
         try {
             $exe = Join-Path $env:SystemRoot 'System32\WindowsPowerShell\v1.0\powershell.exe'
             $main = Join-Path $PSScriptRoot 'Start-App.ps1'
@@ -224,6 +227,7 @@ try {
     }
     function Confirm($message) { [Windows.MessageBox]::Show($message, 'Review change', 'YesNo', 'Question') -eq 'Yes' }
     function Set-Busy($busy) {
+        $busy=$busy -or $script:cpuPowerBusy
         if($busy -and $script:overlayWindow -and $script:overlayWindow.IsVisible){Hide-PCGameOverlay 'Overlay paused for the app task. Use the hotkey to resume after it finishes.'}
         foreach ($n in 'CheckUpdate','ReopenAdmin','Scan','Benchmark','PlansRefresh','Apply','Restore','Export','SensorStart','MultiBenchmark','DashboardTest','DashboardRecord','MonitorStart','LongCPU','MemoryTest','GPUTest','DetectTuning','ApplyGPU','RestoreGPU','SaveBaseline','CompareBaseline','RepeatCPU','RepeatRAM','RepeatGPU','SaveProfile','LoadProfile') { $ui[$n].IsEnabled = -not $busy }
         if (-not $busy) { $ui.DashboardTest.IsEnabled = $null -ne $script:snapshot; $ui.Benchmark.IsEnabled = $null -ne $script:snapshot; $ui.MultiBenchmark.IsEnabled = $null -ne $script:snapshot; $ui.Export.IsEnabled = $null -ne $script:snapshot }
@@ -244,6 +248,7 @@ try {
         if(Get-Command Refresh-PCClockGuideUI -ErrorAction SilentlyContinue){Refresh-PCClockGuideUI}
         if(Get-Command Refresh-PCGpuEnduranceUI -ErrorAction SilentlyContinue){Refresh-PCGpuEnduranceUI}
         if(Get-Command Refresh-PCCpuTuningUI -ErrorAction SilentlyContinue){Refresh-PCCpuTuningUI}
+        if(Get-Command Refresh-PCCpuPowerUI -ErrorAction SilentlyContinue){Refresh-PCCpuPowerUI}
     }
     function Format-Snapshot($s) {
         $out = [System.Collections.Generic.List[string]]::new()
@@ -283,7 +288,7 @@ try {
     Show-DashboardResult
     if (Test-Path $restorePath) { $ui.PowerStatus.Text = 'A previous plan is saved. Use Restore previous plan to recover it.' }
     function Start-Task($kind) {
-        if ($script:job -or $script:updateJob) { return }
+        if ($script:job -or $script:updateJob -or $script:cpuPowerBusy) { return }
         if((Get-Command Test-PCClockGuideLocked -ErrorAction SilentlyContinue) -and (Test-PCClockGuideLocked) -and -not $script:clockGuideRun){return}
         if ($kind -in @('sensors','multicore','monitor','longcpu','memory','gpu','repeatcpu','repeatram','repeatgpu','endurance5','endurance10')) { $script:chartFrames = @(); $ui.TemperatureChart.Children.Clear(); $ui.UsageChart.Children.Clear() }
         Remove-Item -LiteralPath $script:stopPath -ErrorAction SilentlyContinue
@@ -329,6 +334,7 @@ try {
             }
             Refresh-PCGpuEnduranceUI
             Refresh-PCCpuTuningUI
+            Refresh-PCCpuPowerUI
         } catch { Set-Busy $false; Show-Error $_.Exception.Message }
     }
     $ui.MonitorStart.Add_Click({ Start-Task 'monitor' })
@@ -447,6 +453,7 @@ try {
                 $value | Add-Member -NotePropertyName CPUName -NotePropertyValue (($script:snapshot.CPU.Name) -join '; ')
                 if(-not $value.PSObject.Properties['Plan']) { $value | Add-Member -NotePropertyName Plan -NotePropertyValue $(if ($script:jobKind -in @('multicore','longcpu','memory','gpu','repeatcpu','repeatram','repeatgpu','endurance5','endurance10')) { $script:testPlan } else { $null }) }
                 if(-not $value.PSObject.Properties['PowerStateAtStart']) { $value | Add-Member -NotePropertyName PowerStateAtStart -NotePropertyValue $script:testPowerState }
+                if($script:jobKind -notlike 'repeat*' -and $null -ne (Get-PCResultRate $value)){$value=Complete-PCPowerContext $value $script:testPowerState (Get-PCTuningCapabilities)}
                 $value | Add-Member -NotePropertyName DriverVersion -NotePropertyValue (($script:snapshot.GPU.DriverVersion) -join '; ')
                 $value | Add-Member -NotePropertyName MemoryConfig -NotePropertyValue (($script:snapshot.RAM | ForEach-Object { "$($_.Capacity):$($_.ConfiguredClockSpeed)" }) -join ';')
                 $script:sessions = @($script:sessions) + @($value)
@@ -460,7 +467,7 @@ try {
                 $ui.SensorSummary.Text = $summary
                 $ui.Status.Text = $summary
                 if ($null -ne (Get-PCResultRate $value)) {
-                    $score = $value | Select-Object Test,BatchId,RunIndex,RunCount,Timestamp,Seconds,PowerStateAtStart,MiBPerSecond,GpuFramesPerSecond,GPUName,Renderer,BufferMiB,DriverVersion,MemoryConfig,Workers,Runtime,Completed,StopReason,PeakCPU,CPUName,Plan
+                    $score = $value | Select-Object Test,BatchId,RunIndex,RunCount,Timestamp,Seconds,PowerStateAtStart,PowerStateAtEnd,MiBPerSecond,GpuFramesPerSecond,GPUName,Renderer,BufferMiB,DriverVersion,MemoryConfig,Workers,Runtime,Completed,StopReason,PeakCPU,CPUName,Plan
                     $script:history = @($script:history) + @($score)
                     Save-JsonAtomic @($script:history | Select-Object -Last 100) $historyPath
                     Show-History
@@ -472,11 +479,12 @@ try {
             } else {
                 $value | Add-Member -NotePropertyName CPUName -NotePropertyValue (($script:snapshot.CPU.Name) -join '; ')
                 $value | Add-Member -NotePropertyName Plan -NotePropertyValue $script:testPlan
+                $value=Complete-PCPowerContext $value $script:testPowerState (Get-PCTuningCapabilities)
                 $script:history = @($script:history) + @($value)
                 Save-JsonAtomic @($script:history | Select-Object -Last 100) $historyPath
                 Show-History
                 if(-not $value.PSObject.Properties['PowerStateAtStart']) { $value | Add-Member -NotePropertyName PowerStateAtStart -NotePropertyValue $script:testPowerState -Force }
-                $ui.Status.Text = 'CPU test complete. A short benchmark does not establish stability.'
+                $ui.Status.Text = if($value.StopReason){'CPU test excluded: '+$value.StopReason}else{'CPU test complete. A short benchmark does not establish stability.'}
             }
             }
             if($script:guideRun){$guideCompleted=@($values)}
@@ -621,7 +629,7 @@ try {
         try{$ui.UpdateFeed.Text=[string](Get-Content $script:updateConfig -Raw|ConvertFrom-Json).Url;$ui.UpdateStatus.Text='Release feed saved. Choose Save feed and check to look for updates.'}catch{$ui.UpdateStatus.Text='Saved feed could not be read. Enter a trusted release URL.'}
     }
     function Start-UpdateTask([string]$kind,$argument) {
-        if($script:job -or $script:updateJob){return}
+        if($script:job -or $script:updateJob -or $script:cpuPowerBusy){return}
         $script:updateKind=$kind; $script:jobKind='update'
         Set-Busy $true; $ui.Cancel.IsEnabled=$false; $ui.SensorCancel.IsEnabled=$false; $ui.CancelUpdate.IsEnabled=$true
         $ui.UpdateStatus.Text=if($kind -eq 'check'){'Checking release feed...'}else{'Downloading and verifying update...'}
@@ -634,6 +642,7 @@ try {
             }
             Refresh-PCGpuEnduranceUI
             Refresh-PCCpuTuningUI
+            Refresh-PCCpuPowerUI
         } catch {Set-Busy $false; $ui.CancelUpdate.IsEnabled=$false; Show-Error $_.Exception.Message}
     }
     $ui.CheckUpdate.Add_Click({
@@ -676,7 +685,8 @@ try {
         finally{Remove-Job $script:updateJob -Force -ErrorAction SilentlyContinue;$script:updateJob=$null;Set-Busy $false;$ui.CancelUpdate.IsEnabled=$false}
     })
     $ui.InstallUpdate.Add_Click({
-        if($script:job -or $script:updateJob -or -not $script:updateSource){return}
+        if($script:job -or $script:updateJob -or $script:cpuPowerBusy -or -not $script:updateSource){return}
+        if(Test-Path -LiteralPath (Join-Path $dataDir 'cpu-power-restore.json')){Show-Error 'Restore saved CPU limits on CPU tuning before installing an update. Your recovery record has been retained.';return}
         if(-not(Confirm 'Install the downloaded update and restart PC Insight? Saved results and recovery records are preserved. The current scan will need to be run again.')){return}
         try {
             $exe=Join-Path $env:SystemRoot 'System32\WindowsPowerShell\v1.0\powershell.exe'
@@ -692,8 +702,10 @@ try {
     . "$PSScriptRoot\GuidedClocksUI.ps1"
     . "$PSScriptRoot\GpuEnduranceUI.ps1"
     . "$PSScriptRoot\CpuTuningUI.ps1"
+    . "$PSScriptRoot\CpuPowerUI.ps1"
     $window.Add_Closing({
         param($sender,$eventArgs)
+        if($script:cpuPowerBusy){$eventArgs.Cancel=$true;return}
         if($script:clockGuide -and $script:clockGuide.Phase -eq 'Decision'){
             if(-not(Confirm 'Restore the trial clock offsets before closing? Choose No to return and select Keep or Restore.')){$eventArgs.Cancel=$true;return}
             try{Restore-PCClockGuide $script:clockGuide $script:clockJournalPath $script:clockGuidePath}catch{$eventArgs.Cancel=$true;Show-Error $_.Exception.Message;return}

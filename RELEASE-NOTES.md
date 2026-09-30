@@ -1,4 +1,14 @@
-﻿# v0.27.1 — CPU page readability and cancellation
+﻿# v0.28.0 — CPU power-limit preview
+
+- Adds real Intel package-power detection and reviewed PL1/PL2 reductions on the initial i7-13700K / Raptor Lake B7 target, using an already installed PawnIO driver and an official signed module.
+- Saves original settings before writing, checks for conflicts, reads back changes, attempts rollback on failure and offers explicit restoration after reopening on the same boot.
+- Restricts the form to whole watts, 25–253 W, PL1 no greater than PL2, and neither limit above its current value. Preserves timing, enables, clamping and protection bits. CPU ratios and voltage are still unavailable.
+- Includes CPU power context in benchmark measurements and comparisons, and excludes scores when the start/end settings differ.
+- Blocks installation/uninstallation while a CPU recovery record remains; tasks, updates and other tuning controls lock during CPU changes.
+
+Validation: native C# 5 compilation, protocol/bit guards, transaction and UI failure paths, installer recovery, benchmark metadata, existing GPU workflows, updater, PowerShell parsing and XAML binding checks passed on Linux. This preview still needs physical Windows detection, apply, readback and restoration acceptance. Register readback is not proof of the effective hardware power cap or of stability. Firmware may impose other limits. No driver is installed and no CPU changes run automatically at startup.
+
+# v0.27.1 — CPU page readability and cancellation
 
 Fixes clipped CPU control descriptions with explicit wrapping and stacked rows. Adds Cancel CPU batch directly to the CPU page, enabled only during the existing three-run CPU workload. Cancellation retains the existing batch-discard behavior. CPU overclocking/voltage/power-limit writes remain unavailable.
 

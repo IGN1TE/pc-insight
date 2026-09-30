@@ -1,5 +1,8 @@
 ﻿$ErrorActionPreference='Stop'
 function Assert-PCUninstallRecovery([string]$DataPath) {
+    if(Test-Path -LiteralPath (Join-Path $DataPath 'cpu-power-restore.json')){
+        throw 'A CPU settings recovery record exists. Restore saved CPU limits in PC Insight before uninstalling. The recovery record has been retained.'
+    }
     foreach($name in @('gpu-clock-restore.json','gpu-power-restore.json','restore.json')){
         if(Test-Path -LiteralPath (Join-Path $DataPath $name)){
             throw 'A settings recovery record exists. Restore saved GPU clock offsets, GPU power limits and Windows power plans in PC Insight before uninstalling.'

@@ -1,9 +1,29 @@
-﻿function Get-PCPowerSignature($state) {
+﻿if(-not (Get-Command Test-PCRecordedCpuPower -ErrorAction SilentlyContinue)){. (Join-Path $PSScriptRoot 'CpuPowerMetadata.ps1')}
+function Get-PCPowerSignature($state) {
     if(-not $state){return 'GPU power limits unavailable'}
     $power=if($state.Issue -or -not @($state.Devices).Count){'GPU power limits unavailable'}else{(@($state.Devices | Sort-Object UUID | ForEach-Object { "$($_.UUID)=$($_.Current)W" })) -join '; '}
-    if(-not $state.PSObject.Properties['ClockOffsets']){return $power}
-    $clocks=if($state.ClockIssue -or -not @($state.ClockOffsets | Where-Object { $null -ne $_ }).Count){'unavailable'}else{(@($state.ClockOffsets|Sort-Object UUID|ForEach-Object{if($_.Available){"$($_.UUID):P0 core=$($_.CoreMHz)MHz memory=$($_.MemoryMHz)MHz"}else{"$($_.UUID):unavailable"}})) -join '; '}
-    $power+' | Clock offsets: '+$clocks
+    $signature=$power
+    if($state.PSObject.Properties['ClockOffsets']){
+        $clocks=if($state.ClockIssue -or -not @($state.ClockOffsets | Where-Object { $null -ne $_ }).Count){'unavailable'}else{(@($state.ClockOffsets|Sort-Object UUID|ForEach-Object{if($_.Available){"$($_.UUID):P0 core=$($_.CoreMHz)MHz memory=$($_.MemoryMHz)MHz"}else{"$($_.UUID):unavailable"}})) -join '; '}
+        $signature+=' | Clock offsets: '+$clocks
+    }
+    # Keep old saved-data signatures stable; reports separately label missing CPU data.
+    if($state.PSObject.Properties['CpuPower']){$signature+=' | '+(Get-PCRecordedCpuPowerSignature $state)}
+    $signature
+}
+function Complete-PCPowerContext($Result,$Before,$After) {
+    if(-not $Result){throw 'A result is required to complete its power context.'}
+    if(-not $Result.PSObject.Properties['PowerStateAtStart']){$Result | Add-Member NoteProperty PowerStateAtStart $Before}
+    $Result | Add-Member NoteProperty PowerStateAtEnd $After -Force
+    if((Get-PCPowerSignature $Result.PowerStateAtStart) -ne (Get-PCPowerSignature $After)){
+        $reason='Reported power or clock settings changed between the start and end reads, or a previously available reading was lost. Score excluded.'
+        if($Result.StopReason){$reason=[string]$Result.StopReason+' '+$reason}
+        $Result | Add-Member NoteProperty Completed $false -Force
+        $Result | Add-Member NoteProperty StopReason $reason -Force
+        $Result | Add-Member NoteProperty MiBPerSecond $null -Force
+        $Result | Add-Member NoteProperty GpuFramesPerSecond $null -Force
+    }
+    $Result
 }
 function Invoke-PCRepeatedTest([ValidateSet('longcpu','memory','gpu')][string]$Kind) {
     $batch=[guid]::NewGuid().ToString();$results=[Collections.Generic.List[object]]::new()
@@ -22,14 +42,18 @@ function Invoke-PCRepeatedTest([ValidateSet('longcpu','memory','gpu')][string]$K
         }
         if(-not $result){throw 'No result from repeated test.'}
         $after=Get-PCTuningCapabilities;$endPlan=Get-ActivePlan
-        if((Get-PCPowerSignature $before) -ne (Get-PCPowerSignature $after) -or $plan -ne $endPlan){
-            $result.Completed=$false;$result.StopReason='Reported power or clock settings changed during this run. Batch stopped; score excluded.';$result.MiBPerSecond=$null
+        $result=Complete-PCPowerContext $result $before $after
+        if($plan -ne $endPlan){
+            $result | Add-Member NoteProperty Completed $false -Force
+            $reason='Windows power plan changed between the start and end reads. Batch stopped; score excluded.'
+            if($result.StopReason){$reason=[string]$result.StopReason+' '+$reason}
+            $result | Add-Member NoteProperty StopReason $reason -Force
+            $result | Add-Member NoteProperty MiBPerSecond $null -Force
             if($result.PSObject.Properties['GpuFramesPerSecond']){$result.GpuFramesPerSecond=$null}
         }
         $result | Add-Member NoteProperty BatchId $batch
         $result | Add-Member NoteProperty RunIndex $run
         $result | Add-Member NoteProperty RunCount 3
-        $result | Add-Member NoteProperty PowerStateAtStart $before
         $result | Add-Member NoteProperty Plan $plan
         $results.Add($result)
         if(-not $result.Completed -or $result.StopReason){break}
@@ -55,6 +79,7 @@ function Get-PCBatchReport($history) {
     foreach($group in @($groups | Select-Object -Last 8)){
         $last=$group.Group[-1];$stats=Get-PCGroupStats $group.Group
         $lines.Add(("{0} | {1}`n{2}/3 matching runs · median {3:N1} {4}`nRange {5:N1}–{6:N1}; spread {7:N1}% of median.`n{8}" -f $last.Test,$last.Timestamp,$stats.Count,$stats.Median,(Get-PCResultUnit $last),$stats.Min,$stats.Max,$stats.SpreadPercent,(Get-PCPowerSignature $last.PowerStateAtStart)))
+        $lines.Add((Get-PCRecordedCpuPowerContext $last.PowerStateAtStart))
         if($stats.SpreadPercent -gt 5){$lines.Add('HIGH VARIABILITY: spread exceeds the 5% app heuristic. Tuning conclusions are inconclusive; inspect background activity and starting conditions before repeating.')}
         if($stats.Count -lt 3){$lines.Add('Incomplete or mixed-settings batch: collect three matching successful runs before comparing.')}
     }
@@ -67,12 +92,15 @@ function Get-PCBatchReport($history) {
             $lines.Add(('LATEST BATCH COMPARISON: median {0:N1} → {1:N1} {2} ({3:+0.0;-0.0;0.0}%).' -f $old.Median,$now.Median,(Get-PCResultUnit $current),$delta))
             $lines.Add('Earlier settings: '+(Get-PCPowerSignature $prior[0].Group[-1].PowerStateAtStart))
             $lines.Add('Latest settings: '+(Get-PCPowerSignature $current.PowerStateAtStart))
+            $lines.Add('Earlier '+(Get-PCRecordedCpuPowerContext $prior[0].Group[-1].PowerStateAtStart))
+            $lines.Add('Latest '+(Get-PCRecordedCpuPowerContext $current.PowerStateAtStart))
             if($prior[0].Group[-1].Plan -ne $current.Plan){$lines.Add('Windows power plans differ; this is not a controlled single-setting comparison.')}
             if($now.SpreadPercent -gt 5 -or $old.SpreadPercent -gt 5){$lines.Add('COMPARISON INCONCLUSIVE: at least one batch exceeds the 5% variability heuristic. The median difference is descriptive, not evidence of a tuning gain or loss.')}
             if($now.Min -le $old.Max -and $old.Min -le $now.Max){$lines.Add('Observed run ranges overlap. The difference may be normal variability.')}
             else{$lines.Add('Observed ranges do not overlap in these samples. Repeat to check reproducibility; three runs do not establish statistical significance.')}
         }else{$lines.Add('No earlier compatible complete batch. This batch records the initial measurements; check its variability before using it as a tuning baseline.')}
     }
+    $lines.Add('Settings are sampled at run boundaries, not continuously. Changes made and reversed between reads may not be detected.')
     $lines.Add('Cooldown is fixed at 10 seconds, not a guarantee of equal starting temperature. Keep workload, cooling and background applications consistent. Medians reduce sensitivity to one outlier; these tests do not establish stability or causation.')
     $lines -join "`n`n"
 }

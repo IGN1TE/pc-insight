@@ -1,4 +1,5 @@
 ﻿# Pure saved-data comparison. Does not query hardware or change settings.
+if(-not (Get-Command Test-PCRecordedCpuPower -ErrorAction SilentlyContinue)){. (Join-Path $PSScriptRoot 'CpuPowerMetadata.ps1')}
 function Get-PCComparisonNumber($Value) {
     $text=ConvertTo-PCInvariantNumber $Value
     if($text -ne ''){[double]::Parse($text,[Globalization.CultureInfo]::InvariantCulture)}
@@ -57,9 +58,12 @@ function Get-PCSessionComparison($Before,$After) {
     $notes.Add("GPU power limits at start: A $beforePower; B $afterPower.")
     foreach($pair in @(@('A',$Before),@('B',$After))){
         $state=$pair[1].PowerStateAtStart
+        $notes.Add("Recorded CPU limits at start, $($pair[0]): $(Get-PCRecordedCpuPowerContext $state)")
+        $notes.Add("Recorded CPU limits at end, $($pair[0]): $(Get-PCRecordedCpuPowerContext $pair[1].PowerStateAtEnd)")
         $clockText=if(-not $state -or $state.ClockIssue -or -not @($state.ClockOffsets | Where-Object { $null -ne $_ }).Count){'unavailable'}else{(@($state.ClockOffsets|ForEach-Object{if($_.Available){"$($_.UUID): P0 core $($_.CoreMHz) MHz, memory $($_.MemoryMHz) MHz"}else{"$($_.UUID): unavailable"}})) -join '; '}
         $notes.Add("Recorded clock offsets at start, $($pair[0]): $clockText.")
     }
+    $notes.Add('Settings are sampled at run boundaries, not continuously. Changes made and reversed between reads may not be detected; older sessions can lack an end reading.')
     $notes.Add('Change means B minus A. One pair of runs does not establish an improvement; repeat equivalent tests to check variation. Benchmark throughput is not game FPS.')
     $notes.Add('Sensor changes are descriptive sample statistics for matching sensor identities. Only retained samples count; missing readings and frames with issues are excluded. Averages are not time-weighted. Different workloads, durations or sample coverage can change the results.')
     $reasons=@($reasons|Select-Object -Unique)
@@ -87,8 +91,8 @@ function Get-PCSessionComparison($Before,$After) {
     }
     [pscustomobject]@{
         Schema=1;Kind='PCInsight.SessionComparison';Created=(Get-Date).ToString('o')
-        Before=($Before|Select-Object Timestamp,Test,CPUName,Runtime,Workers,Renderer,DriverVersion,MemoryConfig,BufferMiB,WarmupSeconds,Plan,Seconds,Completed,StopReason)
-        After=($After|Select-Object Timestamp,Test,CPUName,Runtime,Workers,Renderer,DriverVersion,MemoryConfig,BufferMiB,WarmupSeconds,Plan,Seconds,Completed,StopReason)
+        Before=($Before|Select-Object Timestamp,Test,CPUName,Runtime,Workers,Renderer,DriverVersion,MemoryConfig,BufferMiB,WarmupSeconds,Plan,Seconds,Completed,StopReason,PowerStateAtStart,PowerStateAtEnd)
+        After=($After|Select-Object Timestamp,Test,CPUName,Runtime,Workers,Renderer,DriverVersion,MemoryConfig,BufferMiB,WarmupSeconds,Plan,Seconds,Completed,StopReason,PowerStateAtStart,PowerStateAtEnd)
         ScoreComparable=$comparable;Reasons=$reasons;Notes=@($notes);Rows=@($rows.ToArray())
         Status=if($comparable){'Matching benchmark configuration. Review the conditions below.'}else{'Score change unavailable: '+($reasons -join ' ')}
     }

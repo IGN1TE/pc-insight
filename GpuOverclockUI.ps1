@@ -1,9 +1,9 @@
-# Manual P0 offsets; detection and startup never write GPU settings.
+﻿# Manual P0 offsets; detection and startup never write GPU settings.
 $script:clockJournalPath=Join-Path $dataDir 'gpu-clock-restore.json'
 $script:clockActionBusy=$false
 function Test-PCClockUiBusy {
     if((Get-Command Test-PCClockGuideLocked -ErrorAction SilentlyContinue) -and (Test-PCClockGuideLocked)){return $true}
-    $script:clockActionBusy -or $script:job -or $script:updateJob -or ($script:guide -and $script:guide.Phase -in @('RunningBaseline','Review','Applying','RunningAfter','Decision','RecoveryRequired'))
+    $script:clockActionBusy -or $script:job -or $script:updateJob -or $script:cpuPowerBusy -or ($script:guide -and $script:guide.Phase -in @('RunningBaseline','Review','Applying','RunningAfter','Decision','RecoveryRequired'))
 }
 function Update-PCClockControlState([bool]$Busy=$false) {
     $blocked=$Busy -or (Test-PCClockUiBusy)

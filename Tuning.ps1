@@ -27,6 +27,26 @@ function Get-PCPowerDevices {
             Label=($row.Name.Trim()+' · '+$uuid);Status=$(if($available){'Power range reported; write permission/support is not yet verified.'}else{'Power limits unavailable; controls disabled.'})}
     }
 }
+function Get-PCCpuPowerTestContext {
+    try {
+        if(-not (Get-Command Get-PCCpuPowerHardware -ErrorAction SilentlyContinue)){. (Join-Path $PSScriptRoot 'CpuPowerNative.ps1')}
+        if(-not (Get-Command Test-PCRecordedCpuPower -ErrorAction SilentlyContinue)){. (Join-Path $PSScriptRoot 'CpuPowerMetadata.ps1')}
+        $read=Get-PCCpuPowerHardware
+        if(-not $read){throw 'CPU package power reader returned no metadata.'}
+        # Read availability is independent of write support: locked or disabled
+        # limits are still useful benchmark context when the raw read is complete.
+        $context=$read | Select-Object Name,Identity,ProcessorId,BIOS,BootId,RawLimitHex,RawUnitsHex,Supported,Reason,PL1Watts,PL2Watts,Locked,PL1Enabled,PL2Enabled
+        $context | Add-Member NoteProperty Available $true
+        $context | Add-Member NoteProperty Timestamp (Get-Date).ToString('o')
+        if(-not (Test-PCRecordedCpuPower $context)){
+            $reason=if($read.Reason){[string]$read.Reason}else{'CPU package power reader returned incomplete or invalid metadata.'}
+            throw $reason
+        }
+        return $context
+    } catch {
+        return [pscustomobject]@{Available=$false;Reason=$_.Exception.Message;Timestamp=(Get-Date).ToString('o')}
+    }
+}
 function Get-PCTuningCapabilities {
     $devices=@();$issue=$null
     try {$devices=@(Get-PCPowerDevices)}catch{$issue=$_.Exception.Message}
@@ -35,7 +55,8 @@ function Get-PCTuningCapabilities {
         if(-not (Get-Command Get-PCClockDevices -ErrorAction SilentlyContinue)){. (Join-Path $PSScriptRoot 'GpuOverclock.ps1')}
         $clocks=@(Get-PCClockDevices|Select-Object UUID,Name,Driver,Available,CoreMHz,MemoryMHz,Issue)
     }catch{$clockIssue=$_.Exception.Message}
-    [pscustomobject]@{Timestamp=(Get-Date).ToString('o');Devices=$devices;Issue=$issue;ClockOffsets=$clocks;ClockIssue=$clockIssue;CPU='Clock, voltage and CPU power writes: not implemented; BIOS support not inferred from CPU name.';GPU='NVIDIA power-limit reductions and capability-gated manual P0 clock offsets. Use Detect clock support separately. Voltage and AMD/Intel writes: not implemented.';RAM='XMP/EXPO and timing writes: not implemented.'}
+    $cpuPower=Get-PCCpuPowerTestContext
+    [pscustomobject]@{Timestamp=(Get-Date).ToString('o');Devices=$devices;Issue=$issue;ClockOffsets=$clocks;ClockIssue=$clockIssue;CpuPower=$cpuPower;CPU='CPU package power support and recovery are checked on the CPU tuning page. Clock and voltage writes are not implemented.';GPU='NVIDIA power-limit reductions and capability-gated manual P0 clock offsets. Use Detect clock support separately. Voltage and AMD/Intel writes: not implemented.';RAM='XMP/EXPO and timing writes: not implemented.'}
 }
 function Get-PCDeviceById([string]$UUID) {
     if ($UUID -notmatch '^GPU-[a-fA-F0-9-]+$') { throw 'Invalid GPU identity.' }
@@ -131,10 +152,13 @@ function Get-PCBaselineComparison($Baseline,$History,$Sessions) {
         $lines.Add(("{0} — 3 baseline + 3 new runs`nMedian: {1:N1} → {2:N1} {3} ({4:+0.0;-0.0;0.0}%).`nSpread: {5:N1}% → {6:N1}%." -f $current.Test,$a.Median,$b.Median,(Get-PCResultUnit $current),$delta,$a.SpreadPercent,$b.SpreadPercent))
         $lines.Add('Baseline test settings: '+(Get-PCPowerSignature $prior.PowerStateAtStart))
         $lines.Add('New test settings: '+(Get-PCPowerSignature $current.PowerStateAtStart))
+        $lines.Add('Baseline '+(Get-PCRecordedCpuPowerContext $prior.PowerStateAtStart))
+        $lines.Add('New '+(Get-PCRecordedCpuPowerContext $current.PowerStateAtStart))
         $unknown=(Get-PCPowerSignature $prior.PowerStateAtStart) -like 'GPU power limits unavailable*' -or (Get-PCPowerSignature $current.PowerStateAtStart) -like 'GPU power limits unavailable*'
         if($a.SpreadPercent -gt 5 -or $b.SpreadPercent -gt 5){$lines.Add('INCONCLUSIVE: at least one batch exceeds the 5% variability heuristic. No tuning gain or loss is established.')}
         elseif($prior.Plan -ne $current.Plan){$lines.Add('INCONCLUSIVE FOR A SINGLE CHANGE: Windows power plans differ between batches.')}
         elseif($unknown){$lines.Add('SETTINGS COVERAGE INCOMPLETE: GPU power limits were unavailable for at least one batch. No controlled tuning conclusion is established.')}
+        elseif($current.Test -notlike 'OpenGL-*' -and (-not (Test-PCRecordedCpuPower $prior.PowerStateAtStart.CpuPower) -or -not (Test-PCRecordedCpuPower $current.PowerStateAtStart.CpuPower))){$lines.Add('SETTINGS COVERAGE INCOMPLETE: CPU limits unavailable for at least one batch. No controlled CPU tuning conclusion is established.')}
         elseif($a.Min -le $b.Max -and $b.Min -le $a.Max){$lines.Add('NO CLEAR SEPARATION: observed throughput ranges overlap. Treat the difference as inconclusive.')}
         elseif($delta -lt 0){$lines.Add('LOWER MEASURED THROUGHPUT: all three new scores are below the baseline range. Repeat to check reproducibility before attributing this to the setting.')}
         else{$lines.Add('HIGHER MEASURED THROUGHPUT: all three new scores are above the baseline range. Repeat to check reproducibility before attributing this to the setting.')}
@@ -156,6 +180,7 @@ function Get-PCBaselineComparison($Baseline,$History,$Sessions) {
             }
         }
     }
+    $lines.Add('Settings are sampled at run boundaries, not continuously. Changes made and reversed between reads may not be detected.')
     $lines.Add('Three runs and a 5% variability threshold are heuristics, not statistical significance. Peak power is not energy use or efficiency. Cooling, background activity and unobserved settings can affect results. No changes are applied or restored by this comparison.')
     $lines -join "`n`n"
 }

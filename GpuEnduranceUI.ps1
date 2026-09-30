@@ -4,7 +4,7 @@ function Save-PCGpuEnduranceStatus([string]$State,[string]$Message){
     $ui.EnduranceStatus.Text=$Message
 }
 function Refresh-PCGpuEnduranceUI {
-    $locked=$script:job -or $script:updateJob -or $script:clockActionBusy -or (Test-PCClockGuideLocked) -or ($script:guide -and $script:guide.Phase -in @('RunningBaseline','Review','Applying','RunningAfter','Decision','RecoveryRequired'))
+    $locked=$script:job -or $script:updateJob -or $script:clockActionBusy -or $script:cpuPowerBusy -or (Test-PCClockGuideLocked) -or ($script:guide -and $script:guide.Phase -in @('RunningBaseline','Review','Applying','RunningAfter','Decision','RecoveryRequired'))
     foreach($n in 'Endurance5','Endurance10'){$ui[$n].IsEnabled=-not $locked -and $null -ne $script:snapshot}
     $ui.EnduranceStop.IsEnabled=$script:job -and $script:jobKind -like 'endurance*'
 }

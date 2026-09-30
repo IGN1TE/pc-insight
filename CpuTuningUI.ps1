@@ -3,7 +3,7 @@ function Refresh-PCCpuTuningUI {
     $script:cpuReadiness=Get-PCCpuTuningReadiness $script:snapshot
     $ui.CpuReadinessText.Text=Format-PCCpuTuningReadiness $script:cpuReadiness
     $ui.CpuControlTable.ItemsSource=@($script:cpuReadiness.Controls)
-    $locked=$script:job -or $script:updateJob -or $script:clockActionBusy -or (Test-PCClockGuideLocked) -or ($script:guide -and $script:guide.Phase -in @('RunningBaseline','Review','Applying','RunningAfter','Decision','RecoveryRequired'))
+    $locked=$script:job -or $script:updateJob -or $script:clockActionBusy -or $script:cpuPowerBusy -or (Test-PCClockGuideLocked) -or ($script:guide -and $script:guide.Phase -in @('RunningBaseline','Review','Applying','RunningAfter','Decision','RecoveryRequired'))
     $ui.CpuReadinessScan.IsEnabled=-not $locked
     $ui.CpuBaselineRun.IsEnabled=-not $locked -and $script:cpuReadiness.CanBenchmark
     $ui.CpuBaselineCancel.IsEnabled=$null -ne $script:job -and $script:jobKind -eq 'repeatcpu' -and -not $script:updateJob

@@ -2,10 +2,10 @@
 
 [Download the latest release](https://github.com/IGN1TE/pc-insight/releases/latest) · [Development workflow](DEVELOPMENT.md)
 
-Version 0.27.0 adds a CPU tuning readiness page, inventory-based guidance, an exportable report and access to the existing three-run CPU baseline. Direct CPU clock, voltage and package-power-limit writes remain unimplemented.
+Version 0.28.0 adds a limited Intel CPU package-power preview: live PL1/PL2 detection, reviewed reductions, saved originals, readback and explicit restoration. The first supported target is a single i7-13700K with the matching Raptor Lake CPUID and an available PawnIO driver. CPU multiplier and voltage control remain unavailable. Physical Windows apply/restore validation is pending.
 
 ---
-# PC Insight 0.24.0 - NVIDIA clock-offset preview
+# PC Insight 0.28.0 - CPU power-limit preview
 
 CPU/GPU sensor readings are now collected inside PC Insight through the bundled official LibreHardwareMonitorLib 0.9.6. You no longer need the Libre Hardware Monitor desktop app, Log Sensors, a CSV file or its remote web server.
 
@@ -456,7 +456,7 @@ Open **CPU tuning → Scan CPU and motherboard**. The report shows the inventory
 
 **Run CPU baseline · 3 tests** uses the existing three monitored 60-second SHA-256 runs and cooldowns. Save work first. The workload checks CPU temperatures and stops at the preview cutoff; it is not a stability certificate. Cancel discards the batch, as on Benchmark. Read **Repeated results** for medians and variability and **Test results** for recorded temperatures. **Export readiness report** saves this report as JSON without serial numbers, account details or unrelated sessions.
 
-Direct CPU overclocking requires a validated vendor interface with capability detection, original-setting capture, write/readback and recovery. That interface is not integrated in this release. Windows power-plan selection remains a separate existing feature on Optimize and is not represented as CPU overclocking.
+CPU multiplier and voltage tuning still require a supported control integration. The separate package-power preview below uses documented Intel power-limit registers. Windows power-plan selection remains a separate feature on Optimize.
 
 References reviewed 2026-09-30:
 - Intel XTU hardware/firmware requirements: https://www.intel.com/content/www/us/en/support/articles/000006636/processors/processor-utilities-and-programs.html
@@ -468,3 +468,20 @@ Validation: read-only classification, missing/multiple/vendor cases, real UI-han
 ## CPU page usability (0.27.1)
 
 Control descriptions use explicit wrapping in a vertical layout to avoid the clipping seen on Windows in 0.27.0. **Cancel CPU batch** is now available beside Run CPU baseline and only acts on a running three-test CPU batch. It uses the existing cancellation behavior, which discards that batch. The screenshot confirmed inventory display for an i7-13700K, ASUS ROG STRIX Z690-A GAMING WIFI D4 and BIOS 4505; CPU write support is still not established.
+
+
+## CPU package power limits (0.28.0)
+
+Open **CPU tuning**, reopen as administrator if needed, then **Detect CPU power limits**. Detection reads hardware and changes no settings. This first preview supports only one Intel Core i7-13700K with family 6 / model B7. Other processors remain unavailable until their own support and validation are implemented. The installed PawnIO driver must be accessible; PC Insight neither installs a driver nor changes Windows security settings.
+
+The sustained limit (PL1) and burst limit (PL2) accept whole watts. The app's initial guard is 25–253 W, PL1 no greater than PL2, and neither value higher than its current detected value. This range is an application restriction, not an Intel stability recommendation. There are no ratio, voltage, timing, clamping, limit-enable or lock-bit controls. This is CPU hardware power tuning, not multiplier overclocking.
+
+Save work and close other tuning utilities. Review the two changes before applying. The app saves the original raw settings before a write, checks for intervening changes, writes the two watt fields and reads them back. A failed write/readback triggers a best-effort rollback; unresolved recovery remains visible. **Restore saved CPU limits** restores the saved originals, which may differ from factory defaults. It remains available after closing and reopening on the same boot. Closing PC Insight does not automatically restore manual changes, and no CPU settings are automatically applied at startup.
+
+Recovery is bound to the CPU/system identity, BIOS, units and boot session. The app does not blindly replay saved settings after a reboot, BIOS change or another utility's conflicting write. If the saved originals already match the live settings, restoration can complete without a write. Keep a recovery record until the app verifies restoration. Installing an update or uninstalling is blocked while that CPU recovery record remains, including an unreadable record.
+
+Readback verifies the requested register settings only. Firmware and other power controls may impose different effective limits; transient consumption can exceed these averaged limits and settling depends on the unchanged time window. The app does not read or modify the separate memory-mapped power controls. Before/after reads attached to benchmarks detect differences at those points, not every transient change during a run. Old results correctly report CPU power metadata as unavailable.
+
+For the first hardware acceptance: detect and record the two limits; apply a small reduction permitted by the form; detect again and check the values; use **Restore saved CPU limits** and detect again to check the originals. Then verify close/reopen recovery. Do not mark hardware validation complete solely from automated mocks. Existing three-run CPU baseline, cancellation and saved-result retention were confirmed by the user on 0.27.1.
+
+Implementation references: Intel SDM Volume 3B §17.10 and Volume 4 Table 2-20 plus Raptor Lake model mapping, from https://www.intel.com/content/www/us/en/developer/articles/technical/intel-sdm.html ; official PawnIO module source and signed releases at https://github.com/namazso/PawnIO.Modules . Retained module source, license and hashes are under `vendor/PawnIO`.

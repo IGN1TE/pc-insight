@@ -19,11 +19,11 @@ function Get-PCCpuTuningReadiness($Snapshot){
     $rows=@(
         [pscustomobject]@{Control='CPU multiplier / frequency';Availability='Unavailable in PC Insight';Detail='No validated vendor write/readback adapter is integrated.'}
         [pscustomobject]@{Control='CPU voltage / undervolt';Availability='Unavailable in PC Insight';Detail='No voltage control, range detection or original-value restoration is implemented.'}
-        [pscustomobject]@{Control='CPU package power limits';Availability='Unavailable in PC Insight';Detail='Firmware limits are not inferred from sensors or a Windows power plan.'}
+        [pscustomobject]@{Control='CPU package power limits';Availability='Use Detect CPU power limits below';Detail='The limited i7-13700K preview can lower PL1 / PL2 after a live probe, save the originals and verify restoration. Inventory alone does not enable writes.'}
         [pscustomobject]@{Control='Three-run CPU measurement';Availability=$(if($cpus.Count -eq 1){'Available; sensor checks at start'}else{'Scan one CPU first'});Detail='Three monitored 60-second SHA-256 runs with cooldowns; temperature required. Not a comprehensive CPU or stability test.'}
         [pscustomobject]@{Control='Windows power-plan selection';Availability='Available on Optimize';Detail='Select and restore an installed Windows power plan. This does not set CPU multipliers or voltage.'}
     )
-    [pscustomobject]@{Schema=1;Generated=(Get-Date).ToString('o');SnapshotTimestamp=$Snapshot.Timestamp;CPUName=$name;Vendor=$vendor;Board=$board;BIOS=$firmware;ProcessorRecords=$cpus.Count;ModelCandidate=$candidate;CanWrite=$false;CanBenchmark=($cpus.Count -eq 1);Reason=$reason;VendorRequirementsUrl=$url;Controls=$rows;Limitations='Inventory snapshot only, not a live hardware-control probe. No BIOS lock, voltage range, multiplier range, thermal headroom or vendor-tool installation is established. No CPU tuning changes are applied or restored by this report.'}
+    [pscustomobject]@{Schema=1;Generated=(Get-Date).ToString('o');SnapshotTimestamp=$Snapshot.Timestamp;CPUName=$name;Vendor=$vendor;Board=$board;BIOS=$firmware;ProcessorRecords=$cpus.Count;ModelCandidate=$candidate;CanWrite=$false;CanBenchmark=($cpus.Count -eq 1);Reason=$reason;VendorRequirementsUrl=$url;Controls=$rows;Limitations='Inventory snapshot only, not a live hardware-control probe. No BIOS lock, voltage range, multiplier range, thermal headroom or vendor-tool installation is established. This inventory report applies no settings. The separate CPU power-limit controls perform a live check before any reviewed change.'}
 }
 function Format-PCCpuTuningReadiness($Report){
     $cpu=if($Report.CPUName){$Report.CPUName}else{'Unavailable — Scan PC first'}
