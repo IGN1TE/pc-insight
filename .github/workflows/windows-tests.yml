@@ -22,11 +22,12 @@ jobs:
             if ($errors.Count) { throw ($errors | Out-String) }
           }
           [xml]$xaml = Get-Content MainWindow.xaml -Raw -Encoding UTF8
-      - name: GPU recovery, trial and comparison regressions (mock hardware)
+      - name: CPU/GPU experiments, recovery and comparison regressions (mock hardware)
         shell: powershell
         run: |
           $ErrorActionPreference = 'Stop'
           $suites = @(
+            'Test-CpuTuning', 'Test-CpuWorkloadGuard', 'Test-CpuTuningUI',
             'Test-GpuOverclock', 'Test-GpuOverclockUI', 'Test-GpuClockTrial',
             'Test-GpuTrialWorkloadGuard', 'Test-GpuClockTrialHistory', 'Test-GpuClockTrialTelemetry', 'Test-GpuClockTrialUI',
             'Test-ClockComparisonContext', 'Test-UninstallRecovery',
