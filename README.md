@@ -5,6 +5,19 @@
 This development build contains v0.24.0 app source, tests and bundled dependencies. `main` holds released code; `develop` is for ongoing work. This GPU-controls candidate is on `feature/nvidia-clock-offsets` and has not been published. Install from the `PC-Insight-Windows-Preview.zip` release asset.
 
 ---
+
+## Development preview v0.25.0: measured GPU clock trials
+
+On **Tuning**, detect clock support, select your NVIDIA GPU and enter the desired absolute core/memory offsets. **Review and run trial** measures the original settings, cools down for ten seconds, applies the reviewed offsets, runs a matching retest and restores the originals. Each measurement uses the existing five-second warm-up and thirty-second OpenGL workload. Allow about ninety seconds.
+
+**Stop trial and restore** cancels cooperatively. Closing the window during a trial requests cancellation and keeps the window open while the worker attempts restoration. Both offset domains are read back. If restoration fails, the recovery record remains and another trial is blocked until you use **Restore saved clock offsets**. If the app or PC is forcibly terminated or a driver call hangs, automatic restoration may not run; recover on the next launch.
+
+Trials currently require exactly one NVIDIA GPU, a matching OpenGL renderer, valid temperature readings and administrator access. Driver/clock changes, missing or invalid readings, the 85 C preview cutoff and incomplete tests stop the trial. A single pair is descriptive, not proof of improved game FPS or long-term stability; the shader workload does not check artifacts or VRAM contents. The feature makes no voltage or power-limit changes.
+
+Results show baseline/retest draws per second, sampled peak GPU temperatures, the measured percentage difference and verified restoration status. **Export trial report** saves JSON. The last result reappears after relaunch as a saved result, not a fresh hardware check. Normal manual apply remains available and persists until explicitly restored; temporary trials always attempt restoration.
+
+Mock tests validate the workflow and recovery. Real GPU clock writes and stability still need testing on the target PC. This development preview has not been published to the updater.
+
 # PC Insight 0.24.0 - NVIDIA clock-offset preview
 
 CPU/GPU sensor readings are now collected inside PC Insight through the bundled official LibreHardwareMonitorLib 0.9.6. You no longer need the Libre Hardware Monitor desktop app, Log Sensors, a CSV file or its remote web server.

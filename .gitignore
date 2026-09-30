@@ -11,3 +11,12 @@ profiles.json
 PC-Insight-*-diagnostic.json
 PC-Insight-Windows-Preview.zip
 PC-Insight-*-release-kit.zip
+
+# GPU recovery and private experiment data
+gpu-clock-restore.json
+gpu-power-restore.json
+gpu-clock-trial.json
+clock-trial-stop-*.signal
+guided-optimization.json
+tuning-baseline.json
+history.json

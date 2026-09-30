@@ -72,7 +72,7 @@ function Set-PCOverlayHotkey([bool]$Enabled) {
     if($script:overlayWindow){$script:overlayUI.OverlayHint.Text=if($script:overlayHotkey){'Ctrl+Alt+O to hide'}else{'Hide from PC Insight > Game overlay'}}
 }
 function Show-PCGameOverlay {
-    if($script:job -or $script:updateJob -or ($script:guide -and $script:guide.Phase -in @('RunningBaseline','Review','Applying','RunningAfter','Decision','RecoveryRequired'))){
+    if($script:job -or $script:updateJob -or $script:clockActionBusy -or $script:clockTrialJob -or ($script:guide -and $script:guide.Phase -in @('RunningBaseline','Review','Applying','RunningAfter','Decision','RecoveryRequired'))){
         $ui.OverlayStatus.Text='Finish the active test, update or guided decision before showing the game overlay.';return
     }
     try{

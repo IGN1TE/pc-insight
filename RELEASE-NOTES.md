@@ -1,4 +1,16 @@
-﻿# v0.24.1 - Windows GPU controls preview
+﻿# v0.25.0 - Measured GPU overclock trials (development preview)
+
+- Adds a reviewed baseline/apply/retest/restore workflow for NVIDIA P0 core and memory offsets.
+- Runs the same 5-second warm-up and 30-second shader workload before and after the change, with a 10-second cooldown. Reports throughput, sampled peak temperature and the measured change.
+- Automatically attempts to restore original offsets after completion, cancellation or failure, and verifies both domains. Unresolved recovery remains on disk and blocks another trial.
+- Checks GPU identity, clock offsets, driver and temperature during the trial. Requires one NVIDIA GPU and a matching OpenGL renderer/temperature sensor.
+- Runs in a background worker. Stop requests are cooperative; closing the window requests cancellation and keeps it open while restoration finishes.
+- Saves the last trial report locally, restores its display after relaunch and supports JSON export. Saved results are clearly distinguished from a current hardware check.
+- Adds automated Windows PowerShell 5.1/WPF regression validation on GitHub.
+
+A single short comparison is not stability certification, artifact detection, VRAM testing or a game FPS prediction. Physical clock writes and performance still require validation on the target GPU. App termination, driver hangs or power loss can prevent restoration; use the saved recovery controls on the next launch. This source preview does not update the public release feed.
+
+# v0.24.1 - Windows GPU controls preview
 
 - Integrated the v0.24.0 NVIDIA clock-offset controls and readable comparison reports.
 - Recheck current GPU temperature immediately before applying offsets; reject invalid temperature values.
