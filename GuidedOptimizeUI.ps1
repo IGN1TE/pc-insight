@@ -46,6 +46,7 @@ function Refresh-GuideUI {
     $ui.GuideChange.Text=$view.Change
     $ui.GuideVerdict.Text=$view.Detail
     $ui.GuideRecovery.Text=$view.Recovery
+    if(Get-Command Refresh-PCClockGuideUI -ErrorAction SilentlyContinue){Refresh-PCClockGuideUI}
 }
 function Interrupt-GuideRun([string]$reason) {
     if(-not $script:guideRun){return}

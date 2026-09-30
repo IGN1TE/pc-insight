@@ -1,4 +1,13 @@
-﻿# v0.24.1 - Windows GPU controls preview
+﻿# v0.25.0 - Guided core trial and dashboard candidate
+
+- Restyles Overview around the supplied reference: navy surfaces, purple navigation, CPU/GPU/memory illustrations, larger readings and a combined latest-session/chart card. All existing navigation and controls remain available.
+- Adds a reviewed +15 MHz NVIDIA core trial: three baseline runs, three retests, then Keep or Restore. Memory offset stays unchanged.
+- Checks GPU identity, driver, power plan, power limit, offsets and benchmark compatibility before comparing shader throughput and sampled GPU temperature peaks.
+- Attempts restoration on cancellation or failed retests; preserves saved originals when restoration cannot be verified. Relaunch requests recovery without writing GPU settings automatically.
+- Fixes the footer claiming no settings changed after manual clock writes.
+- Linux PowerShell workflow tests use mocked GPU controls. Windows WPF and the full physical guided trial still require validation before publication; this is not a stability certification.
+
+# v0.24.1 - Windows GPU controls preview
 
 - Integrated the v0.24.0 NVIDIA clock-offset controls and readable comparison reports.
 - Recheck current GPU temperature immediately before applying offsets; reject invalid temperature values.

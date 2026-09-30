@@ -2,6 +2,7 @@
 $script:clockJournalPath=Join-Path $dataDir 'gpu-clock-restore.json'
 $script:clockActionBusy=$false
 function Test-PCClockUiBusy {
+    if((Get-Command Test-PCClockGuideLocked -ErrorAction SilentlyContinue) -and (Test-PCClockGuideLocked)){return $true}
     $script:clockActionBusy -or $script:job -or $script:updateJob -or ($script:guide -and $script:guide.Phase -in @('RunningBaseline','Review','Applying','RunningAfter','Decision','RecoveryRequired'))
 }
 function Update-PCClockControlState([bool]$Busy=$false) {
@@ -53,19 +54,22 @@ $ui.ApplyClocks.Add_Click({
         $script:clockActionBusy=$true;Set-Busy $true
         if(-not (Confirm "Apply P0 clock offsets to $($selected.Name)?`nGPU: $($selected.UUID)`nCore: $($selected.CoreMHz) -> $core MHz`nMemory: $($selected.MemoryMHz) -> $memory MHz`n`nThese are absolute offset values, not increments. Close games and save your work first. Unstable clocks can cause artifacts, driver resets, crashes or lost work. Driver ranges are not safe-setting recommendations. Original offsets will be saved before writing. Closing PC Insight does not restore them. Use Restore saved clock offsets to undo this change.")){return}
         $ui.ClockStatus.Text=Set-PCGpuClockOffsets $selected $core $memory $script:clockJournalPath
+        $ui.Status.Text=$ui.ClockStatus.Text
         Refresh-PCClockDevices
-    }catch{$ui.ClockStatus.Text=$_.Exception.Message;Show-Error $_.Exception.Message}
+    }catch{$ui.ClockStatus.Text=$_.Exception.Message;$ui.Status.Text=$ui.ClockStatus.Text;Show-Error $_.Exception.Message}
     finally{$script:clockActionBusy=$false;Set-Busy $false}
 })
 $ui.RestoreClocks.Add_Click({
-    if(Test-PCClockUiBusy){return}
+    $recovering=$script:clockGuide -and $script:clockGuide.Phase -eq 'RecoveryRequired'
+    if($recovering){if($script:job -or $script:updateJob -or $script:clockActionBusy){return}}elseif(Test-PCClockUiBusy){return}
     try{
         $j=Read-PCClockJournal $script:clockJournalPath
         $script:clockActionBusy=$true;Set-Busy $true
         if(-not (Confirm "Restore saved offsets on $($j.Name), GPU $($j.UUID)?`nCore: $($j.OriginalCore) MHz; memory: $($j.OriginalMemory) MHz.`nThis restores the offsets present before PC Insight's first change, which may differ from factory settings.")){return}
         $ui.ClockStatus.Text=Restore-PCGpuClockOffsets $script:clockJournalPath
+        $ui.Status.Text=$ui.ClockStatus.Text
         Refresh-PCClockDevices
-    }catch{$ui.ClockStatus.Text=$_.Exception.Message;Show-Error $_.Exception.Message}
+    }catch{$ui.ClockStatus.Text=$_.Exception.Message;$ui.Status.Text=$ui.ClockStatus.Text;Show-Error $_.Exception.Message}
     finally{$script:clockActionBusy=$false;Set-Busy $false}
 })
 if(Test-Path -LiteralPath $script:clockJournalPath){$ui.ClockStatus.Text='Saved clock recovery record found. No clock changes were made at startup. Use Restore saved clock offsets to recover the original values.'}

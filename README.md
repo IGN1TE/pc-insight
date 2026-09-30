@@ -2,7 +2,7 @@
 
 [Download the latest release](https://github.com/IGN1TE/pc-insight/releases/latest) · [Development workflow](DEVELOPMENT.md)
 
-This development build contains v0.24.0 app source, tests and bundled dependencies. `main` holds released code; `develop` is for ongoing work. This GPU-controls candidate is on `feature/nvidia-clock-offsets` and has not been published. Install from the `PC-Insight-Windows-Preview.zip` release asset.
+This development build contains the v0.25.0 guided core trial candidate, tests and bundled dependencies. The candidate is on `feature/guided-core-trial` and has not been published. Windows validation is required before publishing the `PC-Insight-Windows-Preview.zip` release asset.
 
 ---
 # PC Insight 0.24.0 - NVIDIA clock-offset preview
@@ -427,3 +427,17 @@ Implementation references:
 - https://github.com/NVIDIA/go-nvml/blob/main/pkg/nvml/nvml.h (public ABI)
 No NVIDIA DLL is redistributed; the installed library is loaded from Windows
 System32 or the vendor NVSMI directory, never from the app working directory.
+
+## Guided core trial (0.25.0 candidate)
+
+On Tuning, scan the PC and detect clock support, then record three GPU shader baseline runs. Review the proposed +15 MHz core offset before applying it and running three retests. The memory offset is unchanged. The result compares median shader draws/second, run variation and available sampled GPU Core temperature peaks; it does not measure game FPS or certify stability. Choose Keep or Restore explicitly. This first workflow requires exactly one NVIDIA GPU and administrator access for writes; it does not search for a maximum overclock or alter voltage.
+
+Existing saved clock or power changes must be restored before starting. Driver, GPU identity, power plan, power limit and recorded clock offsets must remain compatible. Cancellation or a failed retest attempts to restore the saved original offsets. A system crash can prevent that attempt; relaunch marks an unfinished applied trial as requiring recovery and performs no automatic GPU writes. Keep retains the original-offset journal for restoration and does not configure startup reapplication. Trial progress is stored in guided-core-trial.json beside the app's existing per-user data; the existing clock recovery journal remains authoritative for original offsets.
+
+Validation scope: the user previously observed successful +15 MHz core apply/readback and reset on one RTX 5090 with driver 616.92 using 0.24.1. That does not establish positive memory-offset compatibility or stability. The new guided sequence has simulated workflow/handler coverage on Linux PowerShell; actual Windows WPF, worker integration, closing/relaunch recovery and physical GPU trials must be checked before publishing this candidate.
+
+## Reference dashboard design
+
+The Overview now follows the user-supplied dark navy/purple concept with a slim sidebar, large processor card, stacked graphics/memory cards and a combined latest-session summary and temperature chart. Hardware art is generic vector decoration, not a product identification or sensor reading. Model names, readings and charts retain the existing live/saved-data bindings; unavailable readings remain unavailable. Existing pages and Windows title-bar controls remain accessible. The utilization chart is under its own expander.
+
+Validate on Windows before publishing: run tests/Test-Interface.ps1, inspect 1320x920 and 1000x720 sizes plus 125–150% display scaling, long device names and missing readings, sidebar scrolling, keyboard focus, all Overview buttons, populated session values/charts, and tuning recovery controls. Linux validation only confirms XML structure, resource references and unchanged named controls; it does not establish WPF rendering or pixel fidelity.
