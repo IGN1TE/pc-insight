@@ -9,7 +9,7 @@ $window=[Windows.Markup.XamlReader]::Load([Xml.XmlNodeReader]::new($xaml))
 $dataDir=Join-Path ([IO.Path]::GetTempPath()) ('pc-clock-ui-'+[guid]::NewGuid().ToString('N'))
 $null=New-Item -ItemType Directory $dataDir
 $script:ui=@{}
-foreach($name in 'DetectClocks','ClockGPU','ClockInfo','CoreOffset','MemoryOffset','ApplyClocks','RestoreClocks','ClockStatus'){$ui[$name]=$window.FindName($name);Assert ($null -ne $ui[$name]) "Missing $name"}
+foreach($name in 'DetectClocks','ClockGPU','ClockInfo','CoreOffset','MemoryOffset','ApplyClocks','RestoreClocks','ClockStatus','Status'){$ui[$name]=$window.FindName($name);Assert ($null -ne $ui[$name]) "Missing $name"}
 $script:job=$null;$script:updateJob=$null;$script:guide=$null;$script:isAdministrator=$true
 $script:allowClockChange=$false;$script:clockWriteCount=0;$script:clockUiError=''
 $script:clockLive=[pscustomobject]@{UUID='GPU-aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee';Name='Mock GPU';Label='Mock GPU';Driver='mock';Available=$true;CoreMHz=0;MemoryMHz=0;CoreMin=-500;CoreMax=500;MemoryMin=-1000;MemoryMax=2000;TemperatureC=50}
