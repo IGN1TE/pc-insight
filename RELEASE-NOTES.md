@@ -1,4 +1,10 @@
-﻿# v0.26.1 — Endurance Stop button fix
+﻿# v0.27.0 — CPU tuning readiness
+
+Adds a CPU tuning page with Windows-reported CPU, board and BIOS inventory, explicit per-control availability, vendor requirements, JSON export and direct access to the existing three-run CPU baseline. Intel model-pattern matches are candidates only; no BIOS or write capability is inferred. Direct CPU clock, voltage and power-limit changes are not implemented.
+
+Tests passed on Linux for classification, mocked UI dispatch/locks/export, endurance and guided-clock handlers, repeated tests, updater, PowerShell syntax and XAML wiring. Windows UI validation remains pending. The user confirmed v0.26.1 GPU endurance completion, Stop, persistence after reopen and a 10-minute run without reported errors; these confirm that workflow on one PC, not overclock stability.
+
+# v0.26.1 — Endurance Stop button fix
 
 Refresh endurance controls after the background job is assigned so Stop and save result enables during a run and duration buttons lock. Also refresh after starting an update. Cancel task already uses the same graceful partial-result path for endurance. Regression coverage now executes the actual Start-Task handler with mocked worker creation. Windows button interaction still needs user validation.
 

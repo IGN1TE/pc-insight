@@ -2,7 +2,7 @@
 
 [Download the latest release](https://github.com/IGN1TE/pc-insight/releases/latest) · [Development workflow](DEVELOPMENT.md)
 
-Version 0.26.0 adds GPU endurance observation to the published 0.25.0 guided core trial and dashboard. Native Windows and physical GPU endurance validation remain pending; Linux checks use mocked hardware.
+Version 0.27.0 adds a CPU tuning readiness page, inventory-based guidance, an exportable report and access to the existing three-run CPU baseline. Direct CPU clock, voltage and package-power-limit writes remain unimplemented.
 
 ---
 # PC Insight 0.24.0 - NVIDIA clock-offset preview
@@ -449,3 +449,18 @@ After a hardware scan, open **Benchmark** and choose **GPU · 5 minutes** or **G
 The test uses current clock settings and makes no tuning changes. It does not automatically restore offsets; use **Tuning → Restore original** for that. A successful interval is not proof of stability: there is no pixel-correctness, VRAM integrity, WHEA, driver-reset-log or game validation. Missing/invalid/slow sensors, sampled 85 C CPU or GPU temperatures, API errors and stalled progress stop the test. Native workload checks a six-second sensor heartbeat between rendering batches; a blocked graphics driver can delay cancellation. Interrupted tests are marked at the next app startup, never claimed as completed.
 
 Validation: mocked 300/600-second orchestration, partial cancellation, temperature/sensor/native failures, cleanup and native heartbeat checks passed under PowerShell 7 on Linux. Existing guided-clock, repeatability, result/comparison and updater checks passed. Windows PowerShell 5.1, WPF layout, physical GPU duration, driver cancellation and updater installation still require target-machine validation.
+
+## CPU tuning readiness (0.27.0)
+
+Open **CPU tuning → Scan CPU and motherboard**. The report shows the inventory timestamp, processor, board model and BIOS version reported by Windows. Recognized Intel unlocked-style model names are candidates for checking vendor requirements only. AMD, mobile/unrecognized models and multiple processors never imply writable controls. No board chipset, firmware locks, tuning ranges or installed vendor tools are probed or inferred.
+
+**Run CPU baseline · 3 tests** uses the existing three monitored 60-second SHA-256 runs and cooldowns. Save work first. The workload checks CPU temperatures and stops at the preview cutoff; it is not a stability certificate. Cancel discards the batch, as on Benchmark. Read **Repeated results** for medians and variability and **Test results** for recorded temperatures. **Export readiness report** saves this report as JSON without serial numbers, account details or unrelated sessions.
+
+Direct CPU overclocking requires a validated vendor interface with capability detection, original-setting capture, write/readback and recovery. That interface is not integrated in this release. Windows power-plan selection remains a separate existing feature on Optimize and is not represented as CPU overclocking.
+
+References reviewed 2026-09-30:
+- Intel XTU hardware/firmware requirements: https://www.intel.com/content/www/us/en/support/articles/000006636/processors/processor-utilities-and-programs.html
+- Intel CPU and XTU-version support: https://www.intel.com/content/www/us/en/support/articles/000057552/processors/intel-core-processors.html
+- AMD Ryzen Master: https://www.amd.com/en/products/software/ryzen-master.html
+
+Validation: read-only classification, missing/multiple/vendor cases, real UI-handler dispatch/locking/export with mocked controls, existing endurance and guided-clock handlers, repeated tests, updater, PowerShell parsing and XAML wiring checked on Linux. Actual Windows WPF layout and CPU-page interaction remain to be validated.

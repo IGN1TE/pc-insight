@@ -47,6 +47,7 @@ try {
     'CoreTrialStart','CoreTrialApply','CoreTrialKeep','CoreTrialRestore','CoreTrialCancel','CoreTrialStatus' | ForEach-Object { $ui[$_] = $window.FindName($_) }
     'CompareSessionPicker','ComparisonRows','ComparisonStatus','ComparisonNotes','ExportComparison','ExportComparisonReport','ComparisonExportStatus' | ForEach-Object { $ui[$_] = $window.FindName($_) }
     'Endurance5','Endurance10','EnduranceStop','EnduranceStatus' | ForEach-Object { $ui[$_] = $window.FindName($_) }
+    'CpuReadinessText','CpuControlTable','CpuReadinessScan','CpuBaselineRun','CpuReadinessExport','CpuVendorHelp' | ForEach-Object { $ui[$_] = $window.FindName($_) }
     . "$PSScriptRoot\SessionComparisonUI.ps1"
     $ui.InstalledVersion.Text='Installed version: '+$script:appVersion
     $script:isAdministrator = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
@@ -242,6 +243,7 @@ try {
         if(Get-Command Update-PCClockControlState -ErrorAction SilentlyContinue){Update-PCClockControlState $busy}
         if(Get-Command Refresh-PCClockGuideUI -ErrorAction SilentlyContinue){Refresh-PCClockGuideUI}
         if(Get-Command Refresh-PCGpuEnduranceUI -ErrorAction SilentlyContinue){Refresh-PCGpuEnduranceUI}
+        if(Get-Command Refresh-PCCpuTuningUI -ErrorAction SilentlyContinue){Refresh-PCCpuTuningUI}
     }
     function Format-Snapshot($s) {
         $out = [System.Collections.Generic.List[string]]::new()
@@ -326,6 +328,7 @@ try {
                 } finally { Close-PCNativeSensors }
             }
             Refresh-PCGpuEnduranceUI
+            Refresh-PCCpuTuningUI
         } catch { Set-Busy $false; Show-Error $_.Exception.Message }
     }
     $ui.MonitorStart.Add_Click({ Start-Task 'monitor' })
@@ -630,6 +633,7 @@ try {
                 if($kind -eq 'check'){Get-PCUpdate $argument (Get-PCAppVersion)}else{Save-PCUpdate $argument (Join-Path $data 'updates')}
             }
             Refresh-PCGpuEnduranceUI
+            Refresh-PCCpuTuningUI
         } catch {Set-Busy $false; $ui.CancelUpdate.IsEnabled=$false; Show-Error $_.Exception.Message}
     }
     $ui.CheckUpdate.Add_Click({
@@ -687,6 +691,7 @@ try {
     . "$PSScriptRoot\GpuOverclockUI.ps1"
     . "$PSScriptRoot\GuidedClocksUI.ps1"
     . "$PSScriptRoot\GpuEnduranceUI.ps1"
+    . "$PSScriptRoot\CpuTuningUI.ps1"
     $window.Add_Closing({
         param($sender,$eventArgs)
         if($script:clockGuide -and $script:clockGuide.Phase -eq 'Decision'){

@@ -4,8 +4,9 @@
 - [x] Cancellation restores original clocks (user confirmed).
 - [x] Keep, close/reopen, restore original clocks (user confirmed).
 - [x] Implement 5/10-minute GPU endurance observation with mocked automated checks.
-- [ ] Validate endurance completion, Stop and restart on the user's Windows GPU.
-- [ ] CPU tuning support.
+- [x] Validate endurance completion, Stop, restart and 10-minute run on the user's Windows GPU (user confirmed).
+- [x] CPU tuning readiness: inventory, explicit availability, baseline launch and report export (implemented; Windows UI acceptance pending).
+- [ ] Direct CPU tuning: validated vendor adapter, controls, readback and restoration.
 - [ ] Clearer results dashboard.
 - [ ] Automated Windows release checks.
 - [ ] Installer/layout polish.
