@@ -10,6 +10,7 @@ function Update-PCClockTrialControls([bool]$Busy=$false) {
     $ui.StartClockTrial.IsEnabled=-not $busy -and $script:isAdministrator -and $selected -and $selected.Available -and -not (Test-Path -LiteralPath $script:clockJournalPath)
     $ui.StopClockTrial.IsEnabled=$null -ne $script:clockTrialJob -and -not (Test-Path -LiteralPath $script:clockTrialStopPath)
     $ui.ExportClockTrial.IsEnabled=$null -ne $script:clockTrialResult -and -not $script:clockTrialJob
+    $ui.ClockTrialMode.IsEnabled=-not $busy
 }
 function Stop-PCClockTrial {
     if(-not $script:clockTrialJob){return}
@@ -67,20 +68,23 @@ $ui.StartClockTrial.Add_Click({
         if(-not $selected -or -not $selected.Available){throw 'Detect clock support first.'}
         if(Test-Path -LiteralPath $script:clockJournalPath){throw 'Restore saved clock offsets before starting a trial.'}
         $core=ConvertTo-PCClockInteger $ui.CoreOffset.Text;$memory=ConvertTo-PCClockInteger $ui.MemoryOffset.Text
+        $runCount=[int]$ui.ClockTrialMode.SelectedItem.Tag
+        if($runCount -notin @(1,3)){throw 'Select a trial length.'}
+        $duration=if($runCount -eq 3){'about 5 minutes'}else{'about 90 seconds'}
         Assert-PCClockTargets $selected $core $memory
         if($core -eq $selected.CoreMHz -and $memory -eq $selected.MemoryMHz){throw 'Enter different offsets to measure a change.'}
         $script:clockActionBusy=$true;Set-Busy $true
-        if(-not(Confirm "Run a temporary overclock trial on $($selected.Name)?`nGPU: $($selected.UUID)`nCore: $($selected.CoreMHz) -> $core MHz`nMemory: $($selected.MemoryMHz) -> $memory MHz`n`nThe app measures a baseline, cools down for 10 seconds, applies these offsets, retests, and restores the originals. Allow about 90 seconds. Cancel or a failed test also attempts restoration.`n`nClose games and save your work. Unstable clocks can cause artifacts, driver resets, crashes or lost work. A short test does not prove stability. If the app, driver or PC crashes, use Restore saved clock offsets on the next launch. No voltage or power-limit changes are made.")){return}
+        if(-not(Confirm "Run a temporary overclock trial on $($selected.Name)?`nGPU: $($selected.UUID)`nCore: $($selected.CoreMHz) -> $core MHz`nMemory: $($selected.MemoryMHz) -> $memory MHz`n`nThe app measures $runCount baseline run(s), applies these offsets, measures $runCount retest run(s), and restores the originals. Each run has a 5-second warm-up and 30-second measurement, with 10-second cooldowns. Allow $duration. A noisy three-run baseline stops before applying. Cancel or a failed test also attempts restoration.`n`nClose games and save your work. Unstable clocks can cause artifacts, driver resets, crashes or lost work. A short test does not prove stability. If the app, driver or PC crashes, use Restore saved clock offsets on the next launch. No voltage or power-limit changes are made.")){return}
         Remove-Item -LiteralPath $script:clockTrialStopPath -ErrorAction SilentlyContinue
         $script:clockTrialResult=$null;$ui.ClockTrialResult.Text='Preparing the measured trial...';$ui.ClockTrialStage.Text='Starting baseline';$ui.ClockTrialProgress.Value=0
         $script:clockTrialOriginal=$selected|Select-Object UUID,CoreMHz,MemoryMHz
-        $script:clockTrialJob=Start-Job -ArgumentList $PSScriptRoot,$selected,$core,$memory,$script:clockJournalPath,$script:clockTrialReportPath,$script:clockTrialStopPath,$PID,(Get-Process -Id $PID).StartTime.Ticks -ScriptBlock {
-            param($root,$selected,$core,$memory,$journal,$report,$stopPath,$ownerId,$ownerStart)
+        $script:clockTrialJob=Start-Job -ArgumentList $PSScriptRoot,$selected,$core,$memory,$script:clockJournalPath,$script:clockTrialReportPath,$script:clockTrialStopPath,$PID,(Get-Process -Id $PID).StartTime.Ticks,$runCount -ScriptBlock {
+            param($root,$selected,$core,$memory,$journal,$report,$stopPath,$ownerId,$ownerStart,$runCount)
             $ErrorActionPreference='Stop'
-            foreach($file in 'GpuOverclock.ps1','GpuClockTrial.ps1','Engine.ps1','Monitor.ps1','LiveMonitor.ps1','ExtendedTests.ps1','NativeSensors.ps1'){. (Join-Path $root $file)}
+            foreach($file in 'GpuOverclock.ps1','GpuClockTrial.ps1','Power.ps1','Tuning.ps1','Engine.ps1','Monitor.ps1','LiveMonitor.ps1','ExtendedTests.ps1','NativeSensors.ps1'){. (Join-Path $root $file)}
             try{
                 Initialize-PCNativeSensors
-                Invoke-PCGpuClockTrial $selected $core $memory $journal $report $stopPath $ownerId $ownerStart
+                Invoke-PCGpuClockTrial $selected $core $memory $journal $report $stopPath $ownerId $ownerStart -RunCount $runCount
             }finally{Close-PCNativeSensors}
         }
         $script:clockTrialTimer.Start()
@@ -102,9 +106,7 @@ $ui.ExportClockTrial.Add_Click({
 })
 if(Test-Path -LiteralPath $script:clockTrialReportPath){
     try{
-        $saved=Get-Content -LiteralPath $script:clockTrialReportPath -Raw -Encoding UTF8|ConvertFrom-Json
-        if($saved.Schema -ne 1 -or $saved.Kind -ne 'PCInsight.GpuClockTrial'){throw 'Unknown trial report format.'}
-        if($saved.State -eq 'Running'){$saved.State='Interrupted';$saved.ChangePercent=$null;$saved.Message='The previous trial did not finish. Inspect saved clock recovery before continuing.'}
+        $saved=Read-PCClockTrialReport $script:clockTrialReportPath
         $script:clockTrialResult=$saved
         $ui.ClockTrialResult.Text=Format-PCClockTrialReport $saved
         $ui.ClockTrialStage.Text='Previous trial (saved result; not a fresh hardware check)'

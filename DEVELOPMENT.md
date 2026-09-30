@@ -39,10 +39,12 @@ The PNG logo and matching icon are under `assets/branding/`. They are transparen
 
 ## Current development preview
 
-`feature/gpu-oc-trials` builds v0.25.0 on `develop` (v0.24.1). The public release is v0.24.1. This branch adds a measured temporary clock trial and automatic restoration; pushing the branch is not a release.
+`feature/gpu-oc-trials` builds v0.26.0 on `develop` (v0.24.1). The public release is v0.24.1. This branch adds repeated measured clock trials and automatic restoration; pushing the branch is not a release.
 
 Run `tests/Test-GpuClockTrial.ps1`, `tests/Test-GpuTrialWorkloadGuard.ps1` and `tests/Test-GpuClockTrialUI.ps1` alongside the existing GPU/recovery suites. The Windows workflow runs PowerShell 5.1 and real hidden WPF handlers with simulated jobs and GPU calls. It never changes host clocks. Linux checks cover the workflow/journal logic and simulated workload guards but do not validate WPF or Windows driver behavior.
 
 The earlier read-only probe loaded the installed NVIDIA library and read offsets on the target RTX 5090. Physical writes, artifact behavior, real thermal response and overclock stability remain unverified. Before publishing, validate a small reviewed change on the target PC, cancel during the retest, confirm both original offsets, exercise close/relaunch and inspect the saved report. Do not infer hardware compatibility from mock CI results.
 
 Trial recovery is owned by `gpu-clock-restore.json`. The last result is saved separately in `gpu-clock-trial.json`. A failed or cancelled baseline performs no clock writes. A trial never starts with an existing recovery record. Normal close requests cooperative cancellation and waits; force termination/driver hangs/power loss can leave recovery pending. Startup only displays saved state and never writes clocks automatically.
+
+The default trial uses three runs at each setting. Schema 2 saves `BeforeRuns`/`AfterRuns`, eligible-run summaries, power-setting snapshots, and comparison reasons. Run boundaries check the Windows plan and selected GPU power limit; management queries are outside the scored workload. A >5% baseline spread aborts before any write. Retest spread, range overlap and >5 C median starting-temperature difference label completed comparisons inconclusive. Quick one-pair mode is also inconclusive for repeatability. Prior schema-1 reports remain displayable; no migration writes hardware.

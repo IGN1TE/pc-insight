@@ -1,4 +1,15 @@
-﻿# v0.25.0 - Measured GPU overclock trials (development preview)
+﻿# v0.26.0 - Repeated GPU clock trials (development preview)
+
+- Makes three baseline runs and three retests the default, with a quick one-pair option.
+- Blocks clock application when baseline spread exceeds 5% of the median.
+- Reports median, range, spread and every run's start/peak GPU temperature. Noisy, overlapping or temperature-mismatched groups are marked inconclusive; quick pairs cannot establish repeatability.
+- Requires consistent GPU power limit and Windows power plan at run boundaries and before applying. Lost or changed settings stop the comparison and trigger clock restoration after an apply.
+- Checkpoints individual results after each completed run; partial and excluded results remain available. Supports legacy v0.25.0 report display.
+- Extends simulated recovery, report and Windows UI coverage for repeated runs, late cancellation, power changes and run-quality gates.
+
+Three runs are descriptive, not statistical significance, a stability certificate or a game FPS prediction. The 5% spread and 5 C starting-temperature cutoffs are comparison heuristics. Real GPU writes and thermal behavior remain unverified. This branch does not publish an updater release.
+
+# v0.25.0 - Measured GPU overclock trials (development preview)
 
 - Adds a reviewed baseline/apply/retest/restore workflow for NVIDIA P0 core and memory offsets.
 - Runs the same 5-second warm-up and 30-second shader workload before and after the change, with a 10-second cooldown. Reports throughput, sampled peak temperature and the measured change.

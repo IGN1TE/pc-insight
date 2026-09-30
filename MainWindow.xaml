@@ -117,12 +117,13 @@
     </StackPanel></Border>
     <Border Style="{StaticResource Card}"><StackPanel>
      <TextBlock Text="Measured overclock trial" FontSize="20"/>
-     <TextBlock Text="Use the GPU and offsets selected above. Run a baseline, cool down for 10 seconds, apply your reviewed offsets, then repeat the same 30-second shader test. Each test has a 5-second warm-up. Original offsets are restored after the trial or cancellation. Allow about 90 seconds." Foreground="#B0B5CC"/>
-     <TextBlock Text="Requires one NVIDIA GPU and matching OpenGL/temperature readings. A completed trial is not long-term stability or artifact detection. If the app or PC crashes, use Restore saved clock offsets on the next launch." Foreground="#929BB5"/>
+     <TextBlock Text="Compare three baseline runs with three retests at your reviewed offsets. Each run has a 5-second warm-up and 30-second shader measurement, with 10-second cooldowns. Original offsets are restored after the trial or cancellation. Allow about 5 minutes." Foreground="#B0B5CC"/>
+     <TextBlock Text="Requires one NVIDIA GPU, matching OpenGL/temperature readings and readable power settings. A baseline spread above 5% stops before applying. Results show median, spread and starting temperatures; noisy or overlapping results are inconclusive. A completed trial is not long-term stability or artifact detection. If the app or PC crashes, use Restore saved clock offsets on the next launch." Foreground="#929BB5"/>
+     <ComboBox Name="ClockTrialMode" SelectedIndex="0" Margin="0,8" Padding="10" AutomationProperties.Name="GPU trial length"><ComboBoxItem Tag="3" Content="Repeated trial: 3 runs per setting (about 5 min)"/><ComboBoxItem Tag="1" Content="Quick trial: 1 run per setting (about 90 sec)"/></ComboBox>
      <WrapPanel><Button Name="StartClockTrial" Content="Review and run trial" IsEnabled="False"/><Button Name="StopClockTrial" Content="Stop trial and restore" Background="#28233D" IsEnabled="False"/><Button Name="ExportClockTrial" Content="Export trial report" Background="#28233D" IsEnabled="False"/></WrapPanel>
      <TextBlock Name="ClockTrialStage" Text="Ready after clock detection. Restore any pending clock change first." Foreground="#B195FF"/>
      <ProgressBar Name="ClockTrialProgress" Minimum="0" Maximum="100" Value="0" Height="8" Margin="0,10" AutomationProperties.Name="Current GPU trial test progress"/>
-     <TextBlock Name="ClockTrialResult" Text="Baseline, retest, sampled peak temperatures and restoration status will appear here."/>
+     <TextBlock Name="ClockTrialResult" Text="Per-run results, median change, comparison quality and restoration status will appear here."/>
     </StackPanel></Border>
     <Border Style="{StaticResource Card}"><StackPanel><TextBlock Text="Before / after" FontSize="20"/><TextBlock Name="BaselineResult" Text="Save a baseline containing a complete three-run batch. Repeat the same batch after a reviewed change. Comparisons require three matching successful runs on each side."/></StackPanel></Border>
    </StackPanel></ScrollViewer></TabItem>
