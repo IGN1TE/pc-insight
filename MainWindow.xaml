@@ -125,6 +125,17 @@
      <ProgressBar Name="ClockTrialProgress" Minimum="0" Maximum="100" Value="0" Height="8" Margin="0,10" AutomationProperties.Name="Current GPU trial test progress"/>
      <TextBlock Name="ClockTrialResult" Text="Per-run results, median change, comparison quality and restoration status will appear here."/>
     </StackPanel></Border>
+    <Border Style="{StaticResource Card}"><StackPanel>
+     <TextBlock Text="Saved clock trials" FontSize="20"/>
+     <TextBlock Text="Review past experiments and compare compatible repeated trials. Loading saved offset inputs does not apply them; run a new reviewed trial to test them again." Foreground="#B0B5CC"/>
+     <TextBlock Text="Trial B"/><ComboBox Name="ClockTrialHistory" DisplayMemberPath="Label" Margin="0,8" Padding="10" AutomationProperties.Name="Saved clock trial B"/>
+     <WrapPanel><Button Name="LoadClockTrialOffsets" Content="Load offsets into controls" IsEnabled="False"/><Button Name="ExportSavedClockTrial" Content="Export selected trial" Background="#28233D" IsEnabled="False"/></WrapPanel>
+     <TextBlock Name="ClockTrialHistoryStatus" Text="No saved trials yet." Foreground="#B195FF"/>
+     <Expander Header="Selected saved trial details" Margin="0,8"><TextBlock Name="ClockTrialSavedResult" Text="No saved trial selected."/></Expander>
+     <TextBlock Text="Compare with trial A"/><ComboBox Name="ClockTrialReference" DisplayMemberPath="Label" Margin="0,8" Padding="10" AutomationProperties.Name="Reference clock trial A"/>
+     <TextBlock Name="ClockTrialComparisonResult" Text="Choose two saved trials to compare."/>
+     <Button Name="ExportClockTrialComparison" Content="Export trial comparison" HorizontalAlignment="Left" Background="#28233D" IsEnabled="False"/>
+    </StackPanel></Border>
     <Border Style="{StaticResource Card}"><StackPanel><TextBlock Text="Before / after" FontSize="20"/><TextBlock Name="BaselineResult" Text="Save a baseline containing a complete three-run batch. Repeat the same batch after a reviewed change. Comparisons require three matching successful runs on each side."/></StackPanel></Border>
    </StackPanel></ScrollViewer></TabItem>
    <TabItem Header="Repeated results" Tag="&#xE9D9;"><Grid Margin="20"><TextBox Name="BatchReport" Text="Start a three-run batch from Benchmark. Median and spread will appear here."/></Grid></TabItem>

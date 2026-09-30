@@ -11,6 +11,7 @@ function Update-PCClockTrialControls([bool]$Busy=$false) {
     $ui.StopClockTrial.IsEnabled=$null -ne $script:clockTrialJob -and -not (Test-Path -LiteralPath $script:clockTrialStopPath)
     $ui.ExportClockTrial.IsEnabled=$null -ne $script:clockTrialResult -and -not $script:clockTrialJob
     $ui.ClockTrialMode.IsEnabled=-not $busy
+    if(Get-Command Update-PCClockTrialHistoryControls -ErrorAction SilentlyContinue){Update-PCClockTrialHistoryControls $busy}
 }
 function Stop-PCClockTrial {
     if(-not $script:clockTrialJob){return}
@@ -56,6 +57,7 @@ function Receive-PCClockTrial {
         $script:clockTrialJob=$null;$script:clockActionBusy=$false;$script:clockTrialTimer.Stop()
         Remove-Item -LiteralPath $script:clockTrialStopPath -ErrorAction SilentlyContinue
         Set-Busy $false;Update-PCClockTrialControls
+        if(Get-Command Refresh-PCClockTrialHistory -ErrorAction SilentlyContinue){Refresh-PCClockTrialHistory $script:clockTrialResult.Id}
     }
 }
 $script:clockTrialTimer.Add_Tick({

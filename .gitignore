@@ -16,6 +16,7 @@ PC-Insight-*-release-kit.zip
 gpu-clock-restore.json
 gpu-power-restore.json
 gpu-clock-trial.json
+gpu-clock-trials/
 clock-trial-stop-*.signal
 guided-optimization.json
 tuning-baseline.json

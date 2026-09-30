@@ -1,4 +1,15 @@
-﻿# v0.26.0 - Repeated GPU clock trials (development preview)
+﻿# v0.27.0 - Saved GPU experiments (development preview)
+
+- Archives each finished clock trial and preserves the previous checkpoint before it can be overwritten. Keeps stopped/interrupted results and isolates corrupt archives without deleting them.
+- Adds a saved-trial browser, source report export, and A/B comparison export with both experiments included.
+- Recalculates medians from individual runs; requires matching GPU, driver, original offsets, power settings and workloads. Flags baseline drift, noise, temperature differences and overlapping ranges as inconclusive.
+- Loads requested offsets into the controls after fresh device/range checks. Loading never applies settings or starts a trial and is blocked during active tasks or pending recovery.
+- Keeps history browsing/export available during a trial. Freezes exports before the file dialog so a background completion cannot change the chosen report.
+- Preserves v0.25/v0.26 reports. History and comparison actions are read-only with respect to hardware.
+
+Target-PC clock writes, real thermal response and stability still need acceptance. This source preview does not publish an updater release.
+
+# v0.26.0 - Repeated GPU clock trials (development preview)
 
 - Makes three baseline runs and three retests the default, with a quick one-pair option.
 - Blocks clock application when baseline spread exceeds 5% of the median.

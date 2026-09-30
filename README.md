@@ -2,10 +2,20 @@
 
 [Download the latest release](https://github.com/IGN1TE/pc-insight/releases/latest) · [Development workflow](DEVELOPMENT.md)
 
-This branch contains the v0.26.0 development preview. Source changes do not publish an app update. For the published app, use the `PC-Insight-Windows-Preview.zip` asset on the latest release.
+This branch contains the v0.27.0 development preview. Source changes do not publish an app update. For the published app, use the `PC-Insight-Windows-Preview.zip` asset on the latest release.
 ---
 
-## Development preview v0.26.0: repeated GPU clock trials
+## Development preview v0.27.0: saved GPU experiments
+
+**Saved clock trials** on Tuning keeps completed, stopped and interrupted experiments on this PC. Every finished trial is archived separately. The previous last-run checkpoint is also preserved before another trial can replace it; unreadable or unwritable prior history stops a new trial before any clock change. An archive failure after testing never skips restoration, and the app reports the save problem. The picker shows up to fifty recent records; older archives are retained. A corrupt record is skipped with an explanation, leaving other records available.
+
+Select **Trial B** and **Compare with trial A** to compare requested offsets and retest medians. Comparisons require two distinct completed three-run experiments with recorded verified restoration, the same GPU/driver, original baseline offsets, power plan, power limit and compatible workloads. Summaries are recalculated from the individual runs. Noisy trials, overlapping retest ranges, a >5% shift in original-setting medians, or >5 C difference in retest starting temperatures are inconclusive. Identical requested offsets are labelled a repeatability comparison. These thresholds are heuristics; no setting is ranked as best or guaranteed stable.
+
+**Load offsets into controls** only fills the inputs after refreshing GPU identity, driver and ranges. It does not apply clocks or start a test. A driver change, unsupported range, interrupted/failed trial or pending recovery prevents loading. Use **Review and run trial** for a separate deliberate test. **Export selected trial** and **Export trial comparison** save JSON snapshots; comparison exports include both source experiments and any incompatibility reasons. Browsing and exporting remain available during a running trial, while loading inputs is blocked.
+
+History is stored in `%LOCALAPPDATA%\PCInsight\gpu-clock-trials`; it is separate from the active recovery journal. Loading, comparing, startup and exporting do not write hardware settings. Saved restoration status describes that past trial, not the GPU's current state. Real hardware acceptance remains pending.
+
+## Repeated GPU clock trials (introduced in v0.26.0)
 
 On **Tuning**, detect clock support, select your NVIDIA GPU and enter the desired absolute core/memory offsets. The default **Repeated trial** measures three baseline runs, applies your reviewed offsets, measures three retests and restores the originals. Each run uses the same five-second warm-up and thirty-second OpenGL workload, with ten-second cooldowns between runs. Allow about five minutes. **Quick trial** keeps the one-pair option (about ninety seconds), explicitly marked inconclusive for repeatability.
 

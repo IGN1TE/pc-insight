@@ -1,5 +1,6 @@
 # A reviewed, temporary clock change. Always restores after the retest; never keeps
 # offsets automatically. Hardware calls are injected through GpuOverclock.ps1.
+. (Join-Path $PSScriptRoot 'GpuClockTrialHistory.ps1')
 function Assert-PCClockTrialRunning([string]$StopPath,[int]$OwnerId=0,[long]$OwnerStart=0) {
     if($StopPath -and (Test-Path -LiteralPath $StopPath)){throw 'GPU clock trial cancelled.'}
     if($OwnerId -gt 0){
@@ -167,6 +168,9 @@ function Invoke-PCGpuClockTrial($Selected,$CoreMHz,$MemoryMHz,[string]$JournalPa
     Assert-PCClockTrialState $Selected
     if($core -eq $Selected.CoreMHz -and $memory -eq $Selected.MemoryMHz){throw 'Enter a different core or memory offset to measure a change.'}
     $environment=Get-PCClockTrialEnvironment $Selected
+    # Preserve the previous experiment before replacing the last-run checkpoint.
+    # Failure here aborts before any hardware write.
+    Protect-PCPreviousClockTrial $ReportPath
     $report=[pscustomobject]@{
         Schema=2;Kind='PCInsight.GpuClockTrial';Id=[guid]::NewGuid().ToString('N');Started=[datetimeoffset]::Now.ToString('o');Finished=$null
         State='Running';Stage='Baseline';Device=($Selected|Select-Object UUID,Name,Driver,CoreMHz,MemoryMHz)
@@ -226,6 +230,7 @@ function Invoke-PCGpuClockTrial($Selected,$CoreMHz,$MemoryMHz,[string]$JournalPa
         $report.Stage='Finished';$report.Finished=[datetimeoffset]::Now.ToString('o')
         if($report.State -ne 'Completed'){$report.Comparison='Unavailable';$report.ComparisonReasons=@($report.Message)}
         try{Save-PCClockJournal $report $ReportPath}catch{$report.Message+=' Trial report could not be saved: '+$_.Exception.Message}
+        try{Save-PCClockTrialHistory $report (Get-PCClockTrialHistoryFolder $ReportPath)}catch{$report.Message+=' Trial history could not be saved: '+$_.Exception.Message}
     }
     [pscustomobject]@{Kind='TrialResult';Value=$report}
 }
