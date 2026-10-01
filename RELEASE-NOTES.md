@@ -1,4 +1,14 @@
-﻿# v0.28.0 — CPU power-limit preview
+﻿# 0.28.1 - CPU measurement comparisons
+
+- CPU tuning now displays saved three-run batches with selectable reference A and result B, median/range/spread, peak temperature and coverage, and recorded PL1/PL2 settings.
+- Incomplete or mismatched runs, changed/missing boundary settings, and missing CPU identity/BIOS/power metadata block percentage comparisons. High variation and overlapping ranges are labelled.
+- JSON export preserves the selected comparison while the save dialog is open. Saved selections survive refresh; cancelled tests retain earlier history.
+- Progress records the user-confirmed CPU power detection, 248/253 W apply/readback, restoration to 253/253 W, and same-boot close/reopen recovery.
+- No multiplier/voltage controls are added. The signed module lacks direct turbo-ratio writes; the inspected mailbox implementation only declares older CPU-generation support.
+
+Validation: saved-data and actual-handler mock tests, existing CPU measurement/power/UI and updater regressions, script parsing and XAML control bindings on Linux. Windows WPF rendering and this update's installation remain to be checked on the target PC.
+
+# v0.28.0 — CPU power-limit preview
 
 - Adds real Intel package-power detection and reviewed PL1/PL2 reductions on the initial i7-13700K / Raptor Lake B7 target, using an already installed PawnIO driver and an official signed module.
 - Saves original settings before writing, checks for conflicts, reads back changes, attempts rollback on failure and offers explicit restoration after reopening on the same boot.

@@ -130,7 +130,7 @@
    <TabItem Header="CPU tuning" Tag="&#xE950;"><ScrollViewer VerticalScrollBarVisibility="Auto"><StackPanel Margin="20">
     <TextBlock Text="CPU tuning" FontSize="24" FontWeight="SemiBold"/>
     <TextBlock Text="Check your hardware, record a baseline and review supported CPU power-limit reductions. Frequency and voltage controls remain unavailable." Foreground="#B0B5CC"/>
-    <WrapPanel><Button Name="CpuReadinessScan" Content="Scan CPU and motherboard"/><Button Name="CpuBaselineRun" Content="Run CPU baseline · 3 tests" IsEnabled="False"/><Button Name="CpuBaselineCancel" Content="Cancel CPU batch" IsEnabled="False" Background="#28233D"/><Button Name="CpuReadinessExport" Content="Export readiness report" IsEnabled="False"/><Button Name="CpuVendorHelp" Content="Vendor requirements" IsEnabled="False"/></WrapPanel>
+    <WrapPanel><Button Name="CpuReadinessScan" Content="Scan CPU and motherboard"/><Button Name="CpuBaselineRun" Content="Run CPU measurement · 3 tests" IsEnabled="False"/><Button Name="CpuBaselineCancel" Content="Cancel CPU batch" IsEnabled="False" Background="#28233D"/><Button Name="CpuReadinessExport" Content="Export readiness report" IsEnabled="False"/><Button Name="CpuVendorHelp" Content="Vendor requirements" IsEnabled="False"/></WrapPanel>
     <Border Style="{StaticResource Card}"><TextBlock Name="CpuReadinessText" TextWrapping="Wrap" Text="Scan PC to collect hardware inventory."/></Border>
     <Border Style="{StaticResource Card}"><StackPanel>
      <TextBlock Text="CPU power limits · preview" FontSize="20"/>
@@ -145,8 +145,20 @@
      <WrapPanel><Button Name="CpuPowerApply" Content="Review and apply CPU limits" IsEnabled="False"/><Button Name="CpuPowerRestore" Content="Restore saved CPU limits" IsEnabled="False" Background="#28233D"/></WrapPanel>
      <TextBlock Name="CpuPowerStatus" Text="No CPU changes made. Closing the app does not restore settings. Restore is explicit and requires the same Windows boot; no startup settings are applied." Foreground="#B195FF" TextWrapping="Wrap"/>
     </StackPanel></Border>
+    <Border Style="{StaticResource Card}"><StackPanel>
+     <TextBlock Text="CPU test results" FontSize="20"/>
+     <TextBlock Text="Compare saved three-run batches before and after a reviewed change. A is your reference; B is the result being compared. Selecting results does not apply settings." Foreground="#B0B5CC"/>
+     <WrapPanel><Button Name="CpuBatchRefresh" Content="Refresh saved CPU results"/><Button Name="CpuBatchExport" Content="Export CPU comparison" IsEnabled="False"/></WrapPanel>
+     <TextBlock Text="Reference A" FontWeight="SemiBold"/>
+     <ComboBox Name="CpuBatchBefore" DisplayMemberPath="Label" Padding="8" Margin="0,6" AutomationProperties.Name="CPU reference batch A"/>
+     <TextBlock Name="CpuBatchBeforeText" TextWrapping="Wrap"/>
+     <TextBlock Text="Result B" FontWeight="SemiBold" Margin="0,16,0,0"/>
+     <ComboBox Name="CpuBatchAfter" DisplayMemberPath="Label" Padding="8" Margin="0,6" AutomationProperties.Name="CPU result batch B"/>
+     <TextBlock Name="CpuBatchAfterText" TextWrapping="Wrap"/>
+     <TextBlock Name="CpuBatchVerdict" TextWrapping="Wrap" Foreground="#B195FF" Margin="0,16,0,0"/>
+    </StackPanel></Border>
     <Border Style="{StaticResource Card}"><StackPanel><TextBlock Text="Controls and availability" FontSize="20"/><ItemsControl Name="CpuControlTable" Margin="0,12,0,0" HorizontalContentAlignment="Stretch"><ItemsControl.ItemTemplate><DataTemplate><Border BorderBrush="#33415E" BorderThickness="0,0,0,1" Padding="0,10"><StackPanel><TextBlock Text="{Binding Control}" TextWrapping="Wrap" FontWeight="SemiBold" Margin="0,0,0,4"/><TextBlock Text="{Binding Availability}" TextWrapping="Wrap" Foreground="#B39CFF" Margin="0,0,0,4"/><TextBlock Text="{Binding Detail}" TextWrapping="Wrap" Foreground="#B0B5CC" Margin="0"/></StackPanel></Border></DataTemplate></ItemsControl.ItemTemplate></ItemsControl></StackPanel></Border>
-    <Border Style="{StaticResource Card}"><StackPanel><TextBlock Text="Baseline workflow" FontSize="20"/><TextBlock TextWrapping="Wrap" Text="1. Scan your PC. Save work and keep background activity consistent.&#10;2. Run the three-test CPU baseline; temperature checks are performed by the workload. Cancel CPU batch stops the test and discards the batch.&#10;3. Open Repeated results for median and variation, and Test results for temperatures.&#10;&#10;The baseline only measures the current SHA-256 workload and makes no settings changes. CPU power-limit detection and reviewed changes are separate actions above; they do not automatically start a test or establish stability. Frequency, voltage and BIOS writes are unavailable." Foreground="#B0B5CC"/></StackPanel></Border>
+    <Border Style="{StaticResource Card}"><StackPanel><TextBlock Text="Baseline workflow" FontSize="20"/><TextBlock TextWrapping="Wrap" Text="1. Scan your PC. Save work and keep background activity consistent.&#10;2. Run the three-test CPU baseline; temperature checks are performed by the workload. Cancel CPU batch stops the test and discards the batch.&#10;3. Review CPU test results on this page. After a reviewed change, run another measurement and compare reference A with result B.&#10;&#10;The baseline only measures the current SHA-256 workload and makes no settings changes. CPU power-limit detection and reviewed changes are separate actions above; they do not automatically start a test or establish stability. Frequency, voltage and BIOS writes are unavailable." Foreground="#B0B5CC"/></StackPanel></Border>
    </StackPanel></ScrollViewer></TabItem>
    <TabItem Header="Tuning" Tag="&#xE9E9;"><ScrollViewer VerticalScrollBarVisibility="Auto"><StackPanel Margin="20">
     <TextBlock Text="Measure. Review. Apply. Compare." FontSize="24" FontWeight="SemiBold"/>

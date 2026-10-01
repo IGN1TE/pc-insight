@@ -2,10 +2,10 @@
 
 [Download the latest release](https://github.com/IGN1TE/pc-insight/releases/latest) · [Development workflow](DEVELOPMENT.md)
 
-Version 0.28.0 adds a limited Intel CPU package-power preview: live PL1/PL2 detection, reviewed reductions, saved originals, readback and explicit restoration. The first supported target is a single i7-13700K with the matching Raptor Lake CPUID and an available PawnIO driver. CPU multiplier and voltage control remain unavailable. Physical Windows apply/restore validation is pending.
+Version 0.28.1 adds CPU batch comparisons directly on CPU tuning: choose saved reference and result batches to review throughput, variation, temperature coverage and PL1/PL2 context. CPU power-limit apply/readback and same-boot restoration were confirmed by the user on the initial i7-13700K target. Multiplier and voltage control remain unavailable.
 
 ---
-# PC Insight 0.28.0 - CPU power-limit preview
+# PC Insight 0.28.1 - CPU measurement comparisons
 
 CPU/GPU sensor readings are now collected inside PC Insight through the bundled official LibreHardwareMonitorLib 0.9.6. You no longer need the Libre Hardware Monitor desktop app, Log Sensors, a CSV file or its remote web server.
 
@@ -485,3 +485,9 @@ Readback verifies the requested register settings only. Firmware and other power
 For the first hardware acceptance: detect and record the two limits; apply a small reduction permitted by the form; detect again and check the values; use **Restore saved CPU limits** and detect again to check the originals. Then verify close/reopen recovery. Do not mark hardware validation complete solely from automated mocks. Existing three-run CPU baseline, cancellation and saved-result retention were confirmed by the user on 0.27.1.
 
 Implementation references: Intel SDM Volume 3B §17.10 and Volume 4 Table 2-20 plus Raptor Lake model mapping, from https://www.intel.com/content/www/us/en/developer/articles/technical/intel-sdm.html ; official PawnIO module source and signed releases at https://github.com/namazso/PawnIO.Modules . Retained module source, license and hashes are under `vendor/PawnIO`.
+
+### CPU batch comparison (0.28.1)
+
+CPU tuning now shows saved three-run CPU batches directly. Choose reference A and result B to compare medians, spread, observed temperature peaks and recorded PL1/PL2 settings. Comparisons require complete matching tests with unchanged run-boundary settings and usable CPU identity/BIOS/power metadata. Older batches without this metadata remain visible but cannot produce a tuning comparison. High variation and overlapping run ranges are called out; a throughput change is not proof of stability or causation. Export CPU comparison saves both batches and the checks as JSON. Refresh saved CPU results to select a newly completed batch while preserving your reference selection. No hardware settings are applied by this panel.
+
+The user has confirmed the 0.28.0 PL1 reduction, readback, restore to 253/253 W, and same-boot close/reopen recovery on the initial i7-13700K machine. Multiplier and voltage controls remain unavailable.

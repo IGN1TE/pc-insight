@@ -51,6 +51,7 @@ try {
     'Endurance5','Endurance10','EnduranceStop','EnduranceStatus' | ForEach-Object { $ui[$_] = $window.FindName($_) }
     'CpuReadinessText','CpuControlTable','CpuReadinessScan','CpuBaselineRun','CpuBaselineCancel','CpuReadinessExport','CpuVendorHelp' | ForEach-Object { $ui[$_] = $window.FindName($_) }
     'CpuPowerDetect','CpuPowerInfo','CpuPL1','CpuPL2','CpuPowerApply','CpuPowerRestore','CpuPowerStatus' | ForEach-Object { $ui[$_] = $window.FindName($_) }
+    'CpuBatchBefore','CpuBatchAfter','CpuBatchBeforeText','CpuBatchAfterText','CpuBatchVerdict','CpuBatchRefresh','CpuBatchExport' | ForEach-Object { $ui[$_] = $window.FindName($_) }
     . "$PSScriptRoot\SessionComparisonUI.ps1"
     $ui.InstalledVersion.Text='Installed version: '+$script:appVersion
     $script:isAdministrator = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
@@ -268,6 +269,7 @@ try {
         $out -join "`n"
     }
     function Show-History {
+        if(Get-Command Refresh-PCCpuResultsUI -ErrorAction SilentlyContinue){Refresh-PCCpuResultsUI}
         $rows = @($script:history)
         if ($rows.Count -eq 0) { return }
         $texts = @($rows | Select-Object -Last 30 | ForEach-Object { "$($_.Timestamp)`n$(Format-PCValue (Get-PCResultRate $_) (Get-PCResultUnit $_)) | $($_.Test)`nCPU: $($_.CPUName)`nPower plan: $($_.Plan)`n" })
@@ -703,6 +705,7 @@ try {
     . "$PSScriptRoot\GpuEnduranceUI.ps1"
     . "$PSScriptRoot\CpuTuningUI.ps1"
     . "$PSScriptRoot\CpuPowerUI.ps1"
+    . "$PSScriptRoot\CpuResultsUI.ps1"
     $window.Add_Closing({
         param($sender,$eventArgs)
         if($script:cpuPowerBusy){$eventArgs.Cancel=$true;return}
