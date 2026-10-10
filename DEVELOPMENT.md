@@ -1,4 +1,8 @@
-﻿# 0.30.0 development checkpoint
+﻿# 0.31.0 development checkpoint
+
+Continue from `release/v0.31.0-readable-results`, based on 0.30.0. SessionReport.ps1 creates offline, encoded HTML using the same summary and sensor calculations as Test results. Export handlers freeze session and history before opening the Save dialog. Windows tests include actual report-button invocation and normal/minimum result-page renders.
+
+# 0.30.0 development checkpoint
 
 Continue from `release/v0.30.0-result-library`, based on published v0.29.0. SessionLibrary.ps1 handles retention and immutable annotations. SessionLibraryUI.ps1 binds filters, notes and pins; main-window selection updates charts/exports. The persisted sessions.json format remains an array with optional Pinned and Note fields. At most 20 new pins are allowed, but pre-existing extra pins are never discarded automatically. Unpin does not immediately prune data; retention runs when a new session arrives.
 

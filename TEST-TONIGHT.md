@@ -1,4 +1,8 @@
-﻿# PC Insight 0.30.0 — saved-results checks
+﻿# PC Insight 0.31.0 — report check
+
+Select a saved result under Test results and choose **Save readable result**. Cancel once to confirm nothing is saved, then save the HTML and open it in your browser. Check its note, session identity, sensor coverage and event evidence against the app. Try browser Print → Save as PDF if you want a document to share. Test a stopped endurance result and an older result with no event evidence. No second result is needed.
+
+# PC Insight 0.30.0 — saved-results checks
 
 1. Open Test results. Filter CPU/GPU/RAM/Monitoring, type part of a date or hardware name, then Clear filters.
 2. Select an important result, type a note and choose Pin result. Close and reopen; confirm the pin and note remain. Use Pinned only to find it.

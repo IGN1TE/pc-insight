@@ -1,4 +1,11 @@
-﻿# 0.30.0 validation — 2026-10-10
+﻿# 0.31.0 validation — 2026-10-10
+
+- Portable runner: 39 passed, 6 Windows-only suites skipped, 0 failed.
+- New report regression checks cover stopped/legacy evidence, failed-sample exclusion, sensor coverage, missing values, HTML encoding, absence of active/external content, atomic replacement and existing-file preservation on errors.
+- Windows UI coverage exercises the real report button and verifies that selection and comparison-history changes during Save cannot alter the exported snapshot.
+- Full Windows regression, WPF rendering and package validation run before publication. Target-PC installation and native Save/Print acceptance remain pending.
+
+# 0.30.0 validation — 2026-10-10
 
 - Portable runner: 38 passed, 6 Windows-only suites skipped, 0 failed.
 - Tests cover pinned/recent retention, immutable note updates, literal search and combined filters, pin/note limits, legacy state labels, JSON persistence and unreadable-history preservation.

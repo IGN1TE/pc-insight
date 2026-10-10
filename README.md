@@ -1,4 +1,8 @@
-﻿# PC Insight 0.30.0 — saved results library
+﻿# PC Insight 0.31.0 — readable saved-result reports
+
+Choose a saved result and click **Save readable result** to create a standalone HTML report. Open it in any browser, print it or save as PDF. The report includes your saved note, the same session summary/event evidence as the app, retained sensor statistics with coverage, and recorded hardware context. It needs no internet connection. Review the note and hardware details before sharing.
+
+# PC Insight 0.30.0 — saved results library
 
 Test results now keeps 30 recent unpinned sensor sessions plus up to 20 pinned results. Filter by test type, search dates/hardware/notes, pin important baselines and save a short note. References remain available across result filters. Saved JSON/CSV exports work during tests and capture a snapshot before Save opens. An unreadable history file is preserved instead of overwritten; new results can still be exported from memory.
 

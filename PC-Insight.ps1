@@ -19,6 +19,7 @@ $script:appVersion=Get-PCAppVersion
 . "$PSScriptRoot\SessionDetails.ps1"
 . "$PSScriptRoot\SessionComparison.ps1"
 . "$PSScriptRoot\ComparisonReport.ps1"
+. "$PSScriptRoot\SessionReport.ps1"
 . "$PSScriptRoot\SessionChart.ps1"
 . "$PSScriptRoot\GuidedOptimize.ps1"
 . "$PSScriptRoot\GuidedClocks.ps1"
@@ -45,7 +46,7 @@ try {
     $window.Title='PC Insight | Preview '+$script:appVersion
     Set-PCWindowBranding -Window $window -Root $PSScriptRoot -Version $script:appVersion
     $script:ui = @{}
-    'EnableOverlayHotkey','ToggleOverlay','OverlayStatus','LastFpsCapture','ExportFpsDetails','GuideDetect','GuideBaseline','GuideApply','GuideRestore','GuideKeep','GuideStop','GuideExport','GuideStage','GuideStatusCard','GuideNextAction','GuideResultTitle','GuideRecommendationLabel','GuideRecommendation','GuideBeforeScore','GuideAfterScore','GuideChange','GuideMessage','GuideDevice','GuideVerdict','GuideRecovery','SensorHistoryChart','SensorHistoryTitle','SensorHistoryScale','SensorHistoryTime','SessionSensorDetails','SessionCoverage','ExportSessionCsv','ExportSessionJson','SessionExportStatus','InstalledVersion','ReleaseNotes','LastUpdateCheck','UpdateFeed','CheckUpdate','DownloadUpdate','InstallUpdate','CancelUpdate','UpdateStatus','AccessStatus','ReopenAdmin','OpenAppFolder','OpenDataFolder','Scan','Export','ScanTime','Overview','Insights','Benchmark','Cancel','Results','PlansRefresh','Plans','Apply','Restore','PowerStatus','Status','SensorStart','MultiBenchmark','SensorReadings','SensorSummary','SensorCancel','SessionResults','CPUModel','GPUModel','RAMModel','CPUTemp','GPUTemp','RAMUsed','DashboardTest','ChartCaption','TemperatureChart','DashboardResult','CPUDetails','CPUReadingTime','GPUReadingTime','CPUPower','DashboardRecord','OpenResults','ResultPeak','ResultRate','ResultDelta','Navigation','MonitorStart','MonitorStop','RAMSampleLabel','UsageChart','LongCPU','MemoryTest','GPUTest','TestProgress','ProgressLabel','ResultRateLabel','DetectTuning','GPUDevice','PowerPreset','ApplyGPU','RestoreGPU','TuningStatus','CapabilityText','SaveBaseline','CompareBaseline','BaselineResult','RepeatCPU','RepeatRAM','RepeatGPU','BatchReport','SessionPicker','ProfileName','SaveProfile','ProfilePicker','LoadProfile','ProfileStatus' | ForEach-Object { $ui[$_] = $window.FindName($_) }
+    'EnableOverlayHotkey','ToggleOverlay','OverlayStatus','LastFpsCapture','ExportFpsDetails','GuideDetect','GuideBaseline','GuideApply','GuideRestore','GuideKeep','GuideStop','GuideExport','GuideStage','GuideStatusCard','GuideNextAction','GuideResultTitle','GuideRecommendationLabel','GuideRecommendation','GuideBeforeScore','GuideAfterScore','GuideChange','GuideMessage','GuideDevice','GuideVerdict','GuideRecovery','SensorHistoryChart','SensorHistoryTitle','SensorHistoryScale','SensorHistoryTime','SessionSensorDetails','SessionCoverage','ExportSessionCsv','ExportSessionJson','ExportSessionReport','SessionExportStatus','InstalledVersion','ReleaseNotes','LastUpdateCheck','UpdateFeed','CheckUpdate','DownloadUpdate','InstallUpdate','CancelUpdate','UpdateStatus','AccessStatus','ReopenAdmin','OpenAppFolder','OpenDataFolder','Scan','Export','ScanTime','Overview','Insights','Benchmark','Cancel','Results','PlansRefresh','Plans','Apply','Restore','PowerStatus','Status','SensorStart','MultiBenchmark','SensorReadings','SensorSummary','SensorCancel','SessionResults','CPUModel','GPUModel','RAMModel','CPUTemp','GPUTemp','RAMUsed','DashboardTest','ChartCaption','TemperatureChart','DashboardResult','CPUDetails','CPUReadingTime','GPUReadingTime','CPUPower','DashboardRecord','OpenResults','ResultPeak','ResultRate','ResultDelta','Navigation','MonitorStart','MonitorStop','RAMSampleLabel','UsageChart','LongCPU','MemoryTest','GPUTest','TestProgress','ProgressLabel','ResultRateLabel','DetectTuning','GPUDevice','PowerPreset','ApplyGPU','RestoreGPU','TuningStatus','CapabilityText','SaveBaseline','CompareBaseline','BaselineResult','RepeatCPU','RepeatRAM','RepeatGPU','BatchReport','SessionPicker','ProfileName','SaveProfile','ProfilePicker','LoadProfile','ProfileStatus' | ForEach-Object { $ui[$_] = $window.FindName($_) }
     'DetectClocks','ClockGPU','ClockInfo','CoreOffset','MemoryOffset','ApplyClocks','RestoreClocks','ClockStatus' | ForEach-Object { $ui[$_] = $window.FindName($_) }
     'CoreTrialStart','CoreTrialApply','CoreTrialKeep','CoreTrialRestore','CoreTrialCancel','CoreTrialStatus' | ForEach-Object { $ui[$_] = $window.FindName($_) }
     'CompareSessionPicker','ComparisonRows','ComparisonStatus','ComparisonNotes','ExportComparison','ExportComparisonReport','ComparisonExportStatus' | ForEach-Object { $ui[$_] = $window.FindName($_) }
@@ -175,13 +176,14 @@ try {
         $available=$null -ne $ui.SessionPicker.SelectedItem
         $ui.ExportSessionCsv.IsEnabled=$available
         $ui.ExportSessionJson.IsEnabled=$available
+        $ui.ExportSessionReport.IsEnabled=$available
         $ui.SessionExportStatus.Text='CSV includes retained raw sensor readings, identifiers and issues. Missing readings stay blank.'
         Refresh-PCComparisonReferences
     }
     $ui.SessionPicker.Add_SelectionChanged({Show-PCSelectedSession})
     function Select-PCSessionExportPath([string]$Format) {
         $dialog=[Microsoft.Win32.SaveFileDialog]::new()
-        $dialog.Filter=if($Format -eq 'csv'){'CSV sensor readings (*.csv)|*.csv'}else{'JSON session (*.json)|*.json'}
+        $dialog.Filter=if($Format -eq 'csv'){'CSV sensor readings (*.csv)|*.csv'}elseif($Format -eq 'html'){'Readable result (*.html)|*.html'}else{'JSON session (*.json)|*.json'}
         $dialog.FileName='PC-Insight-session-'+(Get-Date -Format 'yyyyMMdd-HHmmss')+'.'+$Format
         if($dialog.ShowDialog($window) -eq $true){$dialog.FileName}
     }
@@ -189,9 +191,13 @@ try {
         if(-not $ui.SessionPicker.SelectedItem){return}
         try {
             $session=$ui.SessionPicker.SelectedItem.Session | ConvertTo-Json -Depth 24 | ConvertFrom-Json
+            $historySnapshot=@($script:history | ConvertTo-Json -Depth 24 | ConvertFrom-Json)
             $path=Select-PCSessionExportPath $format
             if(-not $path){return}
-            if($format -eq 'csv'){
+            if($format -eq 'html'){
+                Save-PCSessionHtml $session $historySnapshot $script:appVersion $path
+                $ui.SessionExportStatus.Text='Saved readable result report. Open it in your browser to read, print or save as PDF.'
+            }elseif($format -eq 'csv'){
                 $count=Export-PCSessionCsv $session $path
                 $ui.SessionExportStatus.Text="Exported $count sensor rows from the selected session. Only retained samples are included."
             }else{
@@ -202,6 +208,7 @@ try {
     }
     $ui.ExportSessionCsv.Add_Click({Export-SelectedSession 'csv'})
     $ui.ExportSessionJson.Add_Click({Export-SelectedSession 'json'})
+    $ui.ExportSessionReport.Add_Click({Export-SelectedSession 'html'})
     function Show-DashboardResult {
         Refresh-SessionPicker
         $last = $script:sessions | Select-Object -Last 1
@@ -246,6 +253,7 @@ try {
         $ui.SensorCancel.IsEnabled = $busy
         $ui.ExportSessionCsv.IsEnabled = $null -ne $ui.SessionPicker.SelectedItem
         $ui.ExportSessionJson.IsEnabled = $null -ne $ui.SessionPicker.SelectedItem
+        $ui.ExportSessionReport.IsEnabled = $null -ne $ui.SessionPicker.SelectedItem
         Update-PCComparisonExportState
         $ui.UpdateFeed.IsEnabled = -not $busy
         $ui.DownloadUpdate.IsEnabled = -not $busy -and $null -ne $script:updateRelease

@@ -27,3 +27,6 @@ Multiplier research: the signed PawnIO IntelMSR module does not allow direct 0x1
 - [ ] Native event-log, UI and installation acceptance for 0.29.0.
 - [x] Upload 0.29.0 source to GitHub through the signed-in website; Windows checks passed.
 - [ ] Target-PC acceptance of the 0.29.0 release (see TEST-TONIGHT.md).
+
+- [x] Readable single-session HTML report with saved notes, event evidence, sensor coverage and safe exports (0.31.0).
+- [ ] Target-PC acceptance of single-session report saving/printing.

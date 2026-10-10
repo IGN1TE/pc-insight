@@ -1,4 +1,13 @@
-﻿# v0.30.0 — saved results library
+﻿# v0.31.0 — readable single-result reports
+
+- Adds Save readable result beside JSON/CSV export. A second session is not required.
+- Standalone, printable HTML includes the saved note, existing summary and event evidence, sensor min/average/peak/coverage, and recorded hardware context. Missing readings and old sessions without evidence stay explicit.
+- Reports use the existing sensor calculations, excluding failed frames and non-finite values. All saved text is HTML-encoded; reports contain no scripts or external resources.
+- Freezes both the selected result and comparison history before the Save dialog opens. Export remains available during workloads and update checks. Cancel writes nothing; failed saves preserve existing reports.
+
+Portable regression: 39 passed, 6 Windows-only suites skipped. Full Windows UI, regression and package validation run before publication. Target-PC install and native file-dialog acceptance remain pending. No hardware writes added.
+
+# v0.30.0 — saved results library
 
 - Keeps 30 recent unpinned sensor sessions plus up to 20 pinned results, with optional 240-character notes.
 - Adds test-type filters, literal date/hardware/note search, pinned-only view and clear filters. Refresh preserves selection and unsaved notes on that same result.
