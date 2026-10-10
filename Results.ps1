@@ -1,4 +1,5 @@
-﻿function Get-PCResultRate($result) {
+﻿. "$PSScriptRoot\Reliability.ps1"
+function Get-PCResultRate($result) {
     if ($null -ne $result.GpuFramesPerSecond) { return $result.GpuFramesPerSecond }
     return $result.MiBPerSecond
 }
@@ -34,7 +35,7 @@ function Get-PCComparison($latest, $history) {
 }
 function Get-PCSessionSummary($session, $history) {
     if (-not $session) { return 'Run a monitored CPU test or record sensors to see a summary here.' }
-    if($session.Test -like 'GPU-endurance-*'){return ("GPU ENDURANCE | $($session.EnduranceOutcome)`n$($session.Timestamp)`nMeasured: $([math]::Round($session.Seconds,1)) / $($session.RequestedSeconds) seconds, plus warm-up`nGPU: $($session.GPUName)`nPeak matched GPU temperature: $(Format-PCValue $session.PeakGPU 'C')`nRetained sensor queries: $(@($session.Frames).Count)`n$($session.Limitations)")}
+    if($session.Test -like 'GPU-endurance-*'){return ("GPU ENDURANCE | $($session.EnduranceOutcome)`n$($session.Timestamp)`nMeasured: $([math]::Round($session.Seconds,1)) / $($session.RequestedSeconds) seconds, plus warm-up`nGPU: $($session.GPUName)`nPeak matched GPU temperature: $(Format-PCValue $session.PeakGPU 'C')`nRetained sensor queries: $(@($session.Frames).Count)`n$($session.Limitations)`n`n$(Format-PCReliabilityEvidence $session.ReliabilityEvidence)")}
     $frames = @($session.Frames)
     $temps = @(); $powers = @(); $gpu = @()
     foreach ($frame in $frames) {

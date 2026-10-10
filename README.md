@@ -1,4 +1,8 @@
-﻿<p align="center"><img src="assets/branding/pc-insight-logo-v1.png" width="640" alt="PC Insight"></p>
+﻿# 0.29.0 development candidate
+
+New: Benchmark now includes saved GPU endurance results, partial-run review, JSON export and post-test Windows event evidence. See TEST-TONIGHT.md for acceptance steps and DEVELOPMENT.md for the regression/release workflow. This candidate is not yet published; native Windows checks remain pending.
+
+<p align="center"><img src="assets/branding/pc-insight-logo-v1.png" width="640" alt="PC Insight"></p>
 
 [Download the latest release](https://github.com/IGN1TE/pc-insight/releases/latest) · [Development workflow](DEVELOPMENT.md)
 

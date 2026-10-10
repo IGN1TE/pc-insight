@@ -48,7 +48,7 @@ try {
     'DetectClocks','ClockGPU','ClockInfo','CoreOffset','MemoryOffset','ApplyClocks','RestoreClocks','ClockStatus' | ForEach-Object { $ui[$_] = $window.FindName($_) }
     'CoreTrialStart','CoreTrialApply','CoreTrialKeep','CoreTrialRestore','CoreTrialCancel','CoreTrialStatus' | ForEach-Object { $ui[$_] = $window.FindName($_) }
     'CompareSessionPicker','ComparisonRows','ComparisonStatus','ComparisonNotes','ExportComparison','ExportComparisonReport','ComparisonExportStatus' | ForEach-Object { $ui[$_] = $window.FindName($_) }
-    'Endurance5','Endurance10','EnduranceStop','EnduranceStatus' | ForEach-Object { $ui[$_] = $window.FindName($_) }
+    'Endurance5','Endurance10','EnduranceStop','EnduranceStatus','EnduranceHistory','EnduranceHistoryDetails','EnduranceHistoryRefresh','EnduranceHistoryExport' | ForEach-Object { $ui[$_] = $window.FindName($_) }
     'CpuReadinessText','CpuControlTable','CpuReadinessScan','CpuBaselineRun','CpuBaselineCancel','CpuReadinessExport','CpuVendorHelp' | ForEach-Object { $ui[$_] = $window.FindName($_) }
     'CpuPowerDetect','CpuPowerInfo','CpuPL1','CpuPL2','CpuPowerApply','CpuPowerRestore','CpuPowerStatus' | ForEach-Object { $ui[$_] = $window.FindName($_) }
     'CpuBatchBefore','CpuBatchAfter','CpuBatchBeforeText','CpuBatchAfterText','CpuBatchVerdict','CpuBatchRefresh','CpuBatchExport' | ForEach-Object { $ui[$_] = $window.FindName($_) }
@@ -461,6 +461,7 @@ try {
                 $script:sessions = @($script:sessions) + @($value)
                 $script:sessions = @($script:sessions | Select-Object -Last 10)
                 Save-JsonAtomic $script:sessions (Join-Path $dataDir 'sessions.json')
+                Refresh-PCEnduranceResults
                 $summary = "Recorded $($value.Frames.Count) sensor queries. Peak CPU: $($value.PeakCPU) C."
                 if ($null -eq $value.PeakCPU) { $summary = 'Recording completed without CPU temperatures. Check sensor setup.' }
                 if ($value.StopReason) { $summary = 'Test stopped: ' + $value.StopReason + ' No comparable score was recorded.' }
@@ -703,6 +704,7 @@ try {
     . "$PSScriptRoot\GpuOverclockUI.ps1"
     . "$PSScriptRoot\GuidedClocksUI.ps1"
     . "$PSScriptRoot\GpuEnduranceUI.ps1"
+    . "$PSScriptRoot\EnduranceResultsUI.ps1"
     . "$PSScriptRoot\CpuTuningUI.ps1"
     . "$PSScriptRoot\CpuPowerUI.ps1"
     . "$PSScriptRoot\CpuResultsUI.ps1"

@@ -14,9 +14,14 @@
 - [ ] CPU multiplier and voltage controls: supported interface and validation still required.
 - [x] CPU batch results and before/after comparison on CPU tuning, including power context, variation, temperature coverage and JSON export (0.28.1; Windows layout check pending).
 - [ ] Broader results dashboard polish.
-- [ ] Automated Windows release checks.
+- [x] Isolated test runner, Windows CI workflow and audited release packaging implemented (0.29.0 candidate).
+- [ ] First Windows CI run for 0.29.0 (GitHub write access blocked).
 - [ ] Installer/layout polish.
 
 The CPU power preview is limited to decreasing PL1/PL2 on the initial i7-13700K / CPUID B7 target. It does not add multiplier overclocking or voltage control. Do not mark physical validation or CPU stability complete from mocked tests.
 
 Multiplier research: the signed PawnIO IntelMSR module does not allow direct 0x1AD writes (upstream issue 112 remains open as of 2026-10-01). Coreboot oc_mailbox Kconfig declares 4th-10th generation support, not the target 13th-generation CPU. No multiplier or voltage writes were added.
+
+- [x] Saved GPU endurance review and read-only Windows event evidence implemented (0.29.0 candidate).
+- [ ] Native event-log, UI and installation acceptance for 0.29.0.
+- [ ] Publish 0.29.0 after restoring GitHub write access and running Windows checks.

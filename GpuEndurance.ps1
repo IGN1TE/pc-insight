@@ -1,4 +1,5 @@
-﻿# Continuous workload observation, deliberately separate from comparable benchmark scores.
+﻿. "$PSScriptRoot\Reliability.ps1"
+# Continuous workload observation, deliberately separate from comparable benchmark scores.
 function New-PCGpuEnduranceWorker {
     if(-not ('PCInsightGpuWorkload' -as [type])){Add-Type -Path "$PSScriptRoot\GpuWorkload.cs"}
     [PCInsightGpuWorkload]::new()
@@ -14,6 +15,7 @@ function Get-PCGpuEnduranceGuard($Frame,[string]$Name){
 }
 function Invoke-PCGpuEndurance([ValidateSet(300,600)][int]$DurationSeconds,[string]$StopPath){
     $frames=[Collections.Generic.List[object]]::new();$worker=$null;$reason=$null;$gpuName=$null;$seconds=0.0;$renderer=$null;$peakGPU=$null;$lastDraws=0L
+    $startedAt=Get-Date
     $watch=[Diagnostics.Stopwatch]::StartNew();$progressWatch=[Diagnostics.Stopwatch]::StartNew()
     try{
         if(Test-Path -LiteralPath $StopPath){throw 'Cancelled before starting.'}
@@ -55,11 +57,16 @@ function Invoke-PCGpuEndurance([ValidateSet(300,600)][int]$DurationSeconds,[stri
     if(-not $reason -and ($seconds -lt $DurationSeconds-0.5 -or -not $worker -or $worker.Frames -le 0)){$reason='GPU workload ended before the requested interval completed.'}
     $valid=@($frames|Where-Object {-not $_.Issue}|ForEach-Object {$_.Sensors}|Where-Object {$_.Parent -match '^/gpu' -and $_.Name -eq 'GPU Core' -and $_.Type -eq 'Temperature' -and $_.HardwareName -eq $gpuName -and $null -ne $_.Value -and $_.Value -gt 0 -and $_.Value -le 125})
     if($valid.Count){$peakGPU=($valid|Measure-Object Value -Maximum).Maximum}
+    $endedAt=Get-Date
+    [pscustomobject]@{Kind='EnduranceProgress';Value='GPU load stopped. Checking Windows event evidence...'}
+    try{$evidence=Get-PCReliabilityEvidence $startedAt $endedAt}
+    catch{$evidence=[pscustomobject]@{Schema=1;Available=$false;Truncated=$false;Status='Event evidence unavailable';Checks=@();Events=@();Limitations='Event collection failed; workload readings and stop reason were retained.'}}
     $outcome=if($reason){'Stopped: '+$reason}else{'Completed without detected workload errors. Stability is not established.'}
+    if($evidence.Events.Count -gt 0){$outcome+=' Windows events were recorded during this interval; review required.'}
     [pscustomobject]@{Kind='Result';Value=[pscustomobject]@{
         Test="GPU-endurance-${DurationSeconds}s-v1";Timestamp=(Get-Date).ToString('o');RequestedSeconds=$DurationSeconds;Seconds=$seconds;WarmupSeconds=5;Workers=1;Runtime=[Environment]::Version.ToString()
-        Completed=($null -eq $reason);StopReason=$reason;EnduranceOutcome=$outcome;PeakGPU=$peakGPU;GPUName=$gpuName;Renderer=$renderer
+        ReliabilityEvidence=$evidence;StartedAt=$startedAt.ToString('o');EndedAt=$endedAt.ToString('o');Completed=($null -eq $reason);StopReason=$reason;EnduranceOutcome=$outcome;PeakGPU=$peakGPU;GPUName=$gpuName;Renderer=$renderer
         MiBPerSecond=$null;GpuFramesPerSecond=$null;PeakCPU=($frames|Where-Object {$null -ne $_.CPUCelsius}|Measure-Object CPUCelsius -Maximum).Maximum;Frames=@($frames.ToArray())
-        Limitations='Continuous offscreen OpenGL shader load; five-second warm-up plus requested measured interval. Observes API errors, missing/slow sensors and sampled 85 C CPU/GPU cutoff. No pixel-correctness, VRAM integrity, game, WHEA or driver-reset-log validation. A driver hang can delay stopping; heartbeat checks run between draw batches. No clock writes or automatic restoration: use Tuning to restore saved offsets. Completion is not proof of stability; no comparable benchmark score.'
+        Limitations='Continuous offscreen OpenGL shader load; five-second warm-up plus requested measured interval. Observes API errors, missing/slow sensors and sampled 85 C CPU/GPU cutoff. No pixel-correctness, VRAM integrity, game or comprehensive hardware-error validation. A post-test snapshot checks WHEA-Logger and Display 4101 events; this does not establish causality. A driver hang can delay stopping; heartbeat checks run between draw batches. No clock writes or automatic restoration: use Tuning to restore saved offsets. Completion is not proof of stability; no comparable benchmark score.'
     }}
 }

@@ -1,44 +1,35 @@
-# Development workflow
+# Development and releases
 
-## Branches
+The published baseline for this candidate is v0.28.1 on `release/v0.28.1-cpu-results` (210992caef9ba9a745c99e6106574374ab46ced8). `main` still points to v0.22.2; do not start new development there and accidentally discard newer features. The 0.29.0 candidate is on `release/v0.29.0-validation` locally. Its first upload was blocked by the connected GitHub integration returning HTTP 403 for branch and tree creation. No 0.29.0 release is published.
 
-- `main` contains the source of the released app, currently v0.22.2.
-- `develop` is the integration branch for ongoing work. It starts at the same source as `main`.
-- Create short-lived `feature/<name>` and `fix/<name>` branches from `develop`, then merge reviewed changes into `develop`.
-- For a release, validate `develop`, merge it into `main`, tag the release commit with `v<version>`, and publish the packaged app and update manifest.
+## Validation
 
-The releases through v0.22.1 were distributed as ZIP assets before the complete source was imported into this repository. Their existing tags remain unchanged. Use their `PC-Insight-Windows-Preview.zip` assets for the complete historical versions.
-
-## Running and checking the app
-
-Use Windows PowerShell 5.1 and the included `Start-PC-Insight.cmd` launcher. Dependencies and their license notices are included under `vendor/`. See README.md for hardware and driver requirements.
-
-Run the relevant scripts in `tests/` with Windows PowerShell 5.1. Tests that load WPF need `-STA`. For example:
+Run all regression suites in isolated Windows PowerShell 5.1 processes:
 
 ```powershell
-powershell.exe -NoProfile -STA -ExecutionPolicy Bypass -File .\tests\Test-SessionComparison.ps1
-powershell.exe -NoProfile -STA -ExecutionPolicy Bypass -File .\tests\Test-SessionComparisonUI.ps1
-powershell.exe -NoProfile -STA -ExecutionPolicy Bypass -File .\tests\Test-ComparisonWorkflow.ps1
-powershell.exe -NoProfile -STA -ExecutionPolicy Bypass -File .\tests\Test-Interface.ps1
-powershell.exe -NoProfile -STA -ExecutionPolicy Bypass -File .\tests\Test-Updates.ps1
+powershell.exe -NoProfile -STA -ExecutionPolicy Bypass -File tools/Test-Release.ps1
 ```
 
-Mock and interface tests do not replace checking hardware readings and interaction on Windows. Review each test's prerequisites before running it.
+The runner parses all scripts and both XAML documents, then discovers `tests/Test-*.ps1`. A failing suite fails the run. Hardware writes are mocked. The bounded CPU and RAM worker tests execute their actual workloads; WPF tests load windows without starting the app. Windows validation does not certify physical tuning or stability.
 
-## Releases and updater
+On Linux, PowerShell 7 can run `tools/Test-Release.ps1 -Portable`. Five Windows-specific suites are explicitly skipped. The GitHub Actions workflow runs the full Windows suite on push to main, develop, release, feature and fix branches, and on pull requests. This candidate's workflow still needs its first GitHub run.
 
-Package the app inside a single top-level `PC-Insight/` directory. Keep all dependencies and their notices. Attach `PC-Insight-Windows-Preview.zip` and `update.json` to the GitHub Release. Keep `version.json` and the manifest version consistent, and recalculate the ZIP's SHA-256 and byte count after packaging.
+## Packaging
 
-The public update feed is `https://github.com/IGN1TE/pc-insight/releases/latest/download/update.json`. Branch changes alone do not publish an update. Verify the publicly downloaded manifest and archive after publishing.
+Commit the intended source, then run:
 
-Saved sessions, exported hardware reports, settings and recovery records belong on the user's PC and must not be included in source commits or release assets.
+```text
+python tools/Build-Release.py --output outputs/release
+```
 
-## Branding
+The builder includes only tracked root app files and assets/vendor content, checks LibreHardwareMonitor dependency hashes, creates one `PC-Insight/` archive root, checks every archived file's hash, and emits an update manifest and package audit. Developer tests, workflows, local user data, settings and recovery records are excluded. The audit records the source commit and whether tracked work differs from it.
 
-The PNG logo and matching icon are under `assets/branding/`. They are transparent raster assets generated with the built-in ImageGen tool. The prompt set is saved alongside them. `Branding.ps1` loads the logo into WPF using absolute paths so shortcuts can start from another working directory. `assets/branding/Build-Icon.ps1` creates the multi-size Windows icon; the installer uses a release-specific icon filename for Windows shell integration.
+CI also exercises the application's update manifest parser and archive extractor. Successful CI uploads a candidate artifact; it does not automatically publish a public release. Publish the exact validated archive and matching `update.json` together. Verify the public feed and archive after publication. The feed remains `https://github.com/IGN1TE/pc-insight/releases/latest/download/update.json`.
 
-## Current development preview
+## Event evidence
 
-`feature/nvidia-clock-offsets` contains the v0.24.1 candidate built from the supplied v0.24.0 preview. It adds Windows validation, a final temperature check before applying GPU clock offsets, and clock-recovery protection during uninstall. The public release remains v0.22.2 until a candidate is published.
+`Reliability.ps1` reads only the System log, with explicit start/end bounds, at most 101 queried events per provider and 100 retained event references per provider. WHEA-Logger and Display 4101 are separate checks. Unknown/provider/access errors remain unavailable, while only Get-WinEvent's specific no-match error becomes an empty result. Workload results survive evidence failures. Evidence is collected after stopping GPU load; late events or cleared logs can be missed. Raw messages and machine/user identity are not exported. See Microsoft Get-WinEvent documentation: https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.diagnostics/get-winevent?view=powershell-5.1
 
-The Windows mock suites include `tests/Test-GpuOverclock.ps1`, `tests/Test-GpuOverclockUI.ps1`, `tests/Test-ClockComparisonContext.ps1`, `tests/Test-UninstallRecovery.ps1`, and the existing comparison/interface/updater regressions. The read-only probe loaded the installed NVIDIA library and read offsets on the target RTX 5090. This does not validate physical writes or overclock stability.
+## Existing development constraints
+
+Preserve recovery journals and readback checks. No unvalidated CPU ratio or voltage writes. Do not mark hardware validation complete based on mocked tests. Branding sources remain in `assets/branding/`; dependencies and notices remain in `vendor/`. Follow the bundled TEST-TONIGHT.md for manual acceptance.

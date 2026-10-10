@@ -1,4 +1,14 @@
-﻿# 0.28.1 - CPU measurement comparisons
+﻿# v0.29.0 candidate — endurance evidence and release checks
+
+- Adds post-test Windows System log evidence for WHEA-Logger and Display 4101 events, with explicit time bounds, retained event references and separate unavailable/truncated states. Overlapping events require review; they do not prove GPU or test causality.
+- Adds Saved GPU endurance results directly under Benchmark, including stopped tests, retained temperature readings, event evidence and JSON export. Refresh preserves the selected result; exports capture the selection before opening Save.
+- Keeps older sessions readable, with missing evidence explicitly labelled as not collected. Event collection failures preserve the workload result.
+- Adds an isolated regression runner and a Windows PowerShell 5.1/WPF GitHub Actions workflow. Adds a tracked-file release builder, dependency and archive checks, update metadata, package audit and CI candidate artifact.
+- Includes TEST-TONIGHT.md. The retention limit remains ten sensor sessions across all test types; export runs you want to keep.
+
+Validation: portable automated regression and package checks are recorded in VALIDATION.md. Windows CI, native WPF layout, actual event-log reads and installation remain pending. GitHub rejected writes with HTTP 403; this candidate is not published. This update adds no CPU/GPU setting writes and does not certify stability.
+
+# 0.28.1 - CPU measurement comparisons
 
 - CPU tuning now displays saved three-run batches with selectable reference A and result B, median/range/spread, peak temperature and coverage, and recorded PL1/PL2 settings.
 - Incomplete or mismatched runs, changed/missing boundary settings, and missing CPU identity/BIOS/power metadata block percentage comparisons. High variation and overlapping ranges are labelled.
