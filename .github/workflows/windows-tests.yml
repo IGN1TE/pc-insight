@@ -1,0 +1,31 @@
+name: Windows release validation
+on:
+  push:
+    branches: [main, develop, 'release/**', 'feature/**', 'fix/**']
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  powershell-51:
+    runs-on: windows-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Parse scripts, load WPF, run isolated regression suites
+        shell: powershell
+        run: ./tools/Test-Release.ps1
+      - name: Build and verify distributable
+        shell: powershell
+        run: |
+          python tools/Build-Release.py --output outputs/release
+          if ($LASTEXITCODE -ne 0) { throw 'Release packaging failed' }
+          . ./Updates.ps1
+          $manifest = Get-Content outputs/release/update.json -Raw | ConvertFrom-Json
+          $null = Read-PCUpdateManifest $manifest '0.0.0'
+          $null = Expand-PCUpdate (Join-Path $PWD 'outputs/release/PC-Insight-Windows-Preview.zip') (Join-Path $env:RUNNER_TEMP 'pc-insight-package-check')
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pc-insight-validated-candidate
+          path: outputs/release/
+          retention-days: 14
