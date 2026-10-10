@@ -30,7 +30,7 @@ def release_paths():
             raise ValueError(f'Missing or linked release input: {name}')
         paths.append(name)
     for required in ('PC-Insight.ps1', 'Start-App.ps1', 'Install.ps1', 'MainWindow.xaml',
-                     'Reliability.ps1', 'EnduranceResultsUI.ps1', 'SessionLibrary.ps1', 'SessionLibraryUI.ps1', 'version.json',
+                     'Reliability.ps1', 'EnduranceResultsUI.ps1', 'SessionLibrary.ps1', 'SessionLibraryUI.ps1', 'SessionReport.ps1', 'version.json',
                      'vendor/LibreHardwareMonitor/hashes.json'):
         if required not in paths:
             raise ValueError(f'Required file is not tracked: {required}')
@@ -69,7 +69,7 @@ def build(output):
                 'downloadUrl': f'https://github.com/IGN1TE/pc-insight/releases/download/v{version}/PC-Insight-Windows-Preview.zip',
                 'sha256': hashlib.sha256(archive.read_bytes()).hexdigest(),
                 'sizeBytes': archive.stat().st_size,
-                'releaseNotes': 'Saved results library with pins, notes, filters and exports during tests. See bundled release notes for validation status.'}
+                'releaseNotes': 'Readable single-result reports with sensor coverage, notes and event evidence; pinned result library. See bundled release notes for validation status.'}
     (output / 'update.json').write_text(json.dumps(manifest, indent=2) + '\n', encoding='utf-8')
     (output / 'package-audit.json').write_text(json.dumps({'Version': version, 'SourceCommit': commit,
         'WorkingTreeModified': dirty, 'Files': records}, indent=2) + '\n', encoding='utf-8')
