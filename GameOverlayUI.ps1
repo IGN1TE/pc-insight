@@ -1,4 +1,4 @@
-# Loaded after the main controls. The hotkey and capture are opt-in for this app session.
+﻿# Loaded after the main controls. The hotkey and capture are opt-in for this app session.
 $script:overlayWindow=$null;$script:overlayUI=@{};$script:overlaySensorJob=$null
 $script:overlayFrame=$null;$script:overlayCapture=$null;$script:overlayTargetId=0
 $script:overlayFpsIssue=''
@@ -72,7 +72,7 @@ function Set-PCOverlayHotkey([bool]$Enabled) {
     if($script:overlayWindow){$script:overlayUI.OverlayHint.Text=if($script:overlayHotkey){'Ctrl+Alt+O to hide'}else{'Hide from PC Insight > Game overlay'}}
 }
 function Show-PCGameOverlay {
-    if($script:job -or $script:updateJob -or ($script:guide -and $script:guide.Phase -in @('RunningBaseline','Review','Applying','RunningAfter','Decision','RecoveryRequired'))){
+    if($script:job -or $script:updateJob -or $script:cpuPowerBusy -or ($script:guide -and $script:guide.Phase -in @('RunningBaseline','Review','Applying','RunningAfter','Decision','RecoveryRequired'))){
         $ui.OverlayStatus.Text='Finish the active test, update or guided decision before showing the game overlay.';return
     }
     try{

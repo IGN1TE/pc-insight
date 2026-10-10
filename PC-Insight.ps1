@@ -6,16 +6,23 @@ Add-Type -AssemblyName System.Windows.Forms
 . "$PSScriptRoot\Engine.ps1"
 . "$PSScriptRoot\Power.ps1"
 . "$PSScriptRoot\Tuning.ps1"
+. "$PSScriptRoot\GpuOverclock.ps1"
+. "$PSScriptRoot\CpuPowerNative.ps1"
+. "$PSScriptRoot\CpuPower.ps1"
 . "$PSScriptRoot\Profiles.ps1"
 . "$PSScriptRoot\Updates.ps1"
 . "$PSScriptRoot\Branding.ps1"
 $script:appVersion=Get-PCAppVersion
 . "$PSScriptRoot\Results.ps1"
 . "$PSScriptRoot\SessionExport.ps1"
+. "$PSScriptRoot\SessionLibrary.ps1"
 . "$PSScriptRoot\SessionDetails.ps1"
 . "$PSScriptRoot\SessionComparison.ps1"
+. "$PSScriptRoot\ComparisonReport.ps1"
+. "$PSScriptRoot\SessionReport.ps1"
 . "$PSScriptRoot\SessionChart.ps1"
 . "$PSScriptRoot\GuidedOptimize.ps1"
+. "$PSScriptRoot\GuidedClocks.ps1"
 . "$PSScriptRoot\GuidePresentation.ps1"
 . "$PSScriptRoot\GameOverlay.ps1"
 . "$PSScriptRoot\RepeatedTests.ps1"
@@ -39,15 +46,23 @@ try {
     $window.Title='PC Insight | Preview '+$script:appVersion
     Set-PCWindowBranding -Window $window -Root $PSScriptRoot -Version $script:appVersion
     $script:ui = @{}
-    'EnableOverlayHotkey','ToggleOverlay','OverlayStatus','LastFpsCapture','ExportFpsDetails','GuideDetect','GuideBaseline','GuideApply','GuideRestore','GuideKeep','GuideStop','GuideExport','GuideStage','GuideStatusCard','GuideNextAction','GuideResultTitle','GuideRecommendationLabel','GuideRecommendation','GuideBeforeScore','GuideAfterScore','GuideChange','GuideMessage','GuideDevice','GuideVerdict','GuideRecovery','SensorHistoryChart','SensorHistoryTitle','SensorHistoryScale','SensorHistoryTime','SessionSensorDetails','SessionCoverage','ExportSessionCsv','ExportSessionJson','SessionExportStatus','InstalledVersion','ReleaseNotes','LastUpdateCheck','UpdateFeed','CheckUpdate','DownloadUpdate','InstallUpdate','CancelUpdate','UpdateStatus','AccessStatus','ReopenAdmin','OpenAppFolder','OpenDataFolder','Scan','Export','ScanTime','Overview','Insights','Benchmark','Cancel','Results','PlansRefresh','Plans','Apply','Restore','PowerStatus','Status','SensorStart','MultiBenchmark','SensorReadings','SensorSummary','SensorCancel','SessionResults','CPUModel','GPUModel','RAMModel','CPUTemp','GPUTemp','RAMUsed','DashboardTest','ChartCaption','TemperatureChart','DashboardResult','CPUDetails','CPUReadingTime','GPUReadingTime','CPUPower','DashboardRecord','OpenResults','ResultPeak','ResultRate','ResultDelta','Navigation','MonitorStart','MonitorStop','RAMSampleLabel','UsageChart','LongCPU','MemoryTest','GPUTest','TestProgress','ProgressLabel','ResultRateLabel','DetectTuning','GPUDevice','PowerPreset','ApplyGPU','RestoreGPU','TuningStatus','CapabilityText','SaveBaseline','CompareBaseline','BaselineResult','RepeatCPU','RepeatRAM','RepeatGPU','BatchReport','SessionPicker','ProfileName','SaveProfile','ProfilePicker','LoadProfile','ProfileStatus' | ForEach-Object { $ui[$_] = $window.FindName($_) }
-    'CompareSessionPicker','ComparisonRows','ComparisonStatus','ComparisonNotes','ExportComparison','ComparisonExportStatus' | ForEach-Object { $ui[$_] = $window.FindName($_) }
+    'EnableOverlayHotkey','ToggleOverlay','OverlayStatus','LastFpsCapture','ExportFpsDetails','GuideDetect','GuideBaseline','GuideApply','GuideRestore','GuideKeep','GuideStop','GuideExport','GuideStage','GuideStatusCard','GuideNextAction','GuideResultTitle','GuideRecommendationLabel','GuideRecommendation','GuideBeforeScore','GuideAfterScore','GuideChange','GuideMessage','GuideDevice','GuideVerdict','GuideRecovery','SensorHistoryChart','SensorHistoryTitle','SensorHistoryScale','SensorHistoryTime','SessionSensorDetails','SessionCoverage','ExportSessionCsv','ExportSessionJson','ExportSessionReport','SessionExportStatus','InstalledVersion','ReleaseNotes','LastUpdateCheck','UpdateFeed','CheckUpdate','DownloadUpdate','InstallUpdate','CancelUpdate','UpdateStatus','AccessStatus','ReopenAdmin','OpenAppFolder','OpenDataFolder','Scan','Export','ScanTime','Overview','Insights','Benchmark','Cancel','Results','PlansRefresh','Plans','Apply','Restore','PowerStatus','Status','SensorStart','MultiBenchmark','SensorReadings','SensorSummary','SensorCancel','SessionResults','CPUModel','GPUModel','RAMModel','CPUTemp','GPUTemp','RAMUsed','DashboardTest','ChartCaption','TemperatureChart','DashboardResult','CPUDetails','CPUReadingTime','GPUReadingTime','CPUPower','DashboardRecord','OpenResults','ResultPeak','ResultRate','ResultDelta','Navigation','MonitorStart','MonitorStop','RAMSampleLabel','UsageChart','LongCPU','MemoryTest','GPUTest','TestProgress','ProgressLabel','ResultRateLabel','DetectTuning','GPUDevice','PowerPreset','ApplyGPU','RestoreGPU','TuningStatus','CapabilityText','SaveBaseline','CompareBaseline','BaselineResult','RepeatCPU','RepeatRAM','RepeatGPU','BatchReport','SessionPicker','ProfileName','SaveProfile','ProfilePicker','LoadProfile','ProfileStatus' | ForEach-Object { $ui[$_] = $window.FindName($_) }
+    'DetectClocks','ClockGPU','ClockInfo','CoreOffset','MemoryOffset','ApplyClocks','RestoreClocks','ClockStatus' | ForEach-Object { $ui[$_] = $window.FindName($_) }
+    'CoreTrialStart','CoreTrialApply','CoreTrialKeep','CoreTrialRestore','CoreTrialCancel','CoreTrialStatus' | ForEach-Object { $ui[$_] = $window.FindName($_) }
+    'CompareSessionPicker','ComparisonRows','ComparisonStatus','ComparisonNotes','ExportComparison','ExportComparisonReport','ComparisonExportStatus' | ForEach-Object { $ui[$_] = $window.FindName($_) }
+    'Endurance5','Endurance10','EnduranceStop','EnduranceStatus','EnduranceHistory','EnduranceHistoryDetails','EnduranceHistoryRefresh','EnduranceHistoryExport' | ForEach-Object { $ui[$_] = $window.FindName($_) }
+    'CpuReadinessText','CpuControlTable','CpuReadinessScan','CpuBaselineRun','CpuBaselineCancel','CpuReadinessExport','CpuVendorHelp' | ForEach-Object { $ui[$_] = $window.FindName($_) }
+    'CpuPowerDetect','CpuPowerInfo','CpuPL1','CpuPL2','CpuPowerApply','CpuPowerRestore','CpuPowerStatus' | ForEach-Object { $ui[$_] = $window.FindName($_) }
+    'CpuBatchBefore','CpuBatchAfter','CpuBatchBeforeText','CpuBatchAfterText','CpuBatchVerdict','CpuBatchRefresh','CpuBatchExport' | ForEach-Object { $ui[$_] = $window.FindName($_) }
+    'SessionFilter','SessionSearch','SessionPinnedOnly','SessionClearFilters','SessionLibraryStatus','SessionPin','SessionNote','SessionSaveNote' | ForEach-Object { $ui[$_] = $window.FindName($_) }
+    . "$PSScriptRoot\SessionLibraryUI.ps1"
     . "$PSScriptRoot\SessionComparisonUI.ps1"
     $ui.InstalledVersion.Text='Installed version: '+$script:appVersion
     $script:isAdministrator = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
     $ui.AccessStatus.Text = if ($script:isAdministrator) { 'Administrator access - sensor availability depends on hardware and drivers' } else { 'Standard access - some hardware sensors may be unavailable' }
     $ui.ReopenAdmin.Visibility = if ($script:isAdministrator) { 'Collapsed' } else { 'Visible' }
     $ui.ReopenAdmin.Add_Click({
-        if ($script:job) { return }
+        if ($script:job -or $script:cpuPowerBusy) { return }
         try {
             $exe = Join-Path $env:SystemRoot 'System32\WindowsPowerShell\v1.0\powershell.exe'
             $main = Join-Path $PSScriptRoot 'Start-App.ps1'
@@ -144,16 +159,14 @@ try {
     }
     $ui.SessionSensorDetails.Add_SelectionChanged({Show-SensorHistory})
     function Refresh-SessionPicker {
-        $items=@($script:sessions | Sort-Object Timestamp -Descending | ForEach-Object {
-            $state='Completed';if($_.StopReason -or $_.Completed -eq $false){$state='Stopped'}
-            [pscustomobject]@{Label="$($_.Timestamp) · $($_.Test) · $state";Session=$_}
-        })
-        $ui.SessionPicker.ItemsSource=$items
-        if($items.Count){$ui.SessionPicker.SelectedIndex=0}
+        Refresh-PCSessionBrowser
+        Show-PCSelectedSession
         Refresh-PCComparisonReferences
     }
-    $ui.SessionPicker.Add_SelectionChanged({
-        if($ui.SessionPicker.SelectedItem){$ui.SessionResults.Text=Get-PCSessionSummary $ui.SessionPicker.SelectedItem.Session $script:history}
+    function Show-PCSelectedSession {
+        if($script:sessionBrowserRefreshing){return}
+        $ui.SessionResults.Text=if($ui.SessionPicker.SelectedItem){Get-PCSessionSummary $ui.SessionPicker.SelectedItem.Session $script:history}else{'No session selected. Adjust the filters above or run a monitored test.'}
+        Show-PCSessionAnnotation
         $selected=$ui.SessionPicker.SelectedItem
         $ui.SessionSensorDetails.ItemsSource=@(Get-PCSessionSensorDetails $selected.Session)
         Show-SensorHistory
@@ -161,30 +174,41 @@ try {
         $issues=@($frames|Where-Object{$_.Issue}).Count
         $ui.SessionCoverage.Text="$($frames.Count) retained samples; $issues samples with sensor issues excluded. Averages are sample means, not time-weighted. Raw sensor headroom is labeled separately."
         $available=$null -ne $ui.SessionPicker.SelectedItem
-        $ui.ExportSessionCsv.IsEnabled=$available -and -not $script:job -and -not $script:updateJob
-        $ui.ExportSessionJson.IsEnabled=$available -and -not $script:job -and -not $script:updateJob
+        $ui.ExportSessionCsv.IsEnabled=$available
+        $ui.ExportSessionJson.IsEnabled=$available
+        $ui.ExportSessionReport.IsEnabled=$available
         $ui.SessionExportStatus.Text='CSV includes retained raw sensor readings, identifiers and issues. Missing readings stay blank.'
         Refresh-PCComparisonReferences
-    })
+    }
+    $ui.SessionPicker.Add_SelectionChanged({Show-PCSelectedSession})
+    function Select-PCSessionExportPath([string]$Format) {
+        $dialog=[Microsoft.Win32.SaveFileDialog]::new()
+        $dialog.Filter=if($Format -eq 'csv'){'CSV sensor readings (*.csv)|*.csv'}elseif($Format -eq 'html'){'Readable result (*.html)|*.html'}else{'JSON session (*.json)|*.json'}
+        $dialog.FileName='PC-Insight-session-'+(Get-Date -Format 'yyyyMMdd-HHmmss')+'.'+$Format
+        if($dialog.ShowDialog($window) -eq $true){$dialog.FileName}
+    }
     function Export-SelectedSession([string]$format) {
-        if($script:job -or $script:updateJob -or -not $ui.SessionPicker.SelectedItem){return}
+        if(-not $ui.SessionPicker.SelectedItem){return}
         try {
-            $session=$ui.SessionPicker.SelectedItem.Session
-            $dialog=[Microsoft.Win32.SaveFileDialog]::new()
-            $dialog.Filter=if($format -eq 'csv'){'CSV sensor readings (*.csv)|*.csv'}else{'JSON session (*.json)|*.json'}
-            $dialog.FileName='PC-Insight-session-'+(Get-Date -Format 'yyyyMMdd-HHmmss')+'.'+$format
-            if($dialog.ShowDialog() -ne $true){return}
-            if($format -eq 'csv'){
-                $count=Export-PCSessionCsv $session $dialog.FileName
+            $session=$ui.SessionPicker.SelectedItem.Session | ConvertTo-Json -Depth 24 | ConvertFrom-Json
+            $historySnapshot=@($script:history | ConvertTo-Json -Depth 24 | ConvertFrom-Json)
+            $path=Select-PCSessionExportPath $format
+            if(-not $path){return}
+            if($format -eq 'html'){
+                Save-PCSessionHtml $session $historySnapshot $script:appVersion $path
+                $ui.SessionExportStatus.Text='Saved readable result report. Open it in your browser to read, print or save as PDF.'
+            }elseif($format -eq 'csv'){
+                $count=Export-PCSessionCsv $session $path
                 $ui.SessionExportStatus.Text="Exported $count sensor rows from the selected session. Only retained samples are included."
             }else{
-                Save-JsonAtomic ([pscustomobject]@{Schema=1;AppVersion=$script:appVersion;SensorSession=$session}) $dialog.FileName
+                Save-JsonAtomic ([pscustomobject]@{Schema=1;AppVersion=$script:appVersion;SensorSession=$session}) $path
                 $ui.SessionExportStatus.Text='Exported the selected session and its recorded benchmark fields.'
             }
         }catch{Show-Error $_.Exception.Message}
     }
     $ui.ExportSessionCsv.Add_Click({Export-SelectedSession 'csv'})
     $ui.ExportSessionJson.Add_Click({Export-SelectedSession 'json'})
+    $ui.ExportSessionReport.Add_Click({Export-SelectedSession 'html'})
     function Show-DashboardResult {
         Refresh-SessionPicker
         $last = $script:sessions | Select-Object -Last 1
@@ -217,6 +241,7 @@ try {
     }
     function Confirm($message) { [Windows.MessageBox]::Show($message, 'Review change', 'YesNo', 'Question') -eq 'Yes' }
     function Set-Busy($busy) {
+        $busy=$busy -or $script:cpuPowerBusy
         if($busy -and $script:overlayWindow -and $script:overlayWindow.IsVisible){Hide-PCGameOverlay 'Overlay paused for the app task. Use the hotkey to resume after it finishes.'}
         foreach ($n in 'CheckUpdate','ReopenAdmin','Scan','Benchmark','PlansRefresh','Apply','Restore','Export','SensorStart','MultiBenchmark','DashboardTest','DashboardRecord','MonitorStart','LongCPU','MemoryTest','GPUTest','DetectTuning','ApplyGPU','RestoreGPU','SaveBaseline','CompareBaseline','RepeatCPU','RepeatRAM','RepeatGPU','SaveProfile','LoadProfile') { $ui[$n].IsEnabled = -not $busy }
         if (-not $busy) { $ui.DashboardTest.IsEnabled = $null -ne $script:snapshot; $ui.Benchmark.IsEnabled = $null -ne $script:snapshot; $ui.MultiBenchmark.IsEnabled = $null -ne $script:snapshot; $ui.Export.IsEnabled = $null -ne $script:snapshot }
@@ -226,13 +251,19 @@ try {
         $ui.MonitorStop.IsEnabled = $busy -and $script:jobKind -eq 'monitor'
         $ui.Cancel.IsEnabled = $busy
         $ui.SensorCancel.IsEnabled = $busy
-        $ui.ExportSessionCsv.IsEnabled = -not $busy -and $null -ne $ui.SessionPicker.SelectedItem
-        $ui.ExportSessionJson.IsEnabled = -not $busy -and $null -ne $ui.SessionPicker.SelectedItem
+        $ui.ExportSessionCsv.IsEnabled = $null -ne $ui.SessionPicker.SelectedItem
+        $ui.ExportSessionJson.IsEnabled = $null -ne $ui.SessionPicker.SelectedItem
+        $ui.ExportSessionReport.IsEnabled = $null -ne $ui.SessionPicker.SelectedItem
         Update-PCComparisonExportState
         $ui.UpdateFeed.IsEnabled = -not $busy
         $ui.DownloadUpdate.IsEnabled = -not $busy -and $null -ne $script:updateRelease
         $ui.InstallUpdate.IsEnabled = -not $busy -and $null -ne $script:updateSource
         if(Get-Command Refresh-GuideUI -ErrorAction SilentlyContinue){Refresh-GuideUI}
+        if(Get-Command Update-PCClockControlState -ErrorAction SilentlyContinue){Update-PCClockControlState $busy}
+        if(Get-Command Refresh-PCClockGuideUI -ErrorAction SilentlyContinue){Refresh-PCClockGuideUI}
+        if(Get-Command Refresh-PCGpuEnduranceUI -ErrorAction SilentlyContinue){Refresh-PCGpuEnduranceUI}
+        if(Get-Command Refresh-PCCpuTuningUI -ErrorAction SilentlyContinue){Refresh-PCCpuTuningUI}
+        if(Get-Command Refresh-PCCpuPowerUI -ErrorAction SilentlyContinue){Refresh-PCCpuPowerUI}
     }
     function Format-Snapshot($s) {
         $out = [System.Collections.Generic.List[string]]::new()
@@ -252,6 +283,7 @@ try {
         $out -join "`n"
     }
     function Show-History {
+        if(Get-Command Refresh-PCCpuResultsUI -ErrorAction SilentlyContinue){Refresh-PCCpuResultsUI}
         $rows = @($script:history)
         if ($rows.Count -eq 0) { return }
         $texts = @($rows | Select-Object -Last 30 | ForEach-Object { "$($_.Timestamp)`n$(Format-PCValue (Get-PCResultRate $_) (Get-PCResultUnit $_)) | $($_.Test)`nCPU: $($_.CPUName)`nPower plan: $($_.Plan)`n" })
@@ -263,17 +295,19 @@ try {
         try { $script:history = @(Expand-PCHistory (Get-Content $historyPath -Raw | ConvertFrom-Json)); Show-History }
         catch { $ui.Status.Text = 'Saved history could not be read. Existing file retained until a new result is saved.' }
     }
+    $script:sessionReadFailed=$false
     $sessionPath = Join-Path $dataDir 'sessions.json'
     if (Test-Path $sessionPath) {
-        try { $script:sessions = @(Expand-PCHistory (Get-Content $sessionPath -Raw | ConvertFrom-Json)) }
-        catch { $ui.Status.Text = 'Previous sensor sessions could not be read.' }
+        try { $script:sessions = @(Expand-PCHistory (Get-Content $sessionPath -Raw -Encoding UTF8 | ConvertFrom-Json)) }
+        catch { $script:sessionReadFailed=$true; $ui.Status.Text = 'Previous sensor sessions could not be read. Original file preserved; export new results before closing.' }
     }
     $ui.SessionResults.Text = Get-PCSessionSummary ($script:sessions | Select-Object -Last 1) $script:history
     Show-DashboardResult
     if (Test-Path $restorePath) { $ui.PowerStatus.Text = 'A previous plan is saved. Use Restore previous plan to recover it.' }
     function Start-Task($kind) {
-        if ($script:job -or $script:updateJob) { return }
-        if ($kind -in @('sensors','multicore','monitor','longcpu','memory','gpu','repeatcpu','repeatram','repeatgpu')) { $script:chartFrames = @(); $ui.TemperatureChart.Children.Clear(); $ui.UsageChart.Children.Clear() }
+        if ($script:job -or $script:updateJob -or $script:cpuPowerBusy) { return }
+        if((Get-Command Test-PCClockGuideLocked -ErrorAction SilentlyContinue) -and (Test-PCClockGuideLocked) -and -not $script:clockGuideRun){return}
+        if ($kind -in @('sensors','multicore','monitor','longcpu','memory','gpu','repeatcpu','repeatram','repeatgpu','endurance5','endurance10')) { $script:chartFrames = @(); $ui.TemperatureChart.Children.Clear(); $ui.UsageChart.Children.Clear() }
         Remove-Item -LiteralPath $script:stopPath -ErrorAction SilentlyContinue
         $script:lastFrameTime = Get-Date
         $ui.TestProgress.Value = 0; $ui.ProgressLabel.Text = 'Preparing ' + $kind
@@ -282,8 +316,9 @@ try {
         $script:pendingResult = $null
         Set-Busy $true
         $script:testPowerState=$null
-        if ($kind -in @('benchmark','multicore','longcpu','memory','gpu','repeatcpu','repeatram','repeatgpu')) { $script:testPowerState=Get-PCTuningCapabilities }
-        $ui.Status.Text = if ($kind -eq 'scan') { 'Reading hardware. This can take up to a minute...' } elseif ($kind -eq 'monitor') { 'Live monitoring active. Use Stop and save when finished.' } elseif ($kind -eq 'longcpu') { 'Running 60-second monitored CPU test...' } elseif ($kind -eq 'gpu') { 'GPU: 5-second warm-up, then 30-second measurement...' } elseif ($kind -eq 'memory') { 'Preparing 20-second memory test...' } elseif ($kind -like 'repeat*') { 'Starting a three-run batch with 10-second cooldowns...' } elseif ($kind -eq 'benchmark') { 'Running 15-second single-worker CPU test...' } else { 'Recording sensors for 20 seconds...' }
+        if ($kind -in @('benchmark','multicore','longcpu','memory','gpu','repeatcpu','repeatram','repeatgpu','endurance5','endurance10')) { $script:testPowerState=Get-PCTuningCapabilities }
+        $ui.Status.Text = if ($kind -eq 'scan') { 'Reading hardware. This can take up to a minute...' } elseif ($kind -eq 'monitor') { 'Live monitoring active. Use Stop and save when finished.' } elseif ($kind -eq 'longcpu') { 'Running 60-second monitored CPU test...' } elseif ($kind -eq 'gpu') { 'GPU: 5-second warm-up, then 30-second measurement...' } elseif ($kind -eq 'memory') { 'Preparing 20-second memory test...' } elseif ($kind -like 'endurance*') { 'Preparing GPU endurance test...' }
+                        elseif ($kind -like 'repeat*') { 'Starting a three-run batch with 10-second cooldowns...' } elseif ($kind -eq 'benchmark') { 'Running 15-second single-worker CPU test...' } else { 'Recording sensors for 20 seconds...' }
         try {
             $script:job = Start-Job -ArgumentList "$PSScriptRoot\Engine.ps1",$kind,$script:SensorLogPath,$script:stopPath -ScriptBlock {
                 param($engine,$kind,$logPath,$stopPath)
@@ -292,6 +327,7 @@ try {
                 . (Join-Path (Split-Path $engine) 'Monitor.ps1')
                 . (Join-Path (Split-Path $engine) 'LiveMonitor.ps1')
                 . (Join-Path (Split-Path $engine) 'ExtendedTests.ps1')
+                . (Join-Path (Split-Path $engine) 'GpuEndurance.ps1')
                 . (Join-Path (Split-Path $engine) 'Power.ps1')
                 . (Join-Path (Split-Path $engine) 'Tuning.ps1')
                 . (Join-Path (Split-Path $engine) 'RepeatedTests.ps1')
@@ -304,6 +340,7 @@ try {
                     else {
                         Initialize-PCNativeSensors
                         if ($kind -eq 'monitor') { Invoke-PCContinuousSession -StopPath $stopPath }
+                        elseif ($kind -like 'endurance*') { $duration=if($kind -eq 'endurance5'){300}else{600}; Invoke-PCGpuEndurance -DurationSeconds $duration -StopPath $stopPath }
                         elseif ($kind -like 'repeat*') { $type=switch($kind){'repeatcpu'{'longcpu'} 'repeatram'{'memory'} 'repeatgpu'{'gpu'}}; Invoke-PCRepeatedTest $type }
                         elseif ($kind -eq 'longcpu') { Invoke-PCSensorSession -WithLoad -DurationSeconds 60 }
                         elseif ($kind -in @('memory','gpu')) { Invoke-PCExtendedTest -Kind $kind }
@@ -312,6 +349,9 @@ try {
                     }
                 } finally { Close-PCNativeSensors }
             }
+            Refresh-PCGpuEnduranceUI
+            Refresh-PCCpuTuningUI
+            Refresh-PCCpuPowerUI
         } catch { Set-Busy $false; Show-Error $_.Exception.Message }
     }
     $ui.MonitorStart.Add_Click({ Start-Task 'monitor' })
@@ -365,13 +405,22 @@ try {
         if ($null -ne $frame.SampleAgeSeconds) { $freshness = "Log sample age: $($frame.SampleAgeSeconds) seconds" }
         $ui.SensorSummary.Text = "Query: $($frame.Timestamp) | CPU: $temp | $freshness | $($frame.Provider)"
     }
-    function Cancel-Task {
+    function Cancel-Task([switch]$Force) {
+        if($script:job -and $script:jobKind -like 'endurance*'){
+            if(-not $Force){
+                Set-Content -LiteralPath $script:stopPath -Value 'stop'
+                Save-PCGpuEnduranceStatus 'Stopping' 'Stopping GPU load; partial result will be saved when the worker responds.'
+                return
+            }
+            Save-PCGpuEnduranceStatus 'Interrupted' 'Endurance test interrupted by close, timeout or unresponsive worker. No completed result was saved. Check Tuning to restore any saved offsets.'
+        }
         if ($script:job) {
             Stop-Job $script:job -ErrorAction SilentlyContinue
             Remove-Job $script:job -Force -ErrorAction SilentlyContinue
             $script:job = $null; Set-Busy $false; $ui.Status.Text = 'Task cancelled. No result was saved.'; $ui.ProgressLabel.Text = 'Cancelled'; $ui.TestProgress.Value=0
         }
         if($script:guideRun){Interrupt-GuideRun 'Guided test cancelled or timed out.'}
+        if($script:clockGuideRun){Interrupt-PCClockGuide 'Core trial cancelled or timed out.'}
     }
     $ui.Cancel.Add_Click({ Cancel-Task })
     $ui.SensorCancel.Add_Click({ Cancel-Task })
@@ -380,15 +429,17 @@ try {
     $timer.Add_Tick({
         if (-not $script:job) { return }
         if ($script:jobKind -eq 'monitor' -and ((Get-Date) - $script:lastFrameTime).TotalSeconds -gt 30) { Cancel-Task; $ui.Status.Text = 'Monitoring stopped: no sensor response for 30 seconds. No session was saved.'; return }
-        if ($script:jobKind -ne 'monitor' -and ((Get-Date) - $script:taskStarted).TotalSeconds -gt $(if($script:jobKind -like 'repeat*'){360}else{100})) { Cancel-Task; $ui.Status.Text = 'Task timed out. Try again or inspect Windows management services.'; return }
+        if ($script:jobKind -like 'endurance*' -and ((Get-Date)-$script:lastFrameTime).TotalSeconds -gt 30) { Cancel-Task -Force; $ui.Status.Text='GPU endurance stopped: no sensor response for 30 seconds.'; return }
+        if ($script:jobKind -ne 'monitor' -and ((Get-Date) - $script:taskStarted).TotalSeconds -gt $(if($script:jobKind -eq 'endurance5'){360}elseif($script:jobKind -eq 'endurance10'){660}elseif($script:jobKind -like 'repeat*'){360}else{100})) { Cancel-Task -Force; $ui.Status.Text = 'Task timed out. Try again or inspect Windows management services.'; return }
         $finish = $false
-        $guideCompleted=$null
+        $guideCompleted=$null;$clockGuideCompleted=$null
         $terminal = $script:job.State -in @('Completed','Failed','Stopped')
         try {
             $incoming = @(Receive-Job $script:job -ErrorAction Stop)
             foreach ($item in $incoming) {
-                if ($script:jobKind -in @('sensors','multicore','monitor','longcpu','memory','gpu','repeatcpu','repeatram','repeatgpu')) {
+                if ($script:jobKind -in @('sensors','multicore','monitor','longcpu','memory','gpu','repeatcpu','repeatram','repeatgpu','endurance5','endurance10')) {
                     if ($item.Kind -eq 'Frame') { Show-SensorFrame $item.Value }
+                    elseif ($item.Kind -eq 'EnduranceProgress') { $ui.EnduranceStatus.Text=$item.Value; $ui.ProgressLabel.Text=$item.Value }
                     elseif ($item.Kind -eq 'Phase') { $ui.ProgressLabel.Text = $script:jobKind + ': ' + $item.Value }
                     elseif ($item.Kind -eq 'BatchStatus') { $ui.Status.Text=$item.Value; $script:chartFrames=@() }
                     elseif ($item.Kind -eq 'Progress') { $ui.TestProgress.Value = $item.Value; $ui.ProgressLabel.Text = ('{0}: {1:N0}% of measurement interval' -f $script:jobKind,$item.Value) }
@@ -415,23 +466,29 @@ try {
                 Show-MeasuredInsights
                 $ui.ScanTime.Text = 'Snapshot: ' + (Get-Date).ToString('HH:mm:ss')
                 $ui.Status.Text = 'Scan complete. Open Insights for findings.'
-            } elseif ($script:jobKind -in @('sensors','multicore','monitor','longcpu','memory','gpu','repeatcpu','repeatram','repeatgpu')) {
+            } elseif ($script:jobKind -in @('sensors','multicore','monitor','longcpu','memory','gpu','repeatcpu','repeatram','repeatgpu','endurance5','endurance10')) {
                 $value | Add-Member -NotePropertyName CPUName -NotePropertyValue (($script:snapshot.CPU.Name) -join '; ')
-                if(-not $value.PSObject.Properties['Plan']) { $value | Add-Member -NotePropertyName Plan -NotePropertyValue $(if ($script:jobKind -in @('multicore','longcpu','memory','gpu','repeatcpu','repeatram','repeatgpu')) { $script:testPlan } else { $null }) }
+                if(-not $value.PSObject.Properties['Plan']) { $value | Add-Member -NotePropertyName Plan -NotePropertyValue $(if ($script:jobKind -in @('multicore','longcpu','memory','gpu','repeatcpu','repeatram','repeatgpu','endurance5','endurance10')) { $script:testPlan } else { $null }) }
                 if(-not $value.PSObject.Properties['PowerStateAtStart']) { $value | Add-Member -NotePropertyName PowerStateAtStart -NotePropertyValue $script:testPowerState }
+                if($script:jobKind -notlike 'repeat*' -and $null -ne (Get-PCResultRate $value)){$value=Complete-PCPowerContext $value $script:testPowerState (Get-PCTuningCapabilities)}
                 $value | Add-Member -NotePropertyName DriverVersion -NotePropertyValue (($script:snapshot.GPU.DriverVersion) -join '; ')
                 $value | Add-Member -NotePropertyName MemoryConfig -NotePropertyValue (($script:snapshot.RAM | ForEach-Object { "$($_.Capacity):$($_.ConfiguredClockSpeed)" }) -join ';')
                 $script:sessions = @($script:sessions) + @($value)
-                $script:sessions = @($script:sessions | Select-Object -Last 10)
-                Save-JsonAtomic $script:sessions (Join-Path $dataDir 'sessions.json')
+                $script:sessions = @(Get-PCRetainedSessions $script:sessions)
+                $sessionSaveError=$null
+                try { Save-PCSessionLibrary $script:sessions (Join-Path $dataDir 'sessions.json') ([bool]$script:sessionReadFailed) }
+                catch { $sessionSaveError=$_.Exception.Message }
+                Refresh-PCEnduranceResults
                 $summary = "Recorded $($value.Frames.Count) sensor queries. Peak CPU: $($value.PeakCPU) C."
                 if ($null -eq $value.PeakCPU) { $summary = 'Recording completed without CPU temperatures. Check sensor setup.' }
                 if ($value.StopReason) { $summary = 'Test stopped: ' + $value.StopReason + ' No comparable score was recorded.' }
                 elseif ($null -ne (Get-PCResultRate $value)) { $summary += " Throughput: $(Format-PCValue (Get-PCResultRate $value) (Get-PCResultUnit $value))." }
+                if($value.EnduranceOutcome){$summary=$value.EnduranceOutcome+' GPU peak: '+(Format-PCValue $value.PeakGPU 'C');Save-PCGpuEnduranceStatus $(if($value.Completed){'Completed'}else{'Stopped'}) $summary}
                 $ui.SensorSummary.Text = $summary
                 $ui.Status.Text = $summary
+                if($sessionSaveError){$ui.Status.Text='Result retained in memory but could not be saved. Export it before closing. '+$sessionSaveError}
                 if ($null -ne (Get-PCResultRate $value)) {
-                    $score = $value | Select-Object Test,BatchId,RunIndex,RunCount,Timestamp,Seconds,PowerStateAtStart,MiBPerSecond,GpuFramesPerSecond,GPUName,Renderer,BufferMiB,DriverVersion,MemoryConfig,Workers,Runtime,Completed,StopReason,PeakCPU,CPUName,Plan
+                    $score = $value | Select-Object Test,BatchId,RunIndex,RunCount,Timestamp,Seconds,PowerStateAtStart,PowerStateAtEnd,MiBPerSecond,GpuFramesPerSecond,GPUName,Renderer,BufferMiB,DriverVersion,MemoryConfig,Workers,Runtime,Completed,StopReason,PeakCPU,CPUName,Plan
                     $script:history = @($script:history) + @($score)
                     Save-JsonAtomic @($script:history | Select-Object -Last 100) $historyPath
                     Show-History
@@ -443,24 +500,29 @@ try {
             } else {
                 $value | Add-Member -NotePropertyName CPUName -NotePropertyValue (($script:snapshot.CPU.Name) -join '; ')
                 $value | Add-Member -NotePropertyName Plan -NotePropertyValue $script:testPlan
+                $value=Complete-PCPowerContext $value $script:testPowerState (Get-PCTuningCapabilities)
                 $script:history = @($script:history) + @($value)
                 Save-JsonAtomic @($script:history | Select-Object -Last 100) $historyPath
                 Show-History
                 if(-not $value.PSObject.Properties['PowerStateAtStart']) { $value | Add-Member -NotePropertyName PowerStateAtStart -NotePropertyValue $script:testPowerState -Force }
-                $ui.Status.Text = 'CPU test complete. A short benchmark does not establish stability.'
+                $ui.Status.Text = if($value.StopReason){'CPU test excluded: '+$value.StopReason}else{'CPU test complete. A short benchmark does not establish stability.'}
             }
             }
             if($script:guideRun){$guideCompleted=@($values)}
+            if($script:clockGuideRun){$clockGuideCompleted=@($values)}
         } catch {
             $finish = $true
+            if($script:jobKind -like 'endurance*'){Save-PCGpuEnduranceStatus 'Interrupted' ('Endurance worker failed: '+$_.Exception.Message)}
             Stop-Job $script:job -ErrorAction SilentlyContinue
             if($script:guideRun){Interrupt-GuideRun $_.Exception.Message}
+            if($script:clockGuideRun){Interrupt-PCClockGuide $_.Exception.Message}
             Show-Error $_.Exception.Message
         } finally {
             if ($script:job -and $finish) {
                 Remove-Job $script:job -Force -ErrorAction SilentlyContinue; $script:job = $null; Set-Busy $false
             }
             if($null -ne $guideCompleted -and $script:guideRun){Complete-GuideRun $guideCompleted}
+            if($null -ne $clockGuideCompleted -and $script:clockGuideRun){Complete-PCClockGuideRun $clockGuideCompleted}
         }
     })
     $timer.Start()
@@ -588,7 +650,7 @@ try {
         try{$ui.UpdateFeed.Text=[string](Get-Content $script:updateConfig -Raw|ConvertFrom-Json).Url;$ui.UpdateStatus.Text='Release feed saved. Choose Save feed and check to look for updates.'}catch{$ui.UpdateStatus.Text='Saved feed could not be read. Enter a trusted release URL.'}
     }
     function Start-UpdateTask([string]$kind,$argument) {
-        if($script:job -or $script:updateJob){return}
+        if($script:job -or $script:updateJob -or $script:cpuPowerBusy){return}
         $script:updateKind=$kind; $script:jobKind='update'
         Set-Busy $true; $ui.Cancel.IsEnabled=$false; $ui.SensorCancel.IsEnabled=$false; $ui.CancelUpdate.IsEnabled=$true
         $ui.UpdateStatus.Text=if($kind -eq 'check'){'Checking release feed...'}else{'Downloading and verifying update...'}
@@ -599,6 +661,9 @@ try {
                 $ErrorActionPreference='Stop'; . (Join-Path $root 'Updates.ps1')
                 if($kind -eq 'check'){Get-PCUpdate $argument (Get-PCAppVersion)}else{Save-PCUpdate $argument (Join-Path $data 'updates')}
             }
+            Refresh-PCGpuEnduranceUI
+            Refresh-PCCpuTuningUI
+            Refresh-PCCpuPowerUI
         } catch {Set-Busy $false; $ui.CancelUpdate.IsEnabled=$false; Show-Error $_.Exception.Message}
     }
     $ui.CheckUpdate.Add_Click({
@@ -641,7 +706,8 @@ try {
         finally{Remove-Job $script:updateJob -Force -ErrorAction SilentlyContinue;$script:updateJob=$null;Set-Busy $false;$ui.CancelUpdate.IsEnabled=$false}
     })
     $ui.InstallUpdate.Add_Click({
-        if($script:job -or $script:updateJob -or -not $script:updateSource){return}
+        if($script:job -or $script:updateJob -or $script:cpuPowerBusy -or -not $script:updateSource){return}
+        if(Test-Path -LiteralPath (Join-Path $dataDir 'cpu-power-restore.json')){Show-Error 'Restore saved CPU limits on CPU tuning before installing an update. Your recovery record has been retained.';return}
         if(-not(Confirm 'Install the downloaded update and restart PC Insight? Saved results and recovery records are preserved. The current scan will need to be run again.')){return}
         try {
             $exe=Join-Path $env:SystemRoot 'System32\WindowsPowerShell\v1.0\powershell.exe'
@@ -653,14 +719,27 @@ try {
     $updateTimer.Start()
     . "$PSScriptRoot\GuidedOptimizeUI.ps1"
     . "$PSScriptRoot\GameOverlayUI.ps1"
+    . "$PSScriptRoot\GpuOverclockUI.ps1"
+    . "$PSScriptRoot\GuidedClocksUI.ps1"
+    . "$PSScriptRoot\GpuEnduranceUI.ps1"
+    . "$PSScriptRoot\EnduranceResultsUI.ps1"
+    . "$PSScriptRoot\CpuTuningUI.ps1"
+    . "$PSScriptRoot\CpuPowerUI.ps1"
+    . "$PSScriptRoot\CpuResultsUI.ps1"
     $window.Add_Closing({
         param($sender,$eventArgs)
+        if($script:cpuPowerBusy){$eventArgs.Cancel=$true;return}
+        if($script:clockGuide -and $script:clockGuide.Phase -eq 'Decision'){
+            if(-not(Confirm 'Restore the trial clock offsets before closing? Choose No to return and select Keep or Restore.')){$eventArgs.Cancel=$true;return}
+            try{Restore-PCClockGuide $script:clockGuide $script:clockJournalPath $script:clockGuidePath}catch{$eventArgs.Cancel=$true;Show-Error $_.Exception.Message;return}
+        }
         if($script:guide -and $script:guide.Phase -eq 'Decision'){
             if(-not(Confirm 'A guided GPU change is awaiting your decision. Restore the original limit before closing? Choose No to return and select Keep or Restore.')){$eventArgs.Cancel=$true;return}
             try{Restore-PCGuide $script:guide $script:gpuJournalPath $script:guidePath}
             catch{$eventArgs.Cancel=$true;Show-Error $_.Exception.Message;return}
         }
-        $updateTimer.Stop(); if($script:updateJob){Stop-UpdateTask}; $timer.Stop(); Cancel-Task
+        $updateTimer.Stop(); if($script:updateJob){Stop-UpdateTask}; $timer.Stop(); Cancel-Task -Force
+        if($script:clockGuide -and $script:clockGuide.Phase -eq 'RecoveryRequired'){[Windows.MessageBox]::Show('Clock restoration could not be verified. Saved originals remain available on Tuning after relaunch.','PC Insight recovery')|Out-Null}
         if($script:guide -and $script:guide.Phase -eq 'RecoveryRequired'){[Windows.MessageBox]::Show('GPU restoration could not be verified. The recovery record is retained. Open Guided optimization or Tuning to restore it on the next launch.','PC Insight recovery')|Out-Null}
     })
     $null = $window.ShowDialog()

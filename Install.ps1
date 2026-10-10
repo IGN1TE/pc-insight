@@ -1,6 +1,11 @@
 ﻿# Per-user install; does not change hardware, elevation policy, or user data.
 param([string]$SourcePath=$PSScriptRoot,[switch]$WaitForPreviousInstance,[switch]$LaunchAfterInstall)
 $ErrorActionPreference='Stop'
+function Assert-PCInstallRecovery([string]$DataPath) {
+    if(Test-Path -LiteralPath (Join-Path $DataPath 'cpu-power-restore.json')){
+        throw 'A CPU settings recovery record exists. Restore saved CPU limits in PC Insight before installing or updating. The recovery record has been retained.'
+    }
+}
 Add-Type -AssemblyName PresentationFramework
 $destination=Join-Path $env:LOCALAPPDATA 'Programs\PCInsight'
 $parent=Split-Path $destination
@@ -11,6 +16,7 @@ try {
     if([IO.Path]::GetFullPath($SourcePath).TrimEnd('\') -eq [IO.Path]::GetFullPath($destination).TrimEnd('\')){throw 'Extract the new ZIP into a separate folder, then run Install-PC-Insight.cmd there.'}
     $mutex=[Threading.Mutex]::new($false,'Local\PCInsightPreview01');$locked=$mutex.WaitOne($(if($WaitForPreviousInstance){15000}else{0}))
     if(-not $locked){throw 'Close PC Insight before installing or updating.'}
+    Assert-PCInstallRecovery (Join-Path $env:LOCALAPPDATA 'PCInsight')
     if(Test-Path $destination){
         $marker=Join-Path $destination 'pc-insight-install.json'
         if(-not(Test-Path $marker) -or (Get-Content $marker -Raw|ConvertFrom-Json).AppId -ne 'PCInsight.PerUser'){throw 'The destination contains an unrecognized folder. Nothing was replaced.'}

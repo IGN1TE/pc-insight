@@ -13,8 +13,13 @@ public sealed class PCInsightGpuWorkload {
  public bool Ready { get { return ready; } } public bool Done { get { return thread != null && !thread.IsAlive; } }
  public long Frames { get { return Interlocked.Read(ref frames); } }
  public double Seconds { get { return timer == null ? 0 : timer.Elapsed.TotalSeconds; } }
- public void Prepare(double seconds) { if(thread!=null || seconds<=0 || seconds>30) throw new ArgumentOutOfRangeException(); duration=seconds; thread=new Thread(Run); thread.IsBackground=true; thread.Start(); }
- public void Begin() { begin=true; }
+ private bool monitored; private long heartbeat;
+ public void KeepAlive() { Interlocked.Exchange(ref heartbeat,Stopwatch.GetTimestamp()); }
+ private void CheckHeartbeat() { if(monitored && (Stopwatch.GetTimestamp()-Interlocked.Read(ref heartbeat))/(double)Stopwatch.Frequency>6) throw new TimeoutException("Sensor heartbeat expired; GPU load stopped."); }
+ private void PrepareCore(double seconds) { duration=seconds; KeepAlive(); thread=new Thread(Run); thread.IsBackground=true; thread.Start(); }
+ public void Prepare(double seconds) { if(thread!=null || Double.IsNaN(seconds) || Double.IsInfinity(seconds) || seconds<=0 || seconds>30) throw new ArgumentOutOfRangeException(); PrepareCore(seconds); }
+ public void PrepareMonitored(int seconds) { if(thread!=null || (seconds!=300 && seconds!=600)) throw new ArgumentOutOfRangeException(); monitored=true; PrepareCore(seconds); }
+ public void Begin() { KeepAlive(); begin=true; }
  public void Stop() { cancelled=true; if(thread!=null && !thread.Join(3000)) throw new TimeoutException("GPU driver did not respond to stop."); }
  [StructLayout(LayoutKind.Sequential)] struct PFD { public ushort size,version; public uint flags; public byte pixel,color,red,redShift,green,greenShift,blue,blueShift,alpha,alphaShift,accum,accumR,accumG,accumB,accumA,depth,stencil,aux,layer,reserved; public uint layerMask,visible,damage; }
  [DllImport("user32.dll",CharSet=CharSet.Unicode)] static extern IntPtr CreateWindowEx(uint ex,string cls,string title,uint style,int x,int y,int w,int h,IntPtr parent,IntPtr menu,IntPtr instance,IntPtr param);
@@ -73,10 +78,10 @@ public sealed class PCInsightGpuWorkload {
    ready=true;var wait=Stopwatch.StartNew();while(!begin && !cancelled && wait.Elapsed.TotalSeconds<30) Thread.Sleep(20);
    if(!begin || cancelled) return;
    phase="Warm-up (unscored)";
-   var warmup=Stopwatch.StartNew();while(!cancelled && warmup.Elapsed.TotalSeconds<5) DrawBatch();
+   var warmup=Stopwatch.StartNew();while(!cancelled && warmup.Elapsed.TotalSeconds<5) { CheckHeartbeat(); DrawBatch(); }
    if(cancelled) return;
    phase="Measuring";
-   timer=Stopwatch.StartNew();while(!cancelled && timer.Elapsed.TotalSeconds<duration) { DrawBatch();Interlocked.Add(ref frames,8); }timer.Stop();phase="Finished";
+   timer=Stopwatch.StartNew();while(!cancelled && timer.Elapsed.TotalSeconds<duration) { CheckHeartbeat(); DrawBatch();Interlocked.Add(ref frames,8); }timer.Stop();phase="Finished";
   } catch(Exception ex) { error=ex.Message; }
   finally { if(timer!=null)timer.Stop();if(ctx!=IntPtr.Zero){wglMakeCurrent(IntPtr.Zero,IntPtr.Zero);wglDeleteContext(ctx);}if(dc!=IntPtr.Zero)ReleaseDC(window,dc);if(window!=IntPtr.Zero)DestroyWindow(window); }
  }

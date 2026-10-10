@@ -1,11 +1,25 @@
-﻿<p align="center"><img src="assets/branding/pc-insight-logo-v1.png" width="640" alt="PC Insight"></p>
+﻿# PC Insight 0.31.0 — readable saved-result reports
+
+Choose a saved result and click **Save readable result** to create a standalone HTML report. Open it in any browser, print it or save as PDF. The report includes your saved note, the same session summary/event evidence as the app, retained sensor statistics with coverage, and recorded hardware context. It needs no internet connection. Review the note and hardware details before sharing.
+
+# PC Insight 0.30.0 — saved results library
+
+Test results now keeps 30 recent unpinned sensor sessions plus up to 20 pinned results. Filter by test type, search dates/hardware/notes, pin important baselines and save a short note. References remain available across result filters. Saved JSON/CSV exports work during tests and capture a snapshot before Save opens. An unreadable history file is preserved instead of overwritten; new results can still be exported from memory.
+
+Older results already removed by previous rolling limits cannot be recovered. Pins are local retention, not a backup; export important results. Unpinning makes a result eligible for future rolling removal. Save a note before switching results; refresh preserves an unsaved note on the same selection.
+
+# PC Insight 0.29.0
+
+New: Benchmark now includes saved GPU endurance results, partial-run review, JSON export and post-test Windows event evidence. See TEST-TONIGHT.md for acceptance steps and DEVELOPMENT.md for the regression/release workflow. Windows PowerShell 5.1 regression and package checks passed. Target-PC appearance, event-log access and installation remain to be checked.
+
+<p align="center"><img src="assets/branding/pc-insight-logo-v1.png" width="640" alt="PC Insight"></p>
 
 [Download the latest release](https://github.com/IGN1TE/pc-insight/releases/latest) · [Development workflow](DEVELOPMENT.md)
 
-The repository now includes the complete v0.22.2 app source, tests and bundled dependencies. `main` holds released code; `develop` is for ongoing work. Install from the `PC-Insight-Windows-Preview.zip` release asset.
+Version 0.28.1 adds CPU batch comparisons directly on CPU tuning: choose saved reference and result batches to review throughput, variation, temperature coverage and PL1/PL2 context. CPU power-limit apply/readback and same-boot restoration were confirmed by the user on the initial i7-13700K target. Multiplier and voltage control remain unavailable.
 
 ---
-# PC Insight 0.22.2 - project branding
+# PC Insight 0.28.1 - CPU measurement comparisons
 
 CPU/GPU sensor readings are now collected inside PC Insight through the bundled official LibreHardwareMonitorLib 0.9.6. You no longer need the Libre Hardware Monitor desktop app, Log Sensors, a CSV file or its remote web server.
 
@@ -44,7 +58,7 @@ The original 15-second single-worker SHA-256 baseline remains on Benchmark. It d
 
 85 C is this preview's conservative test cutoff, not a manufacturer limit or a guarantee of safety. Direct hardware updates are requested for each query, but sensor-level timestamps are not supplied by the library. Hardware-level freshness and accuracy cannot be guaranteed. Temperatures are Celsius; clocks are reported MHz, not necessarily effective clocks. The app excludes Distance to TjMax/headroom readings from absolute CPU temperature and stop decisions.
 
-Tests measure their particular SHA-256 workload, not FPS or overall system health. Completion is not long-term stability certification. Compare the same test, CPU, runtime and worker count under equivalent conditions. GPU shader tests, RAM copy tests, guided NVIDIA power-limit reduction and the optional game FPS overlay are also available. Clock/voltage tuning, fan/BIOS/RAM writes, definitive thermal-throttling diagnosis and long-term stability certification are not implemented.
+Tests measure their particular SHA-256 workload, not FPS or overall system health. Completion is not long-term stability certification. Compare the same test, CPU, runtime and worker count under equivalent conditions. GPU shader tests, RAM copy tests, guided NVIDIA power-limit reduction and the optional game FPS overlay are also available. Voltage tuning, AMD/Intel clock control, fan/BIOS/RAM writes, definitive thermal-throttling diagnosis and long-term stability certification are not implemented.
 
 Older session summaries may still contain the pre-0.3.1 inflated temperature peaks. Raw samples remain available. New sessions use the corrected filter.
 
@@ -364,3 +378,130 @@ diagnosis; no saved results or hardware settings were changed.
 The new purple/cyan PC Insight logo appears in the sidebar and About page. About and the sidebar show the installed version. Desktop, Start menu, Installed Apps and the app window use the matching icon, with nine native sizes from 16 to 256 pixels. Installation uses a versioned icon filename to avoid stale Windows icon-cache entries. Branding loads from the app folder even when launched from another working directory.
 
 The v0.22.1 comparison export fix is retained. This release changes presentation and shortcut branding; it does not add hardware actions or change saved sessions. WPF integration, comparison export, updater and extracted-package checks were run on Windows. UI layouts were inspected at 1320x920 and 1000x720, with additional 150% and 200% raster rendering checks.
+## Readable comparison reports
+
+In Test results, select session B and a reference session A, then choose **Save
+readable report**. The standalone HTML file opens in a browser without an internet
+connection. Use the browser's Print command to print or save as PDF. The report
+includes the displayed measurements, sample coverage, both sessions' recorded
+configuration and comparison limits. It keeps missing values and blocked score
+comparisons explicit. **Export comparison JSON** remains available for data analysis.
+
+The report is frozen before the Save dialog opens, even if monitoring updates the
+session selectors. Cancelling saves nothing. Reports may contain hardware details
+and recorded settings; sharing is up to you. Nothing is uploaded automatically.
+
+## NVIDIA GPU overclocking preview (0.24.0)
+
+Tuning now includes **Detect clock support**, manual graphics/core and memory MHz
+offsets, **Review and apply offsets**, and **Restore saved clock offsets**. This
+first implementation uses NVIDIA's documented NVML clock-offset API for P0. It
+requires a 64-bit Windows process and a driver exposing those functions (introduced
+in R555). Actual availability is determined by read calls, not a GPU-name whitelist.
+RTX 5090 write support and behavior have NOT been verified on hardware here. An
+unsupported driver/device stays disabled; a read success does not guarantee writes.
+
+Detection is read-only. Applying requires administrator access, a current readable
+GPU temperature below the 85 C preview cutoff, whole-MHz values within the reported
+ranges, and explicit review of the GPU identity and requested values. The cutoff
+and driver ranges are not stability guarantees. P0 is the highest performance
+state; this preview does not claim control of every P-state. Memory values are raw
+NVML MHz offsets, not effective DDR data rates or another tool's slider units.
+
+Close games and other tuning tools and save work before a change. Unstable offsets
+can cause artifacts, driver resets, crashes and lost work. This is manual tuning,
+not automatic stability testing or an OC scanner. No voltage, fan, BIOS, driver
+installation, power-limit increase or startup profile is added.
+
+The original offsets (which may already be nonzero) are flushed to
+`%LOCALAPPDATA%\PCInsight\gpu-clock-restore.json` before writing. Both offsets are
+read back after apply. A rejected write or mismatch attempts both rollback domains
+independently, and retains the recovery record. Later edits never replace the
+original values. Restore is explicit, available after relaunch, and requires
+readback before the recovery file is removed. Temperature checks do not block
+restoration. A driver/system crash can prevent in-process recovery; no watchdog or
+automatic restoration after app exit is claimed. Do not delete a pending recovery
+record to bypass a blocked apply.
+
+Benchmark snapshots record reported P0 offsets when available. Repeated runs with
+different reported offsets are separated, and session comparison includes this
+context. Older sessions show it as unavailable. These snapshots cannot detect every
+external tuning change. Guided power-limit optimization requires restoring the
+saved manual clock changes first. Manual benchmarks remain available.
+
+Validation here covers mocked writes/failures/recovery, NVML structure layout,
+clock-context grouping, comparison and updater regressions. Windows PowerShell 5.1,
+WPF interaction, native detection and reviewed hardware writes remain validation
+requirements. `tests/Test-GpuOverclock.ps1` is mock-only;
+`tests/Test-GpuOverclockUI.ps1` requires Windows WPF and also mocks every GPU write.
+
+Implementation references:
+- https://docs.nvidia.com/deploy/nvml-api/change-log.html (R555 clock-offset functions)
+- https://docs.nvidia.com/deploy/nvml-api/latest/api/group__nvmlDeviceCommands.html
+- https://github.com/NVIDIA/go-nvml/blob/main/pkg/nvml/nvml.h (public ABI)
+No NVIDIA DLL is redistributed; the installed library is loaded from Windows
+System32 or the vendor NVSMI directory, never from the app working directory.
+
+## Guided core trial (0.25.0 candidate)
+
+On Tuning, scan the PC and detect clock support, then record three GPU shader baseline runs. Review the proposed +15 MHz core offset before applying it and running three retests. The memory offset is unchanged. The result compares median shader draws/second, run variation and available sampled GPU Core temperature peaks; it does not measure game FPS or certify stability. Choose Keep or Restore explicitly. This first workflow requires exactly one NVIDIA GPU and administrator access for writes; it does not search for a maximum overclock or alter voltage.
+
+Existing saved clock or power changes must be restored before starting. Driver, GPU identity, power plan, power limit and recorded clock offsets must remain compatible. Cancellation or a failed retest attempts to restore the saved original offsets. A system crash can prevent that attempt; relaunch marks an unfinished applied trial as requiring recovery and performs no automatic GPU writes. Keep retains the original-offset journal for restoration and does not configure startup reapplication. Trial progress is stored in guided-core-trial.json beside the app's existing per-user data; the existing clock recovery journal remains authoritative for original offsets.
+
+Validation scope: the user previously observed successful +15 MHz core apply/readback and reset on one RTX 5090 with driver 616.92 using 0.24.1. That does not establish positive memory-offset compatibility or stability. The new guided sequence has simulated workflow/handler coverage on Linux PowerShell; actual Windows WPF, worker integration, closing/relaunch recovery and physical GPU trials must be checked before publishing this candidate.
+
+## Reference dashboard design
+
+The Overview now follows the user-supplied dark navy/purple concept with a slim sidebar, large processor card, stacked graphics/memory cards and a combined latest-session summary and temperature chart. Hardware art is generic vector decoration, not a product identification or sensor reading. Model names, readings and charts retain the existing live/saved-data bindings; unavailable readings remain unavailable. Existing pages and Windows title-bar controls remain accessible. The utilization chart is under its own expander.
+
+Validate on Windows before publishing: run tests/Test-Interface.ps1, inspect 1320x920 and 1000x720 sizes plus 125–150% display scaling, long device names and missing readings, sidebar scrolling, keyboard focus, all Overview buttons, populated session values/charts, and tuning recovery controls. Linux validation only confirms XML structure, resource references and unchanged named controls; it does not establish WPF rendering or pixel fidelity.
+
+## GPU endurance (0.26.0)
+
+After a hardware scan, open **Benchmark** and choose **GPU · 5 minutes** or **GPU · 10 minutes**. These run the existing offscreen shader workload continuously, with a five-second warm-up and live progress. Save work and close games first. **Stop and save result** retains the partial observation and stop reason. Open **Test results** for elapsed time, matched GPU peak temperature and limits. Endurance sessions do not create comparable benchmark scores.
+
+The test uses current clock settings and makes no tuning changes. It does not automatically restore offsets; use **Tuning → Restore original** for that. A successful interval is not proof of stability: there is no pixel-correctness, VRAM integrity, WHEA, driver-reset-log or game validation. Missing/invalid/slow sensors, sampled 85 C CPU or GPU temperatures, API errors and stalled progress stop the test. Native workload checks a six-second sensor heartbeat between rendering batches; a blocked graphics driver can delay cancellation. Interrupted tests are marked at the next app startup, never claimed as completed.
+
+Validation: mocked 300/600-second orchestration, partial cancellation, temperature/sensor/native failures, cleanup and native heartbeat checks passed under PowerShell 7 on Linux. Existing guided-clock, repeatability, result/comparison and updater checks passed. Windows PowerShell 5.1, WPF layout, physical GPU duration, driver cancellation and updater installation still require target-machine validation.
+
+## CPU tuning readiness (0.27.0)
+
+Open **CPU tuning → Scan CPU and motherboard**. The report shows the inventory timestamp, processor, board model and BIOS version reported by Windows. Recognized Intel unlocked-style model names are candidates for checking vendor requirements only. AMD, mobile/unrecognized models and multiple processors never imply writable controls. No board chipset, firmware locks, tuning ranges or installed vendor tools are probed or inferred.
+
+**Run CPU baseline · 3 tests** uses the existing three monitored 60-second SHA-256 runs and cooldowns. Save work first. The workload checks CPU temperatures and stops at the preview cutoff; it is not a stability certificate. Cancel discards the batch, as on Benchmark. Read **Repeated results** for medians and variability and **Test results** for recorded temperatures. **Export readiness report** saves this report as JSON without serial numbers, account details or unrelated sessions.
+
+CPU multiplier and voltage tuning still require a supported control integration. The separate package-power preview below uses documented Intel power-limit registers. Windows power-plan selection remains a separate feature on Optimize.
+
+References reviewed 2026-09-30:
+- Intel XTU hardware/firmware requirements: https://www.intel.com/content/www/us/en/support/articles/000006636/processors/processor-utilities-and-programs.html
+- Intel CPU and XTU-version support: https://www.intel.com/content/www/us/en/support/articles/000057552/processors/intel-core-processors.html
+- AMD Ryzen Master: https://www.amd.com/en/products/software/ryzen-master.html
+
+Validation: read-only classification, missing/multiple/vendor cases, real UI-handler dispatch/locking/export with mocked controls, existing endurance and guided-clock handlers, repeated tests, updater, PowerShell parsing and XAML wiring checked on Linux. Actual Windows WPF layout and CPU-page interaction remain to be validated.
+
+## CPU page usability (0.27.1)
+
+Control descriptions use explicit wrapping in a vertical layout to avoid the clipping seen on Windows in 0.27.0. **Cancel CPU batch** is now available beside Run CPU baseline and only acts on a running three-test CPU batch. It uses the existing cancellation behavior, which discards that batch. The screenshot confirmed inventory display for an i7-13700K, ASUS ROG STRIX Z690-A GAMING WIFI D4 and BIOS 4505; CPU write support is still not established.
+
+
+## CPU package power limits (0.28.0)
+
+Open **CPU tuning**, reopen as administrator if needed, then **Detect CPU power limits**. Detection reads hardware and changes no settings. This first preview supports only one Intel Core i7-13700K with family 6 / model B7. Other processors remain unavailable until their own support and validation are implemented. The installed PawnIO driver must be accessible; PC Insight neither installs a driver nor changes Windows security settings.
+
+The sustained limit (PL1) and burst limit (PL2) accept whole watts. The app's initial guard is 25–253 W, PL1 no greater than PL2, and neither value higher than its current detected value. This range is an application restriction, not an Intel stability recommendation. There are no ratio, voltage, timing, clamping, limit-enable or lock-bit controls. This is CPU hardware power tuning, not multiplier overclocking.
+
+Save work and close other tuning utilities. Review the two changes before applying. The app saves the original raw settings before a write, checks for intervening changes, writes the two watt fields and reads them back. A failed write/readback triggers a best-effort rollback; unresolved recovery remains visible. **Restore saved CPU limits** restores the saved originals, which may differ from factory defaults. It remains available after closing and reopening on the same boot. Closing PC Insight does not automatically restore manual changes, and no CPU settings are automatically applied at startup.
+
+Recovery is bound to the CPU/system identity, BIOS, units and boot session. The app does not blindly replay saved settings after a reboot, BIOS change or another utility's conflicting write. If the saved originals already match the live settings, restoration can complete without a write. Keep a recovery record until the app verifies restoration. Installing an update or uninstalling is blocked while that CPU recovery record remains, including an unreadable record.
+
+Readback verifies the requested register settings only. Firmware and other power controls may impose different effective limits; transient consumption can exceed these averaged limits and settling depends on the unchanged time window. The app does not read or modify the separate memory-mapped power controls. Before/after reads attached to benchmarks detect differences at those points, not every transient change during a run. Old results correctly report CPU power metadata as unavailable.
+
+For the first hardware acceptance: detect and record the two limits; apply a small reduction permitted by the form; detect again and check the values; use **Restore saved CPU limits** and detect again to check the originals. Then verify close/reopen recovery. Do not mark hardware validation complete solely from automated mocks. Existing three-run CPU baseline, cancellation and saved-result retention were confirmed by the user on 0.27.1.
+
+Implementation references: Intel SDM Volume 3B §17.10 and Volume 4 Table 2-20 plus Raptor Lake model mapping, from https://www.intel.com/content/www/us/en/developer/articles/technical/intel-sdm.html ; official PawnIO module source and signed releases at https://github.com/namazso/PawnIO.Modules . Retained module source, license and hashes are under `vendor/PawnIO`.
+
+### CPU batch comparison (0.28.1)
+
+CPU tuning now shows saved three-run CPU batches directly. Choose reference A and result B to compare medians, spread, observed temperature peaks and recorded PL1/PL2 settings. Comparisons require complete matching tests with unchanged run-boundary settings and usable CPU identity/BIOS/power metadata. Older batches without this metadata remain visible but cannot produce a tuning comparison. High variation and overlapping run ranges are called out; a throughput change is not proof of stability or causation. Export CPU comparison saves both batches and the checks as JSON. Refresh saved CPU results to select a newly completed batch while preserving your reference selection. No hardware settings are applied by this panel.
+
+The user has confirmed the 0.28.0 PL1 reduction, readback, restore to 253/253 W, and same-boot close/reopen recovery on the initial i7-13700K machine. Multiplier and voltage controls remain unavailable.

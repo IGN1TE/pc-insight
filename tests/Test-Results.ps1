@@ -15,3 +15,12 @@ Assert ((Get-PCComparison $b @($a)) -eq 'No comparable score for this session.')
 $flat = @(Expand-PCHistory @(@{value=@(@{value=@($a,$b);Count=2});Count=1}))
 Assert ($flat.Count -eq 2) 'Nested sessions must recover'
 'Results tests passed'
+
+$issueSession=[pscustomobject]@{Test='Sensors-only-v1';Frames=@(
+    [pscustomobject]@{Issue='Read failure';Sensors=@([pscustomobject]@{Parent='/intelcpu/0';Name='CPU Package';Type='Temperature';Value=90})},
+    [pscustomobject]@{Sensors=@([pscustomobject]@{Parent='/intelcpu/0';Name='CPU Package';Type='Temperature';Value=40},[pscustomobject]@{Parent='/gpu/0';Name='GPU Core';Type='Temperature';Value=[double]::NaN},[pscustomobject]@{Parent='/intelcpu/0';Name='CPU Package';Type='Power';Value='invalid'})}
+)}
+$summary=Get-PCSessionSummary $issueSession @()
+Assert ($summary -match '40.0 C' -and $summary -notmatch '90.0 C' -and $summary -notmatch 'NaN' -and $summary -match 'completion not supplied') 'Invalid/failed sensor readings or unknown completion misrepresented'
+Assert ($summary -match 'SESSION' -and $summary -notmatch 'LATEST SESSION') 'Older selection labelled latest'
+'PASS: summary excludes failed/non-finite readings and labels unknown completion honestly'
