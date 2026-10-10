@@ -1,7 +1,7 @@
 # Actual hidden WPF controls and main-window handlers; no hardware or app startup.
 $ErrorActionPreference='Stop'
 $root=Split-Path $PSScriptRoot
-foreach($module in 'Power','Results','SessionExport','SessionDetails','SessionLibrary','SessionComparison','ComparisonReport'){. "$root/$module.ps1"}
+foreach($module in 'Power','Results','SessionExport','SessionDetails','SessionLibrary','SessionComparison','ComparisonReport','SessionReport'){. "$root/$module.ps1"}
 function Assert($ok,$message){if(-not $ok){throw $message}}
 function Show-SensorHistory {}
 function Show-Error($message){$script:lastError=$message}
@@ -12,7 +12,7 @@ $script:dataDir=Join-Path ([IO.Path]::GetTempPath()) ('pc-library-ui-'+[guid]::N
 $null=New-Item -ItemType Directory $script:dataDir
 try{
     $ui=@{};foreach($element in $xaml.SelectNodes('//*[@Name]')){$ui[$element.Name]=$window.FindName($element.Name)}
-    $script:job=$null;$script:updateJob=$null;$script:sessionReadFailed=$false;$script:appVersion='test'
+    $script:job=$null;$script:updateJob=$null;$script:sessionReadFailed=$false;$script:appVersion='0.31.0'
     $script:sessions=@(
         [pscustomobject]@{Timestamp='2026-10-10T10:00:00Z';Test='SHA256-1MiB-parallel-v2';CPUName='CPU A';Completed=$true;MiBPerSecond=100;Frames=@()},
         [pscustomobject]@{Timestamp='2026-10-10T11:00:00Z';Test='OpenGL-test';GPUName='GPU B';Completed=$false;StopReason='Stopped';Frames=@()}
@@ -47,7 +47,13 @@ try{
     Export-SelectedSession 'json'
     $saved=Get-Content (Join-Path $script:dataDir 'export.json') -Raw -Encoding UTF8|ConvertFrom-Json
     Assert ($saved.SensorSession.Timestamp -eq $original -and $saved.SensorSession.Note -eq 'Factory baseline') 'Busy export did not freeze selection'
-    # Failed persistence never commits annotation changes in memory.
+    $ui.SessionPicker.SelectedIndex=2
+    $script:history=@([pscustomobject]@{Test='SHA256-1MiB-parallel-v2';Timestamp='2026-10-10T09:00:00Z';CPUName='CPU A';MiBPerSecond=90;Completed=$true})
+    function Select-PCSessionExportPath($Format){$script:history[0].MiBPerSecond=1;$ui.SessionPicker.SelectedIndex=0;Join-Path $script:dataDir ('export.'+$Format)}
+    $ui.ExportSessionReport.RaiseEvent([Windows.RoutedEventArgs]::new([Windows.Controls.Primitives.ButtonBase]::ClickEvent))
+    $report=[IO.File]::ReadAllText((Join-Path $script:dataDir 'export.html'))
+    Assert ($report -match 'CPU A' -and $report -match '90.0' -and $report -notmatch '1.0 -&gt;') 'Readable report did not freeze session and comparison history'
+        # Failed persistence never commits annotation changes in memory.
     function Save-PCSessionLibrary {throw 'Simulated disk full'}
     $ui.SessionNote.Text='Should not save';Save-PCSelectedSessionAnnotation $true
     Assert ($script:lastError -eq 'Simulated disk full' -and -not $ui.SessionPicker.SelectedItem.Session.Pinned) 'Write failure changed in-memory pin'
@@ -60,13 +66,14 @@ try{
         Refresh-SessionPicker
         $ui.Navigation.SelectedIndex=4
         foreach($item in $ui.Navigation.Items){if($item.Header -eq 'Test results'){$ui.Navigation.SelectedItem=$item;break}}
-        $ui.InstalledVersion.Text='Installed version: 0.30.0';$ui.Status.Text='Preview with synthetic saved results - no hardware access'
+        $ui.InstalledVersion.Text='Installed version: 0.31.0';$ui.Status.Text='Preview with synthetic saved results - no hardware access'
         . "$root/Branding.ps1"
-        Set-PCWindowBranding -Window $window -Root $root -Version '0.30.0'
+        Set-PCWindowBranding -Window $window -Root $root -Version '0.31.0'
         $script:sessionAnnotationKey='';Show-PCSessionAnnotation
         $output=Join-Path $root 'outputs/release';$null=New-Item -ItemType Directory $output -Force
         foreach($size in @(@(1320,920),@(1000,720))){
             $content=$window.Content
+            $content.Background=$window.Background
             $content.Measure([Windows.Size]::new($size[0],$size[1]))
             $content.Arrange([Windows.Rect]::new(0,0,$size[0],$size[1]));$content.UpdateLayout()
             Assert ($ui.ResultsPageScroll.ViewportHeight -gt 350 -and $ui.ResultsPageScroll.ScrollableHeight -gt 0) 'Results page lacks usable full-page scrolling' 
