@@ -1,6 +1,6 @@
-# PC Insight 0.29.0 candidate — testing tonight
+# PC Insight 0.29.0 — testing tonight
 
-This candidate adds result review and diagnostic evidence; Windows layout, real event-log access and installation are not yet validated. It has not been published to the updater feed.
+This release adds result review and diagnostic evidence. Automated Windows PowerShell 5.1/WPF and package checks passed; target-PC appearance, real event-log access and installation still need your acceptance.
 
 1. Restore any saved CPU package limits in your current installation before installing; the installer blocks an outstanding CPU recovery record. Close PC Insight and extract the entire ZIP, then run Install-PC-Insight.cmd.
 2. Confirm About shows 0.29.0. Scan PC. Open Benchmark and find Saved GPU endurance results. Older endurance sessions should appear with event evidence marked "not collected".

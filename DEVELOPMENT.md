@@ -1,6 +1,6 @@
 # Development and releases
 
-The published baseline for this candidate is v0.28.1 on `release/v0.28.1-cpu-results` (210992caef9ba9a745c99e6106574374ab46ced8). `main` still points to v0.22.2; do not start new development there and accidentally discard newer features. The 0.29.0 candidate is on `release/v0.29.0-validation` locally. Its first upload was blocked by the connected GitHub integration returning HTTP 403 for branch and tree creation. No 0.29.0 release is published.
+The published baseline for this candidate is v0.28.1 on `release/v0.28.1-cpu-results` (210992caef9ba9a745c99e6106574374ab46ced8). `main` still points to v0.22.2; do not start new development there and accidentally discard newer features. The 0.29.0 source is on `release/v0.29.0-validation` on GitHub. When the connected integration rejected writes, the authorized signed-in GitHub website upload route succeeded.
 
 ## Validation
 
@@ -12,7 +12,7 @@ powershell.exe -NoProfile -STA -ExecutionPolicy Bypass -File tools/Test-Release.
 
 The runner parses all scripts and both XAML documents, then discovers `tests/Test-*.ps1`. A failing suite fails the run. Hardware writes are mocked. The bounded CPU and RAM worker tests execute their actual workloads; WPF tests load windows without starting the app. Windows validation does not certify physical tuning or stability.
 
-On Linux, PowerShell 7 can run `tools/Test-Release.ps1 -Portable`. Five Windows-specific suites are explicitly skipped. The GitHub Actions workflow runs the full Windows suite on push to main, develop, release, feature and fix branches, and on pull requests. This candidate's workflow still needs its first GitHub run.
+On Linux, PowerShell 7 can run `tools/Test-Release.ps1 -Portable`. Five Windows-specific suites are explicitly skipped. The GitHub Actions workflow runs the full Windows suite on push to main, develop, release, feature and fix branches, and on pull requests. The first full Windows run passed all 42 suites and the updater/package checks: https://github.com/IGN1TE/pc-insight/actions/runs/38062748711 .
 
 ## Packaging
 

@@ -1,4 +1,4 @@
-﻿# v0.29.0 candidate — endurance evidence and release checks
+﻿# v0.29.0 — endurance evidence and release checks
 
 - Adds post-test Windows System log evidence for WHEA-Logger and Display 4101 events, with explicit time bounds, retained event references and separate unavailable/truncated states. Overlapping events require review; they do not prove GPU or test causality.
 - Adds Saved GPU endurance results directly under Benchmark, including stopped tests, retained temperature readings, event evidence and JSON export. Refresh preserves the selected result; exports capture the selection before opening Save.
@@ -6,7 +6,7 @@
 - Adds an isolated regression runner and a Windows PowerShell 5.1/WPF GitHub Actions workflow. Adds a tracked-file release builder, dependency and archive checks, update metadata, package audit and CI candidate artifact.
 - Includes TEST-TONIGHT.md. The retention limit remains ten sensor sessions across all test types; export runs you want to keep.
 
-Validation: portable automated regression and package checks are recorded in VALIDATION.md. Windows CI, native WPF layout, actual event-log reads and installation remain pending. GitHub rejected writes with HTTP 403; this candidate is not published. This update adds no CPU/GPU setting writes and does not certify stability.
+Validation: all 42 Windows PowerShell 5.1 regression suites passed, including WPF loading and handler checks. CI also built and verified the distributable and exercised the actual updater manifest parser and archive extractor. Portable regression and package checks are recorded in VALIDATION.md. Target-PC appearance, actual event-log reads and installation remain pending. This update adds no CPU/GPU setting writes and does not certify stability.
 
 # 0.28.1 - CPU measurement comparisons
 

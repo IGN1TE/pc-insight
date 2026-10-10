@@ -1,6 +1,6 @@
-﻿# 0.29.0 development candidate
+﻿# PC Insight 0.29.0
 
-New: Benchmark now includes saved GPU endurance results, partial-run review, JSON export and post-test Windows event evidence. See TEST-TONIGHT.md for acceptance steps and DEVELOPMENT.md for the regression/release workflow. This candidate is not yet published; native Windows checks remain pending.
+New: Benchmark now includes saved GPU endurance results, partial-run review, JSON export and post-test Windows event evidence. See TEST-TONIGHT.md for acceptance steps and DEVELOPMENT.md for the regression/release workflow. Windows PowerShell 5.1 regression and package checks passed. Target-PC appearance, event-log access and installation remain to be checked.
 
 <p align="center"><img src="assets/branding/pc-insight-logo-v1.png" width="640" alt="PC Insight"></p>
 
