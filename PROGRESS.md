@@ -1,4 +1,4 @@
-﻿# PC Insight progress
+# PC Insight progress
 
 - [x] Guided GPU core trial: baseline, reviewed +15 MHz step, retests and result (user confirmed).
 - [x] GPU cancellation restores original clocks (user confirmed).
@@ -30,3 +30,6 @@ Multiplier research: the signed PawnIO IntelMSR module does not allow direct 0x1
 
 - [x] Readable single-session HTML report with saved notes, event evidence, sensor coverage and safe exports (0.31.0).
 - [ ] Target-PC acceptance of single-session report saving/printing.
+
+- [x] Published 0.30.0 and 0.31.0 with tested Windows packages and matching updater feeds.
+- [x] Final 0.31.0 Windows CI: 45 passed, 0 skipped, 0 failed; public archive integrity verified.

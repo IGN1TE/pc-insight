@@ -1,16 +1,17 @@
-﻿# 0.31.0 validation — 2026-10-10
+# 0.31.0 validation — 2026-10-10
 
 - Portable runner: 39 passed, 6 Windows-only suites skipped, 0 failed.
 - New report regression checks cover stopped/legacy evidence, failed-sample exclusion, sensor coverage, missing values, HTML encoding, absence of active/external content, atomic replacement and existing-file preservation on errors.
 - Windows UI coverage exercises the real report button and verifies that selection and comparison-history changes during Save cannot alter the exported snapshot.
-- Full Windows regression, WPF rendering and package validation run before publication. Target-PC installation and native Save/Print acceptance remain pending.
+- Final Windows PowerShell 5.1 CI: **45 passed, 0 skipped, 0 failed**. Run: https://github.com/IGN1TE/pc-insight/actions/runs/38065051650 . Source: `392bc15e707ba68b95f5874e6cc4357c6ffcd8b6`. Package integrity and actual updater extraction passed. The public latest feed and ZIP were verified byte-for-byte against the CI artifact after publication.
+- Target-PC installation and native Save/Print acceptance remain pending.
 
 # 0.30.0 validation — 2026-10-10
 
 - Portable runner: 38 passed, 6 Windows-only suites skipped, 0 failed.
 - Tests cover pinned/recent retention, immutable note updates, literal search and combined filters, pin/note limits, legacy state labels, JSON persistence and unreadable-history preservation.
 - New Windows UI suite exercises real controls and actual main-window handlers: selection retention, filtered comparison references, note/pin clicks, empty states, exports during jobs, modal snapshot consistency, failed writes and unsaved drafts during refresh.
-- Initial Windows feature checkpoint: 44 passed, 0 skipped, 0 failed. Windows rendering identified cramped minimum-size content; the whole results page now scrolls. Final Windows CI validates the revised layout and summary readings before publication.
+- Initial Windows feature checkpoint: 44 passed, 0 skipped, 0 failed. Windows rendering identified cramped minimum-size content; the whole results page now scrolls. Final Windows run 38064394416 passed all 44 suites plus package validation. The published feed and ZIP matched that CI artifact.
 - Target-PC appearance and installation still need acceptance; see TEST-TONIGHT.md.
 
 # 0.29.0 validation — 2026-10-10

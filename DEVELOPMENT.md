@@ -1,4 +1,8 @@
-﻿# 0.31.0 development checkpoint
+# Published 0.31.0 checkpoint — 2026-10-10
+
+The published v0.31.0 source is `392bc15e707ba68b95f5874e6cc4357c6ffcd8b6`. Windows run 38065051650 passed all 45 suites and package checks. The public latest update feed and ZIP matched the CI artifacts byte-for-byte. Release synchronization into `main` preserves the existing commit history; the tagged release remains the reproducible build source.
+
+# 0.31.0 development checkpoint
 
 Continue from `release/v0.31.0-readable-results`, based on 0.30.0. SessionReport.ps1 creates offline, encoded HTML using the same summary and sensor calculations as Test results. Export handlers freeze session and history before opening the Save dialog. Windows tests include actual report-button invocation and normal/minimum result-page renders.
 
@@ -8,7 +12,7 @@ Continue from `release/v0.30.0-result-library`, based on published v0.29.0. Sess
 
 # Development and releases
 
-The published baseline for this candidate is v0.28.1 on `release/v0.28.1-cpu-results` (210992caef9ba9a745c99e6106574374ab46ced8). `main` still points to v0.22.2; do not start new development there and accidentally discard newer features. The 0.29.0 source is on `release/v0.29.0-validation` on GitHub. When the connected integration rejected writes, the authorized signed-in GitHub website upload route succeeded.
+The published baseline for this candidate is v0.28.1 on `release/v0.28.1-cpu-results` (210992caef9ba9a745c99e6106574374ab46ced8). At this historical checkpoint, `main` was still on v0.22.2. New work should check `version.json` and start from the newest validated source. The 0.29.0 source is on `release/v0.29.0-validation` on GitHub. When the connected integration rejected writes, the authorized signed-in GitHub website upload route succeeded.
 
 ## Validation
 
