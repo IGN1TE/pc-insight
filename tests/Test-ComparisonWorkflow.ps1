@@ -1,7 +1,7 @@
 ﻿# Real WPF selectors and click handler with synthetic saved sessions; no hardware or app startup.
 $ErrorActionPreference='Stop'
 $root=Split-Path $PSScriptRoot
-foreach($module in 'Power','Results','SessionExport','SessionDetails','SessionComparison','ComparisonReport'){. "$root/$module.ps1"}
+foreach($module in 'Power','Results','SessionExport','SessionDetails','SessionLibrary','SessionComparison','ComparisonReport'){. "$root/$module.ps1"}
 function Assert($ok,$message){if(-not $ok){throw $message}}
 function Show-SensorHistory {}
 function Show-Error($message){throw $message}
@@ -14,6 +14,7 @@ try{
     foreach($element in $xaml.SelectNodes('//*[@Name]')){$ui[$element.Name]=$window.FindName($element.Name)}
     $script:job=$null;$script:updateJob=$null;$script:jobKind='monitor'
     . "$root/SessionComparisonUI.ps1"
+    . "$root/SessionLibraryUI.ps1"
     $script:sessions=@(1..3|ForEach-Object {
         [pscustomobject]@{Timestamp="2026-09-29T12:0$($_):00Z";Test='SHA256-1MiB-parallel-v2';CPUName='Test CPU';Workers=8;Runtime='4.0';Completed=$true;MiBPerSecond=100+$_;Seconds=20;Frames=@()}
     })
