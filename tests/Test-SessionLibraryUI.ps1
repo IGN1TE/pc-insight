@@ -61,13 +61,17 @@ try{
         $ui.Navigation.SelectedIndex=4
         foreach($item in $ui.Navigation.Items){if($item.Header -eq 'Test results'){$ui.Navigation.SelectedItem=$item;break}}
         $ui.InstalledVersion.Text='Installed version: 0.30.0';$ui.Status.Text='Preview with synthetic saved results - no hardware access'
-        $window.Show()
+        . "$root/Branding.ps1"
+        Set-PCWindowBranding -Window $window -Root $root -Version '0.30.0'
+        $script:sessionAnnotationKey='';Show-PCSessionAnnotation
         $output=Join-Path $root 'outputs/release';$null=New-Item -ItemType Directory $output -Force
         foreach($size in @(@(1320,920),@(1000,720))){
-            $window.Width=$size[0];$window.Height=$size[1];$window.UpdateLayout()
-            $window.Dispatcher.Invoke([action]{},[Windows.Threading.DispatcherPriority]::Render)
-            $bitmap=[Windows.Media.Imaging.RenderTargetBitmap]::new([int]$window.ActualWidth,[int]$window.ActualHeight,96,96,[Windows.Media.PixelFormats]::Pbgra32)
-            $bitmap.Render($window)
+            $content=$window.Content
+            $content.Measure([Windows.Size]::new($size[0],$size[1]))
+            $content.Arrange([Windows.Rect]::new(0,0,$size[0],$size[1]));$content.UpdateLayout()
+            Assert ($ui.ResultsPageScroll.ViewportHeight -gt 350 -and $ui.ResultsPageScroll.ScrollableHeight -gt 0) 'Results page lacks usable full-page scrolling' 
+            $bitmap=[Windows.Media.Imaging.RenderTargetBitmap]::new([int]$size[0],[int]$size[1],96,96,[Windows.Media.PixelFormats]::Pbgra32)
+            $bitmap.Render($content)
             $encoder=[Windows.Media.Imaging.PngBitmapEncoder]::new();$encoder.Frames.Add([Windows.Media.Imaging.BitmapFrame]::Create($bitmap))
             $stream=[IO.File]::Create((Join-Path $output ('Results-'+$size[0]+'.png')))
             try{$encoder.Save($stream)}finally{$stream.Dispose()}
