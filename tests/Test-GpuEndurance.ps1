@@ -1,7 +1,8 @@
-$ErrorActionPreference='Stop'
+﻿$ErrorActionPreference='Stop'
 . "$PSScriptRoot/../ExtendedTests.ps1"
 . "$PSScriptRoot/../GpuEndurance.ps1"
 . "$PSScriptRoot/../Results.ps1"
+function Read-PCReliabilityEvents { @() }
 function Assert($ok,$message){if(-not $ok){throw $message}}
 function Add-PCMemorySample($frame){$frame}
 function Get-PCSensorFrame {
@@ -39,6 +40,7 @@ try{
   $script:mode='ok';$script:queries=0
   $r=@(Invoke-PCGpuEndurance $duration $script:stop|Where-Object Kind -eq Result)[0].Value
   Assert ($r.Completed -and $r.Seconds -eq $duration -and $r.PeakGPU -eq 65 -and $script:worker.Stopped) 'Completion/duration/peak/cleanup failed'
+  Assert ($r.ReliabilityEvidence.Available -and $r.StartedAt -and $r.EndedAt) 'Event evidence and interval were not saved'
   Assert ($null -eq $r.GpuFramesPerSecond -and (Get-PCSessionSummary $r @()) -match 'Stability is not established') 'Endurance must not produce a benchmark or stability claim'
  }
  foreach($case in 'heat','cpuheat','missing','invalid','slow','issue','exception','cancel','init','early','nativeerror','stoperror'){
@@ -52,6 +54,10 @@ try{
  Set-Content $script:stop 'stop';$script:queries=0
  $r=@(Invoke-PCGpuEndurance 300 $script:stop|Where-Object Kind -eq Result)[0].Value
  Assert (-not $r.Completed -and $script:queries -eq 0) 'Pre-start cancellation failed'
+ function Get-PCReliabilityEvidence {throw 'Evidence failed'}
+ $script:mode='ok';$script:queries=0;Remove-Item $script:stop -ErrorAction SilentlyContinue
+ $r=@(Invoke-PCGpuEndurance 300 $script:stop|Where-Object Kind -eq Result)[0].Value
+ Assert ($r.Completed -and -not $r.ReliabilityEvidence.Available -and $r.Frames.Count -gt 0) 'Evidence failure discarded workload result'
  Add-Type -Path "$PSScriptRoot/../GpuWorkload.cs"
  $native=[PCInsightGpuWorkload]::new();$flags=[Reflection.BindingFlags]'NonPublic,Instance'
  $type=$native.GetType();$type.GetField('monitored',$flags).SetValue($native,$true)
