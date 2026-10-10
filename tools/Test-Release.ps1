@@ -8,7 +8,7 @@ Get-ChildItem $root -Recurse -Filter *.ps1 | ForEach-Object {
     if($errors.Count){throw ($errors | Out-String)}
 }
 foreach($file in 'MainWindow.xaml','GameOverlay.xaml'){[xml]$null=Get-Content (Join-Path $root $file) -Raw -Encoding UTF8}
-$windowsOnly=@('Test-Interface','Test-GpuOverclockUI','Test-ComparisonWorkflow','Test-SessionComparisonUI','Test-NativeSensors')
+$windowsOnly=@('Test-Interface','Test-GpuOverclockUI','Test-ComparisonWorkflow','Test-SessionComparisonUI','Test-NativeSensors','Test-SessionLibraryUI')
 $hostPath=(Get-Process -Id $PID).Path
 $failures=@();$passed=0;$skipped=0
 foreach($suite in (Get-ChildItem (Join-Path $root 'tests') -Filter 'Test-*.ps1' | Sort-Object Name)){
