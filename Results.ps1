@@ -36,25 +36,29 @@ function Get-PCComparison($latest, $history) {
 function Get-PCSessionSummary($session, $history) {
     if (-not $session) { return 'Run a monitored CPU test or record sensors to see a summary here.' }
     if($session.Test -like 'GPU-endurance-*'){return ("GPU ENDURANCE | $($session.EnduranceOutcome)`n$($session.Timestamp)`nMeasured: $([math]::Round($session.Seconds,1)) / $($session.RequestedSeconds) seconds, plus warm-up`nGPU: $($session.GPUName)`nPeak matched GPU temperature: $(Format-PCValue $session.PeakGPU 'C')`nRetained sensor queries: $(@($session.Frames).Count)`n$($session.Limitations)`n`n$(Format-PCReliabilityEvidence $session.ReliabilityEvidence)")}
-    $frames = @($session.Frames)
+    $frames = @($session.Frames | Where-Object {$null -ne $_})
     $temps = @(); $powers = @(); $gpu = @()
     foreach ($frame in $frames) {
+        if($frame.Issue){continue}
         foreach ($sensor in $frame.Sensors) {
             if ($null -eq $sensor.Value) { continue }
+            $reading=0.0
+            if(-not [double]::TryParse([Convert]::ToString($sensor.Value,[Globalization.CultureInfo]::InvariantCulture),[Globalization.NumberStyles]::Float,[Globalization.CultureInfo]::InvariantCulture,[ref]$reading) -or [double]::IsNaN($reading) -or [double]::IsInfinity($reading)){continue}
             if ($sensor.Parent -match '^/(intelcpu|amdcpu)/') {
-                if ($sensor.Type -eq 'Temperature' -and $sensor.Name -notmatch '(?i)distance|tjmax|headroom|critical|limit' -and $sensor.Value -gt 0 -and $sensor.Value -lt 125) { $temps += $sensor.Value }
-                if ($sensor.Type -eq 'Power' -and $sensor.Name -eq 'CPU Package') { $powers += $sensor.Value }
+                if ($sensor.Type -eq 'Temperature' -and $sensor.Name -notmatch '(?i)distance|tjmax|headroom|critical|limit' -and $reading -gt 0 -and $reading -lt 125) { $temps += $reading }
+                if ($sensor.Type -eq 'Power' -and $sensor.Name -eq 'CPU Package') { $powers += $reading }
             }
-            if ($sensor.Parent -match '^/gpu' -and $sensor.Type -eq 'Temperature' -and $sensor.Name -eq 'GPU Core') { $gpu += $sensor.Value }
+            if ($sensor.Parent -match '^/gpu' -and $sensor.Type -eq 'Temperature' -and $sensor.Name -eq 'GPU Core') { $gpu += $reading }
         }
     }
     $issues = @($frames | Where-Object { $_.Issue } | ForEach-Object { $_.Issue } | Select-Object -Unique)
     $state = 'Completed'
     if ($session.StopReason) { $state = 'Stopped: ' + $session.StopReason }
     elseif ($session.Completed -eq $false) { $state = 'Incomplete' }
+    elseif ($null -eq $session.Completed) { $state = 'Recorded; completion not supplied' }
     elseif ($issues.Count -gt 0 -or $temps.Count -eq 0) { $state = 'Completed with missing readings or sensor issues' }
     $lines = @(
-        "LATEST SESSION | $state", "$($session.Timestamp) | $($session.Test)",
+        "SESSION | $state", "$($session.Timestamp) | $($session.Test)",
         ('Duration: {0:N1} seconds | Workers: {1} | Sensor queries: {2}' -f $session.Seconds,$session.Workers,$frames.Count),
         ('Peak CPU temperature: ' + (Format-PCValue (($temps | Measure-Object -Maximum).Maximum) 'C')),
         ('Peak CPU package power: ' + (Format-PCValue (($powers | Measure-Object -Maximum).Maximum) 'W')),

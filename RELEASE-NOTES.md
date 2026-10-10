@@ -4,9 +4,10 @@
 - Adds test-type filters, literal date/hardware/note search, pinned-only view and clear filters. Refresh preserves selection and unsaved notes on that same result.
 - Comparison reference A remains available across filters on result B. Empty searches clear details and exports.
 - Allows saved JSON/CSV exports during workloads and update checks, freezing the result before the Save dialog opens.
+- Makes the full Test results page scrollable at minimum window size. Summaries exclude failed/non-finite sensor readings and no longer label older selected results as the latest.
 - Preserves unreadable session files; warns that new results remain in memory and need exporting before closing. Failed annotation saves do not change the in-memory original.
 
-Portable regression: 38 suites passed, 6 Windows-only suites skipped. Full Windows validation is required before release. This update adds no hardware setting writes. Target-PC layout and installation acceptance remain pending.
+Portable regression: 38 suites passed, 6 Windows-only suites skipped. All 44 Windows PowerShell 5.1 suites passed on the initial feature checkpoint; final layout/summary checks are run before publication. This update adds no hardware setting writes. Target-PC layout and installation acceptance remain pending.
 
 # v0.29.0 — endurance evidence and release checks
 
