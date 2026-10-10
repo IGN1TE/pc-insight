@@ -15,6 +15,7 @@ Add-Type -AssemblyName System.Windows.Forms
 $script:appVersion=Get-PCAppVersion
 . "$PSScriptRoot\Results.ps1"
 . "$PSScriptRoot\SessionExport.ps1"
+. "$PSScriptRoot\SessionLibrary.ps1"
 . "$PSScriptRoot\SessionDetails.ps1"
 . "$PSScriptRoot\SessionComparison.ps1"
 . "$PSScriptRoot\ComparisonReport.ps1"
@@ -52,6 +53,8 @@ try {
     'CpuReadinessText','CpuControlTable','CpuReadinessScan','CpuBaselineRun','CpuBaselineCancel','CpuReadinessExport','CpuVendorHelp' | ForEach-Object { $ui[$_] = $window.FindName($_) }
     'CpuPowerDetect','CpuPowerInfo','CpuPL1','CpuPL2','CpuPowerApply','CpuPowerRestore','CpuPowerStatus' | ForEach-Object { $ui[$_] = $window.FindName($_) }
     'CpuBatchBefore','CpuBatchAfter','CpuBatchBeforeText','CpuBatchAfterText','CpuBatchVerdict','CpuBatchRefresh','CpuBatchExport' | ForEach-Object { $ui[$_] = $window.FindName($_) }
+    'SessionFilter','SessionSearch','SessionPinnedOnly','SessionClearFilters','SessionLibraryStatus','SessionPin','SessionNote','SessionSaveNote' | ForEach-Object { $ui[$_] = $window.FindName($_) }
+    . "$PSScriptRoot\SessionLibraryUI.ps1"
     . "$PSScriptRoot\SessionComparisonUI.ps1"
     $ui.InstalledVersion.Text='Installed version: '+$script:appVersion
     $script:isAdministrator = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
@@ -155,16 +158,14 @@ try {
     }
     $ui.SessionSensorDetails.Add_SelectionChanged({Show-SensorHistory})
     function Refresh-SessionPicker {
-        $items=@($script:sessions | Sort-Object Timestamp -Descending | ForEach-Object {
-            $state='Completed';if($_.StopReason -or $_.Completed -eq $false){$state='Stopped'}
-            [pscustomobject]@{Label="$($_.Timestamp) · $($_.Test) · $state";Session=$_}
-        })
-        $ui.SessionPicker.ItemsSource=$items
-        if($items.Count){$ui.SessionPicker.SelectedIndex=0}
+        Refresh-PCSessionBrowser
+        Show-PCSelectedSession
         Refresh-PCComparisonReferences
     }
-    $ui.SessionPicker.Add_SelectionChanged({
-        if($ui.SessionPicker.SelectedItem){$ui.SessionResults.Text=Get-PCSessionSummary $ui.SessionPicker.SelectedItem.Session $script:history}
+    function Show-PCSelectedSession {
+        if($script:sessionBrowserRefreshing){return}
+        $ui.SessionResults.Text=if($ui.SessionPicker.SelectedItem){Get-PCSessionSummary $ui.SessionPicker.SelectedItem.Session $script:history}else{'No session selected. Adjust the filters above or run a monitored test.'}
+        Show-PCSessionAnnotation
         $selected=$ui.SessionPicker.SelectedItem
         $ui.SessionSensorDetails.ItemsSource=@(Get-PCSessionSensorDetails $selected.Session)
         Show-SensorHistory
@@ -172,24 +173,29 @@ try {
         $issues=@($frames|Where-Object{$_.Issue}).Count
         $ui.SessionCoverage.Text="$($frames.Count) retained samples; $issues samples with sensor issues excluded. Averages are sample means, not time-weighted. Raw sensor headroom is labeled separately."
         $available=$null -ne $ui.SessionPicker.SelectedItem
-        $ui.ExportSessionCsv.IsEnabled=$available -and -not $script:job -and -not $script:updateJob
-        $ui.ExportSessionJson.IsEnabled=$available -and -not $script:job -and -not $script:updateJob
+        $ui.ExportSessionCsv.IsEnabled=$available
+        $ui.ExportSessionJson.IsEnabled=$available
         $ui.SessionExportStatus.Text='CSV includes retained raw sensor readings, identifiers and issues. Missing readings stay blank.'
         Refresh-PCComparisonReferences
-    })
+    }
+    $ui.SessionPicker.Add_SelectionChanged({Show-PCSelectedSession})
+    function Select-PCSessionExportPath([string]$Format) {
+        $dialog=[Microsoft.Win32.SaveFileDialog]::new()
+        $dialog.Filter=if($Format -eq 'csv'){'CSV sensor readings (*.csv)|*.csv'}else{'JSON session (*.json)|*.json'}
+        $dialog.FileName='PC-Insight-session-'+(Get-Date -Format 'yyyyMMdd-HHmmss')+'.'+$Format
+        if($dialog.ShowDialog($window) -eq $true){$dialog.FileName}
+    }
     function Export-SelectedSession([string]$format) {
-        if($script:job -or $script:updateJob -or -not $ui.SessionPicker.SelectedItem){return}
+        if(-not $ui.SessionPicker.SelectedItem){return}
         try {
-            $session=$ui.SessionPicker.SelectedItem.Session
-            $dialog=[Microsoft.Win32.SaveFileDialog]::new()
-            $dialog.Filter=if($format -eq 'csv'){'CSV sensor readings (*.csv)|*.csv'}else{'JSON session (*.json)|*.json'}
-            $dialog.FileName='PC-Insight-session-'+(Get-Date -Format 'yyyyMMdd-HHmmss')+'.'+$format
-            if($dialog.ShowDialog() -ne $true){return}
+            $session=$ui.SessionPicker.SelectedItem.Session | ConvertTo-Json -Depth 24 | ConvertFrom-Json
+            $path=Select-PCSessionExportPath $format
+            if(-not $path){return}
             if($format -eq 'csv'){
-                $count=Export-PCSessionCsv $session $dialog.FileName
+                $count=Export-PCSessionCsv $session $path
                 $ui.SessionExportStatus.Text="Exported $count sensor rows from the selected session. Only retained samples are included."
             }else{
-                Save-JsonAtomic ([pscustomobject]@{Schema=1;AppVersion=$script:appVersion;SensorSession=$session}) $dialog.FileName
+                Save-JsonAtomic ([pscustomobject]@{Schema=1;AppVersion=$script:appVersion;SensorSession=$session}) $path
                 $ui.SessionExportStatus.Text='Exported the selected session and its recorded benchmark fields.'
             }
         }catch{Show-Error $_.Exception.Message}
@@ -238,8 +244,8 @@ try {
         $ui.MonitorStop.IsEnabled = $busy -and $script:jobKind -eq 'monitor'
         $ui.Cancel.IsEnabled = $busy
         $ui.SensorCancel.IsEnabled = $busy
-        $ui.ExportSessionCsv.IsEnabled = -not $busy -and $null -ne $ui.SessionPicker.SelectedItem
-        $ui.ExportSessionJson.IsEnabled = -not $busy -and $null -ne $ui.SessionPicker.SelectedItem
+        $ui.ExportSessionCsv.IsEnabled = $null -ne $ui.SessionPicker.SelectedItem
+        $ui.ExportSessionJson.IsEnabled = $null -ne $ui.SessionPicker.SelectedItem
         Update-PCComparisonExportState
         $ui.UpdateFeed.IsEnabled = -not $busy
         $ui.DownloadUpdate.IsEnabled = -not $busy -and $null -ne $script:updateRelease
@@ -281,10 +287,11 @@ try {
         try { $script:history = @(Expand-PCHistory (Get-Content $historyPath -Raw | ConvertFrom-Json)); Show-History }
         catch { $ui.Status.Text = 'Saved history could not be read. Existing file retained until a new result is saved.' }
     }
+    $script:sessionReadFailed=$false
     $sessionPath = Join-Path $dataDir 'sessions.json'
     if (Test-Path $sessionPath) {
-        try { $script:sessions = @(Expand-PCHistory (Get-Content $sessionPath -Raw | ConvertFrom-Json)) }
-        catch { $ui.Status.Text = 'Previous sensor sessions could not be read.' }
+        try { $script:sessions = @(Expand-PCHistory (Get-Content $sessionPath -Raw -Encoding UTF8 | ConvertFrom-Json)) }
+        catch { $script:sessionReadFailed=$true; $ui.Status.Text = 'Previous sensor sessions could not be read. Original file preserved; export new results before closing.' }
     }
     $ui.SessionResults.Text = Get-PCSessionSummary ($script:sessions | Select-Object -Last 1) $script:history
     Show-DashboardResult
@@ -459,8 +466,10 @@ try {
                 $value | Add-Member -NotePropertyName DriverVersion -NotePropertyValue (($script:snapshot.GPU.DriverVersion) -join '; ')
                 $value | Add-Member -NotePropertyName MemoryConfig -NotePropertyValue (($script:snapshot.RAM | ForEach-Object { "$($_.Capacity):$($_.ConfiguredClockSpeed)" }) -join ';')
                 $script:sessions = @($script:sessions) + @($value)
-                $script:sessions = @($script:sessions | Select-Object -Last 10)
-                Save-JsonAtomic $script:sessions (Join-Path $dataDir 'sessions.json')
+                $script:sessions = @(Get-PCRetainedSessions $script:sessions)
+                $sessionSaveError=$null
+                try { Save-PCSessionLibrary $script:sessions (Join-Path $dataDir 'sessions.json') ([bool]$script:sessionReadFailed) }
+                catch { $sessionSaveError=$_.Exception.Message }
                 Refresh-PCEnduranceResults
                 $summary = "Recorded $($value.Frames.Count) sensor queries. Peak CPU: $($value.PeakCPU) C."
                 if ($null -eq $value.PeakCPU) { $summary = 'Recording completed without CPU temperatures. Check sensor setup.' }
@@ -469,6 +478,7 @@ try {
                 if($value.EnduranceOutcome){$summary=$value.EnduranceOutcome+' GPU peak: '+(Format-PCValue $value.PeakGPU 'C');Save-PCGpuEnduranceStatus $(if($value.Completed){'Completed'}else{'Stopped'}) $summary}
                 $ui.SensorSummary.Text = $summary
                 $ui.Status.Text = $summary
+                if($sessionSaveError){$ui.Status.Text='Result retained in memory but could not be saved. Export it before closing. '+$sessionSaveError}
                 if ($null -ne (Get-PCResultRate $value)) {
                     $score = $value | Select-Object Test,BatchId,RunIndex,RunCount,Timestamp,Seconds,PowerStateAtStart,PowerStateAtEnd,MiBPerSecond,GpuFramesPerSecond,GPUName,Renderer,BufferMiB,DriverVersion,MemoryConfig,Workers,Runtime,Completed,StopReason,PeakCPU,CPUName,Plan
                     $script:history = @($script:history) + @($score)

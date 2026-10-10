@@ -10,7 +10,9 @@ function Refresh-PCComparisonReferences {
     $selected=$ui.SessionPicker.SelectedItem
     $script:comparisonReferencesRefreshing=$true
     try{
-        $candidates=@($ui.SessionPicker.ItemsSource|Where-Object {
+        # Result B can be filtered; keep all saved sessions available as reference A.
+        $referenceItems=if(Get-Command Get-PCSessionLibraryItems -ErrorAction SilentlyContinue){@(Get-PCSessionLibraryItems $script:sessions)}else{@($ui.SessionPicker.ItemsSource)}
+        $candidates=@($referenceItems|Where-Object {
             $selected -and -not (Test-PCSameComparisonSession $_.Session $selected.Session)
         })
         $ui.CompareSessionPicker.ItemsSource=$candidates

@@ -1,4 +1,14 @@
-﻿# v0.29.0 — endurance evidence and release checks
+﻿# v0.30.0 — saved results library
+
+- Keeps 30 recent unpinned sensor sessions plus up to 20 pinned results, with optional 240-character notes.
+- Adds test-type filters, literal date/hardware/note search, pinned-only view and clear filters. Refresh preserves selection and unsaved notes on that same result.
+- Comparison reference A remains available across filters on result B. Empty searches clear details and exports.
+- Allows saved JSON/CSV exports during workloads and update checks, freezing the result before the Save dialog opens.
+- Preserves unreadable session files; warns that new results remain in memory and need exporting before closing. Failed annotation saves do not change the in-memory original.
+
+Portable regression: 38 suites passed, 6 Windows-only suites skipped. Full Windows validation is required before release. This update adds no hardware setting writes. Target-PC layout and installation acceptance remain pending.
+
+# v0.29.0 — endurance evidence and release checks
 
 - Adds post-test Windows System log evidence for WHEA-Logger and Display 4101 events, with explicit time bounds, retained event references and separate unavailable/truncated states. Overlapping events require review; they do not prove GPU or test causality.
 - Adds Saved GPU endurance results directly under Benchmark, including stopped tests, retained temperature readings, event evidence and JSON export. Refresh preserves the selected result; exports capture the selection before opening Save.

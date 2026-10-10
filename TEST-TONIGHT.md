@@ -1,3 +1,13 @@
+﻿# PC Insight 0.30.0 — saved-results checks
+
+1. Open Test results. Filter CPU/GPU/RAM/Monitoring, type part of a date or hardware name, then Clear filters.
+2. Select an important result, type a note and choose Pin result. Close and reopen; confirm the pin and note remain. Use Pinned only to find it.
+3. Choose a result and comparison reference, then change result filters; the reference list should still include other saved sessions.
+4. Export JSON and CSV during a sensor recording or test. Cancel Save once, then save a file. Confirm the export belongs to the chosen saved result.
+5. Check the page at your usual Windows scaling and minimum window size. Send a screenshot if anything clips.
+
+The app keeps 30 recent unpinned sensor sessions plus up to 20 pins. Pins stay on this PC; export a separate backup for important runs. Unpinning allows future rolling removal. Results lost under earlier retention limits cannot be recovered by this update.
+
 # PC Insight 0.29.0 — testing tonight
 
 This release adds result review and diagnostic evidence. Automated Windows PowerShell 5.1/WPF and package checks passed; target-PC appearance, real event-log access and installation still need your acceptance.

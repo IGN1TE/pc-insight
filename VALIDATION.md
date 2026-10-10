@@ -1,3 +1,11 @@
+﻿# 0.30.0 validation — 2026-10-10
+
+- Portable runner: 38 passed, 6 Windows-only suites skipped, 0 failed.
+- Tests cover pinned/recent retention, immutable note updates, literal search and combined filters, pin/note limits, legacy state labels, JSON persistence and unreadable-history preservation.
+- New Windows UI suite exercises real controls and actual main-window handlers: selection retention, filtered comparison references, note/pin clicks, empty states, exports during jobs, modal snapshot consistency, failed writes and unsaved drafts during refresh.
+- Full Windows CI and package validation must pass before publishing.
+- Target-PC appearance and installation still need acceptance; see TEST-TONIGHT.md.
+
 # 0.29.0 validation — 2026-10-10
 
 Base: published v0.28.1, commit 210992caef9ba9a745c99e6106574374ab46ced8.

@@ -3,7 +3,7 @@ $script:enduranceResultsRefreshing=$false
 function Show-PCEnduranceResult {
     if($script:enduranceResultsRefreshing){return}
     $selected=$ui.EnduranceHistory.SelectedItem
-    $ui.EnduranceHistoryDetails.Text=if($selected){Get-PCSessionSummary $selected.Session @()}else{'No saved GPU endurance sessions. Run a 5- or 10-minute test above. Stopped sessions are saved too; at most ten recent sensor sessions are retained across all test types.'}
+    $ui.EnduranceHistoryDetails.Text=if($selected){Get-PCSessionSummary $selected.Session @()}else{'No saved GPU endurance sessions. Run a 5- or 10-minute test above. Stopped sessions are saved too; 30 recent unpinned sessions are retained across test types, plus pinned results. Pin important runs on Test results.'}
     $ui.EnduranceHistoryExport.IsEnabled=$null -ne $selected
 }
 function Refresh-PCEnduranceResults {

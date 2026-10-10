@@ -1,4 +1,10 @@
-﻿# PC Insight 0.29.0
+﻿# PC Insight 0.30.0 — saved results library
+
+Test results now keeps 30 recent unpinned sensor sessions plus up to 20 pinned results. Filter by test type, search dates/hardware/notes, pin important baselines and save a short note. References remain available across result filters. Saved JSON/CSV exports work during tests and capture a snapshot before Save opens. An unreadable history file is preserved instead of overwritten; new results can still be exported from memory.
+
+Older results already removed by previous rolling limits cannot be recovered. Pins are local retention, not a backup; export important results. Unpinning makes a result eligible for future rolling removal. Save a note before switching results; refresh preserves an unsaved note on the same selection.
+
+# PC Insight 0.29.0
 
 New: Benchmark now includes saved GPU endurance results, partial-run review, JSON export and post-test Windows event evidence. See TEST-TONIGHT.md for acceptance steps and DEVELOPMENT.md for the regression/release workflow. Windows PowerShell 5.1 regression and package checks passed. Target-PC appearance, event-log access and installation remain to be checked.
 

@@ -1,4 +1,4 @@
-# PC Insight progress
+﻿# PC Insight progress
 
 - [x] Guided GPU core trial: baseline, reviewed +15 MHz step, retests and result (user confirmed).
 - [x] GPU cancellation restores original clocks (user confirmed).
@@ -13,7 +13,8 @@
 - [x] CPU saved originals survive close/reopen and restore on the same boot (user confirmed).
 - [ ] CPU multiplier and voltage controls: supported interface and validation still required.
 - [x] CPU batch results and before/after comparison on CPU tuning, including power context, variation, temperature coverage and JSON export (0.28.1; Windows layout check pending).
-- [ ] Broader results dashboard polish.
+- [x] Saved-results filtering, notes, pinned retention and exports during workloads (0.30.0).
+- [ ] Target-PC acceptance of saved-results controls at normal/minimum window size.
 - [x] Isolated test runner, Windows CI workflow and audited release packaging implemented (0.29.0).
 - [x] Full Windows CI for 0.29.0: 42 regression suites plus package/updater checks passed.
 - [ ] Installer/layout polish.
