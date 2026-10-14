@@ -69,7 +69,7 @@ def build(output):
                 'downloadUrl': f'https://github.com/IGN1TE/pc-insight/releases/download/v{version}/PC-Insight-Windows-Preview.zip',
                 'sha256': hashlib.sha256(archive.read_bytes()).hexdigest(),
                 'sizeBytes': archive.stat().st_size,
-                'releaseNotes': 'GPU automatic core scan: reviewed +15/+30/+45 MHz steps, original-offset restoration and measured recommendations. Apply recommendations explicitly. Short tests do not establish stability.'}
+                'releaseNotes': 'Fixes GPU baselines being rejected when only CPU temperatures are unavailable. GPU readings remain usable, missing CPU coverage is shown, and real sensor errors still block tuning. Start a fresh automatic scan baseline.'}
     (output / 'update.json').write_text(json.dumps(manifest, indent=2) + '\n', encoding='utf-8')
     (output / 'package-audit.json').write_text(json.dumps({'Version': version, 'SourceCommit': commit,
         'WorkingTreeModified': dirty, 'Files': records}, indent=2) + '\n', encoding='utf-8')
