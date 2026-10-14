@@ -1,4 +1,8 @@
-﻿# 0.32.1 sensor-scope fix
+﻿# Published 0.32.1 checkpoint — 2026-10-14
+
+v0.32.1 is live from b55a493854168945bc6a79a54f7c09f58d76a83d on release/v0.32.1-gpu-sensor-fix. All 48 Windows suites passed; public updater assets match the CI package. Next: user reruns Automatic scan baseline and confirms review becomes available. CPU sensor availability is a separate unresolved hardware/access issue.
+
+# 0.32.1 sensor-scope fix
 
 Continue on release/v0.32.1-gpu-sensor-fix, based on published 0.32.0. NativeSensors now distinguishes CPUWarning (missing CPU temperature only) from Issue (provider failure). GPU-only workflows use valid GPU samples; CPU/RAM guard remains mandatory. Test-GpuCpuSensorScope reproduces the user-reported shape with synthetic hardware. Uploaded user sessions remain private and are not committed. Windows validation/publication evidence follows in VALIDATION.md.
 

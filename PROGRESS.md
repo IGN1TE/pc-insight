@@ -2,7 +2,7 @@
 
 - [x] Identified 0.32.0 baseline rejection: CPU-only missing-temperature warning invalidated valid GPU frames.
 - [x] Separate CPU warning, retain valid GPU samples, show missing CPU coverage and test real error guards (0.32.1).
-- [ ] 0.32.1 Windows gate, publication and update-feed verification.
+- [x] 0.32.1 Windows gate (48 suites passed), publication and update-feed verification.
 - [ ] Target-PC automatic scan retry after 0.32.1.
 
 - [x] Bounded automatic GPU core scan and measured recommendation implemented (0.32.0).

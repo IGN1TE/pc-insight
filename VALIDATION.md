@@ -2,7 +2,9 @@
 
 - Focused synthetic native-sensor-to-scan regression passed: CPU-only warning, GPU baseline review, retained GPU statistics, blocked CPU/RAM load, real provider failures, missing GPU data, slow queries and both thermal cutoffs.
 - Actual scan UI handler regression passed with missing-CPU warning in the review prompt.
-- Full Windows regression and updater/package gate required before publication. Target-PC retry pending.
+- Windows run https://github.com/IGN1TE/pc-insight/actions/runs/38633124653 passed 48 suites, zero skipped/failed, plus package/updater extraction.
+- Published v0.32.1 source: b55a493854168945bc6a79a54f7c09f58d76a83d. Public latest feed and ZIP exactly matched the Windows CI artifact. ZIP SHA256 116e65e8be31c060a45b7f81dadf9e50da29b48faee2be0852f78a013e492392; 8,645,894 bytes.
+- Target-PC retry pending. CPU temperature access remains unavailable in the reported data; no driver fix is claimed.
 
 # 0.32.0 validation
 
