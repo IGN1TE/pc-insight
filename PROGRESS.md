@@ -2,8 +2,8 @@
 
 - [x] Bounded automatic GPU core scan and measured recommendation implemented (0.32.0).
 - [x] Simulated scan sequencing, Cancel, failed tests and recovery checks.
-- [ ] 0.32.0 Windows regression and package gate.
-- [ ] 0.32.0 publication and in-app update feed verification.
+- [x] 0.32.0 Windows regression and package gate: 47 suites passed; updater extraction passed.
+- [x] 0.32.0 published; public latest feed and ZIP exactly match the Windows CI artifact.
 - [ ] Physical GPU scan, original-offset restoration and recommendation acceptance.
 
 - [x] Guided GPU core trial: baseline, reviewed +15 MHz step, retests and result (user confirmed).

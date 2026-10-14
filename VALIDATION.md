@@ -2,7 +2,9 @@
 
 - Portable PowerShell 7: 41 passed, 6 Windows-only suites skipped, 0 failed.
 - New scanner transaction and UI handler suites cover bounded progression, recommendations, cancellation, restart and restoration failures with mocked hardware.
-- Full Windows PowerShell 5.1/WPF and package gate pending. Physical GPU acceptance pending.
+- Windows PowerShell 5.1/WPF: 47 passed, zero skipped/failed; package and updater extraction passed. Run https://github.com/IGN1TE/pc-insight/actions/runs/38629660959 .
+- Published tag v0.32.0 targets c6c6bfef7a3b9fcdda81df96773f4bb286e06a8e. Public latest feed and ZIP verified byte-for-byte against that Windows CI artifact. ZIP SHA256: a7f6ef1d01450749c816b103b150f322b802299d103f783ab32e4d47bacf733e; 8,644,694 bytes.
+- Physical GPU scan acceptance remains pending.
 
 # 0.31.0 validation — 2026-10-10
 
