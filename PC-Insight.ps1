@@ -399,7 +399,8 @@ try {
         Show-MeasuredInsights
         $lines = @($frame.Sensors | ForEach-Object { '{0}: {1:N1} [{2}]  {3}' -f $_.Name,$_.Value,$_.Type,$_.Parent })
         $ui.SensorReadings.Text = ($lines -join "`n")
-        if ($frame.Issue) { $ui.SensorReadings.Text = ($lines -join "`n") + "`n`n" + $frame.Issue + "`n`nBuilt-in sensor access needs compatible hardware and drivers. If running with standard access, finish or stop this session, then choose Reopen as administrator. See README for the PawnIO dependency." }
+        $sensorMessages=@($frame.Issue,$frame.CPUWarning | Where-Object {$_})
+        if ($sensorMessages.Count) { $ui.SensorReadings.Text = ($lines -join "`n") + "`n`n" + ($sensorMessages -join "`n") + "`n`nBuilt-in sensor access needs compatible hardware and drivers. If running with standard access, finish or stop this session, then choose Reopen as administrator. See README for the PawnIO dependency." }
         $temp = 'unavailable'; if ($null -ne $frame.CPUCelsius) { $temp = "$($frame.CPUCelsius) C" }
         $freshness = 'Direct update requested; sensor age not supplied'
         if ($null -ne $frame.SampleAgeSeconds) { $freshness = "Log sample age: $($frame.SampleAgeSeconds) seconds" }

@@ -55,6 +55,7 @@ function Complete-PCGpuAutoScanBatch($Guide,$Records,[string]$Journal,[string]$P
         Complete-PCClockGuide $Guide $Records $Journal $Path
         if($baseline){
             $Guide.Summary='Baseline complete. Review the bounded core scan: +15, +30 and +45 MHz above the starting offset, three runs each. Original offsets are restored when the scan finishes.'
+            if(@($Guide.Before | ForEach-Object {$_.Frames} | Where-Object {$_.CPUWarning}).Count){$Guide.Summary+=' CPU temperatures were unavailable in some or all samples. GPU temperature checks remain active; CPU thermal protection cannot cover missing readings.'}
             Save-PCClockGuide $Guide $Path;return
         }
         $Guide.ScanResults=@($Guide.ScanResults)+@([pscustomobject]@{CoreMHz=$Guide.TargetCore;Records=@($Records)})
@@ -84,6 +85,7 @@ function Complete-PCGpuAutoScanBatch($Guide,$Records,[string]$Journal,[string]$P
             $lines+=('Core {0} MHz: median {1:N1} draws/s; spread {2:N1}%; change {3:+0.0;-0.0;0.0}%.' -f $candidate.CoreMHz,$s.Median,$s.SpreadPercent,(100*($s.Median/$base.Median-1)))
         }
         $lines+=if($best){"Candidate: core offset $($best.CoreMHz) MHz; memory $($Guide.Clock.MemoryMHz) MHz. Use Review recommended offset to apply it explicitly. Repeat and test your games before deciding to keep it."}else{'Keep the starting settings. No recommendation: the scan was noisy, regressed, or did not show a clear improvement over the baseline.'}
+        if(@($Guide.Before | ForEach-Object {$_.Frames} | Where-Object {$_.CPUWarning}).Count){$lines+='CPU temperature coverage was incomplete or unavailable. No CPU thermal assessment is provided.'}
         $lines+='This short shader scan does not detect every artifact, memory error or crash risk, and does not establish stability or game FPS.'
         $Guide.ScanSummary=$lines -join "`n";$Guide.Summary=$Guide.ScanSummary
         Save-PCClockGuide $Guide $Path

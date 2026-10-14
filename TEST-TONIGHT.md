@@ -1,4 +1,11 @@
-﻿# PC Insight 0.32.0 — automatic scan acceptance
+﻿# PC Insight 0.32.1 — retry the automatic scan baseline
+
+1. Update in the app and confirm 0.32.1. Keep games and other tuning tools closed, save work and remain in administrator mode.
+2. Scan PC, Detect clock support, then **Automatic scan baseline**. Use a new baseline; old interrupted results stay saved.
+3. If GPU readings remain available and the runs are consistent, **2. Review and retest** should become available. Missing CPU temperatures are reported separately. CPU and RAM tests remain blocked until CPU temperature access works.
+4. Review the offsets and CPU coverage before deciding to run the scan. After it finishes, verify the starting offsets were restored. Follow the 0.32.0 acceptance steps below.
+
+# PC Insight 0.32.0 — automatic scan acceptance
 
 1. Update through the app and confirm About shows 0.32.0. Restore any pending saved tuning changes. Reopen as administrator, Scan PC, then Detect clock support on Tuning. Save work and close games/other tuning utilities.
 2. Select **Automatic scan baseline**. Three baseline runs should finish without changing clocks. Cancel the next review once and confirm no clocks changed.

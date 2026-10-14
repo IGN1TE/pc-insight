@@ -42,7 +42,7 @@ function Read-PCNativeHardware($hardware) {
 }
 function Get-PCNativeFrame {
     $watch = [Diagnostics.Stopwatch]::StartNew()
-    $rows = @(); $issue = $null
+    $rows = @(); $issue = $null; $cpuWarning = $null
     try {
         if (-not $script:NativeComputer) { throw 'Built-in sensors are not initialized.' }
         $rows = @(foreach ($hardware in $script:NativeComputer.Hardware) { Read-PCNativeHardware $hardware })
@@ -54,12 +54,12 @@ function Get-PCNativeFrame {
     $peak = $null
     if ($temps.Count -gt 0) { $peak = ($temps | Measure-Object Value -Maximum).Maximum }
     if ($null -eq $peak -and -not $issue) {
-        $issue = 'No direct CPU temperature is available. Close PC Insight and use Start-PC-Insight-Admin.cmd. If already elevated, the PawnIO hardware-access driver may be missing or blocked; see README. Do not disable Windows security settings.'
+        $cpuWarning = 'No direct CPU temperature is available. Close PC Insight and use Start-PC-Insight-Admin.cmd. If already elevated, the PawnIO hardware-access driver may be missing or blocked; see README. Do not disable Windows security settings.'
     }
     $watch.Stop()
     [pscustomobject]@{
         Timestamp=(Get-Date).ToString('o'); QuerySeconds=$watch.Elapsed.TotalSeconds
-        CPUCelsius=$peak; Sensors=$rows; Issue=$issue; Provider='Built-in LibreHardwareMonitorLib 0.9.6'
+        CPUCelsius=$peak; Sensors=$rows; Issue=$issue; CPUWarning=$cpuWarning; Provider='Built-in LibreHardwareMonitorLib 0.9.6'
         SampleTimestamp=$null; SampleAgeSeconds=$null
         Freshness='Hardware.Update called for this query. Sensor-level timestamps are not supplied; hardware freshness is not guaranteed.'
     }

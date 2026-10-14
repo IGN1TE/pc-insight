@@ -1,4 +1,5 @@
 ﻿function Get-PCGpuStopReason($frame, [string]$HardwareName) {
+    if($frame.Issue){return "Sensor unavailable: $($frame.Issue)"}
     if ($frame.QuerySeconds -gt 3) { return 'Sensor query exceeded 3 seconds.' }
     $temps = @($frame.Sensors | Where-Object { $_.Parent -match '^/gpu' -and $_.Name -eq 'GPU Core' -and $_.Type -eq 'Temperature' -and $_.HardwareName -eq $HardwareName -and $null -ne $_.Value })
     if (-not $temps.Count) { return 'No temperature reading for the selected OpenGL GPU.' }

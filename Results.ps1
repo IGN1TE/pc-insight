@@ -68,6 +68,8 @@ function Get-PCSessionSummary($session, $history) {
     )
     if ($session.Test -eq 'Continuous-monitor-v1') { $lines += "Retained window: $($session.RetainedQueries) of $($session.TotalQueries) queries. Peaks and diagnostics cover only these retained samples." }
     if ($issues.Count) { $lines += 'Sensor issues: ' + ($issues -join '; ') }
+    $cpuWarnings=@($frames | Where-Object {$_.CPUWarning} | ForEach-Object {$_.CPUWarning} | Select-Object -Unique)
+    if($cpuWarnings.Count){$lines+='CPU temperature warning: '+($cpuWarnings -join '; ')}
     if ($session.Renderer) { $lines += 'OpenGL renderer: ' + $session.Renderer }
     if ($session.Limitations) { $lines += $session.Limitations }
     $lines += ''; $lines += Get-PCComparison $session $history

@@ -1,4 +1,8 @@
-﻿# PC Insight 0.32.0 — automatic GPU core scan
+﻿# PC Insight 0.32.1 — GPU baseline sensor warning fix
+
+Fixes a CPU-only temperature warning rejecting otherwise valid GPU baselines. GPU temperatures remain usable; unavailable CPU temperatures are shown separately in sensor results and scan review. CPU/RAM tests still require CPU temperature. Real provider failures still block GPU tuning. Update, then run a fresh **Automatic scan baseline**. This fix does not restore missing CPU temperature access.
+
+# PC Insight 0.32.0 — automatic GPU core scan
 
 On **Tuning**, choose **Automatic scan baseline**, then **2. Review and retest**. After you review the whole scan, it tests +15, +30 and +45 MHz above your starting core offset, three GPU shader runs per step. Memory stays unchanged. Allow roughly nine minutes including the baseline. The scan restores and verifies your starting offsets before displaying a recommendation. **Review recommended offset** is a separate deliberate apply, followed by Keep or Restore.
 

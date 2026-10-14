@@ -1,4 +1,10 @@
-﻿# 0.32.0 validation
+﻿# 0.32.1 validation
+
+- Focused synthetic native-sensor-to-scan regression passed: CPU-only warning, GPU baseline review, retained GPU statistics, blocked CPU/RAM load, real provider failures, missing GPU data, slow queries and both thermal cutoffs.
+- Actual scan UI handler regression passed with missing-CPU warning in the review prompt.
+- Full Windows regression and updater/package gate required before publication. Target-PC retry pending.
+
+# 0.32.0 validation
 
 - Portable PowerShell 7: 41 passed, 6 Windows-only suites skipped, 0 failed.
 - New scanner transaction and UI handler suites cover bounded progression, recommendations, cancellation, restart and restoration failures with mocked hardware.

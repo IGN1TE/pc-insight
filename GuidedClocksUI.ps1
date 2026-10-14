@@ -67,6 +67,7 @@ $ui.CoreTrialApply.Add_Click({
     try{
         $g=$script:clockGuide
         $prompt=if($g.ScanMode){"Run the bounded automatic core scan on $($g.Clock.Name), GPU $($g.Clock.UUID)?`nStarting core offset: $($g.Clock.CoreMHz) MHz. Test offsets: $([int]$g.Clock.CoreMHz+15), $([int]$g.Clock.CoreMHz+30), $([int]$g.Clock.CoreMHz+45) MHz. Memory remains $($g.Clock.MemoryMHz) MHz.`n`nThis approval covers these three steps only. Each step runs three GPU tests. Finish, Cancel or test failure attempts restoration of the starting offsets. A system crash can prevent restoration; reopen and use Restore. Unstable clocks can cause artifacts, crashes or lost work. No maximum-overclock or stability guarantee. The recommendation is never applied automatically."}else{"Apply core offset $($g.Clock.CoreMHz) -> $($g.TargetCore) MHz to $($g.Clock.Name), GPU $($g.Clock.UUID), and run three retests? Memory remains $($g.Clock.MemoryMHz) MHz. Unstable clocks can cause crashes or lost work. Cancel or a failed retest attempts restoration; a system crash may require restoration after relaunch. No voltage changes or stability guarantee."}
+        if(@($g.Before | ForEach-Object {$_.Frames} | Where-Object {$_.CPUWarning}).Count){$prompt+="`n`nCPU temperatures were unavailable in some or all baseline samples. GPU temperature checks remain active. CPU thermal protection cannot cover missing CPU readings."}
         if(-not (Confirm $prompt)){return}
         Refresh-PCClockGuideUI;if(-not $ui.CoreTrialApply.IsEnabled){return}
         Set-Busy $true

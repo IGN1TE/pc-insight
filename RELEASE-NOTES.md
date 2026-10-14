@@ -1,4 +1,13 @@
-﻿# v0.32.0 — bounded automatic GPU core scan
+﻿# v0.32.1 — GPU baseline sensor warning fix
+
+- Separates unavailable CPU temperature into CPUWarning instead of marking the entire native sensor query as failed. Valid GPU samples remain usable in guided tuning and saved sensor statistics.
+- CPU and RAM tests still refuse to run without CPU temperature. GPU tests now explicitly stop on a real provider error, in addition to existing matched-temperature, thermal and slow-query guards.
+- Shows missing CPU coverage in live sensor messages, saved session summaries and the automatic scan review. GPU temperature checks cannot replace missing CPU thermal protection.
+- Existing saved results are preserved. Start a fresh scan baseline after updating; this patch does not recover CPU temperature access or reinterpret old sensor errors.
+
+The reported three-run baseline had GPU readings in all 102 frames and no CPU temperature readings. Regression tests recreate that condition with synthetic hardware, including real provider errors, missing GPU readings and both thermal cutoffs. The uploaded private session history is not included in the source or release.
+
+# v0.32.0 — bounded automatic GPU core scan
 
 - Adds Automatic scan baseline and Review recommended offset on Tuning, beside the existing single trial.
 - Records three baseline runs. Explicit review authorizes only +15/+30/+45 MHz above the saved starting core offset, with three runs per step. Memory remains unchanged.

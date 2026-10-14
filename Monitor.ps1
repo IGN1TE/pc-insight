@@ -26,7 +26,10 @@ function Get-PCWMISensorFrame {
 }
 function Get-PCStopReason($frame) {
     if ($frame.Issue) { return "Sensor unavailable: $($frame.Issue)" }
-    if ($null -eq $frame.CPUCelsius) { return 'No valid CPU temperature sensor is available.' }
+    if ($null -eq $frame.CPUCelsius) {
+        if($frame.CPUWarning){return "CPU temperature unavailable: $($frame.CPUWarning)"}
+        return 'No valid CPU temperature sensor is available.'
+    }
     if ($frame.QuerySeconds -gt 3) { return 'Sensor query exceeded the 3-second response limit.' }
     if ($frame.CPUCelsius -ge 85) { return 'CPU temperature reached the 85 C preview cutoff.' }
     return $null
