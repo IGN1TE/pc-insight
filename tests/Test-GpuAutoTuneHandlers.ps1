@@ -11,7 +11,7 @@ foreach($e in $x.SelectNodes('//*[@Name]')){
  $ui[$e.Name]=$c
 }
 $script:job=$null;$script:updateJob=$null;$script:clockActionBusy=$false;$script:guide=$null;$script:snapshot='mock scan';$script:isAdministrator=$true;$script:allow=$false;$script:core=0;$script:writes=0
-function Confirm($message){$script:allow}
+function Confirm($message){$script:lastPrompt=$message;$script:allow}
 function Show-Error($message){$script:errorSeen=$message}
 function Set-Busy($busy){Refresh-PCClockGuideUI}
 function Start-Task($kind){Assert ($kind -eq 'repeatgpu') 'Wrong benchmark';$script:job='mock job';Set-Busy $true}
@@ -22,7 +22,7 @@ function Get-PCClockDevice($UUID){[pscustomobject]@{UUID='GPU-abcd';Name='Mock G
 function Get-PCClockDevices{Get-PCClockDevice ''}
 function Get-PCDeviceById($UUID){[pscustomobject]@{UUID='GPU-abcd';Name='Mock GPU';Driver='1';Current=600;Min=400;Max=600;Available=$true}}
 function Set-PCClockOffset($UUID,$Domain,$MHz){$script:writes++;if($Domain -eq 0){$script:core=$MHz}}
-function Batch($core){1..3|ForEach-Object{[pscustomobject]@{Test='OpenGL-1280x720-256shader-b8-w5-30s-v2';BatchId='b'+$core;RunIndex=$_;Completed=$true;StopReason=$null;Timestamp="$core-$_";Seconds=30;GPUName='Mock GPU';Renderer='Mock GPU';CPUName='CPU';Runtime='4';Workers=1;DriverVersion='1';MemoryConfig='RAM';Plan='plan-a';GpuFramesPerSecond=100+$core;PowerStateAtStart=[pscustomobject]@{Devices=@((Get-PCDeviceById ''));Issue=$null;ClockIssue=$null;ClockOffsets=@([pscustomobject]@{UUID='GPU-abcd';Driver='1';Available=$true;CoreMHz=$core;MemoryMHz=0})};Frames=@([pscustomobject]@{Sensors=@([pscustomobject]@{Parent='/gpu/0';HardwareName='Mock GPU';Name='GPU Core';Type='Temperature';Value=60})})}}}
+function Batch($core){1..3|ForEach-Object{[pscustomobject]@{Test='OpenGL-1280x720-256shader-b8-w5-30s-v2';BatchId='b'+$core;RunIndex=$_;Completed=$true;StopReason=$null;Timestamp="$core-$_";Seconds=30;GPUName='Mock GPU';Renderer='Mock GPU';CPUName='CPU';Runtime='4';Workers=1;DriverVersion='1';MemoryConfig='RAM';Plan='plan-a';GpuFramesPerSecond=100+$core;PowerStateAtStart=[pscustomobject]@{Devices=@((Get-PCDeviceById ''));Issue=$null;ClockIssue=$null;ClockOffsets=@([pscustomobject]@{UUID='GPU-abcd';Driver='1';Available=$true;CoreMHz=$core;MemoryMHz=0})};Frames=@([pscustomobject]@{CPUWarning='CPU temperature unavailable';Sensors=@([pscustomobject]@{Parent='/gpu/0';HardwareName='Mock GPU';Name='GPU Core';Type='Temperature';Value=60})})}}}
 
 function ScanBatch($core){
  $rows=@(Batch $core)
@@ -37,6 +37,7 @@ try{
  Assert ($script:job -and $script:clockGuide.ScanMode -eq 'Core45') 'Auto scan baseline not dispatched'
  $script:job=$null;Complete-PCClockGuideRun @(ScanBatch 0)
  $script:allow=$false;& $ui.CoreTrialApply.Click;Assert ($script:writes -eq 0) 'Declined scan approval wrote hardware'
+ Assert ($script:lastPrompt -match 'CPU thermal protection cannot cover missing CPU readings') 'Review omitted missing CPU temperature coverage'
  $script:allow=$true;& $ui.CoreTrialApply.Click
  foreach($core in @(15,30,45)){
   Assert ($script:job -and $script:core -eq $core -and -not $ui.GpuScanApply.IsEnabled -and $ui.CoreTrialCancel.IsEnabled) 'Next scan worker not started or action locks failed'
