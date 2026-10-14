@@ -1,3 +1,9 @@
+﻿# 0.32.0 validation
+
+- Portable PowerShell 7: 41 passed, 6 Windows-only suites skipped, 0 failed.
+- New scanner transaction and UI handler suites cover bounded progression, recommendations, cancellation, restart and restoration failures with mocked hardware.
+- Full Windows PowerShell 5.1/WPF and package gate pending. Physical GPU acceptance pending.
+
 # 0.31.0 validation — 2026-10-10
 
 - Portable runner: 39 passed, 6 Windows-only suites skipped, 0 failed.

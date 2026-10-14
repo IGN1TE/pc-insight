@@ -1,4 +1,10 @@
-﻿# PC Insight 0.31.0 — readable saved-result reports
+﻿# PC Insight 0.32.0 — automatic GPU core scan
+
+On **Tuning**, choose **Automatic scan baseline**, then **2. Review and retest**. After you review the whole scan, it tests +15, +30 and +45 MHz above your starting core offset, three GPU shader runs per step. Memory stays unchanged. Allow roughly nine minutes including the baseline. The scan restores and verifies your starting offsets before displaying a recommendation. **Review recommended offset** is a separate deliberate apply, followed by Keep or Restore.
+
+A recommendation needs complete matching runs, no more than 5% spread, and an observed score range entirely above the baseline. A noisy or regressed step stops the scan early. Missing temperature evidence or any sampled GPU peak at least 80 C prevents advancing; this check runs after each batch, while the existing live 85 C workload cutoff remains active. These are preview guards, not vendor limits. Cancel/failure attempts restoration; a driver/system crash can prevent it. Restart never resumes or applies automatically and keeps recovery available. The short shader scan does not certify stability, detect all artifacts or measure game FPS. Save work and close games and other tuning tools first.
+
+# PC Insight 0.31.0 — readable saved-result reports
 
 Choose a saved result and click **Save readable result** to create a standalone HTML report. Open it in any browser, print it or save as PDF. The report includes your saved note, the same session summary/event evidence as the app, retained sensor statistics with coverage, and recorded hardware context. It needs no internet connection. Review the note and hardware details before sharing.
 

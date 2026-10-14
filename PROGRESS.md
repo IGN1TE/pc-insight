@@ -1,4 +1,10 @@
-# PC Insight progress
+﻿# PC Insight progress
+
+- [x] Bounded automatic GPU core scan and measured recommendation implemented (0.32.0).
+- [x] Simulated scan sequencing, Cancel, failed tests and recovery checks.
+- [ ] 0.32.0 Windows regression and package gate.
+- [ ] 0.32.0 publication and in-app update feed verification.
+- [ ] Physical GPU scan, original-offset restoration and recommendation acceptance.
 
 - [x] Guided GPU core trial: baseline, reviewed +15 MHz step, retests and result (user confirmed).
 - [x] GPU cancellation restores original clocks (user confirmed).

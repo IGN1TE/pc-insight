@@ -1,4 +1,5 @@
-# One reviewed +15 MHz core trial; memory stays unchanged. Not an automatic OC scanner.
+﻿. "$PSScriptRoot\GpuAutoTune.ps1"
+# Guided core trial and bounded scan share the same recovery state machine.
 function New-PCClockGuide($Clock,$Power,[string]$Plan,[string]$Journal) {
     if(Test-Path -LiteralPath $Journal){throw 'Restore saved clock offsets before starting a fresh trial.'}
     Assert-PCClockDevice $Clock $Clock.UUID
@@ -13,7 +14,9 @@ function Read-PCClockGuide([string]$Path){
     $id=[guid]::Empty
     if($g.Schema -ne 1 -or $g.Kind -ne 'PCInsight.CoreTrial' -or -not [guid]::TryParse([string]$g.ID,[ref]$id) -or $g.Phase -notin @('RunningBaseline','Review','Applying','RunningAfter','Decision','Kept','Restored','Interrupted','RecoveryRequired')){throw 'Invalid saved core trial. Inspect saved clock recovery on Tuning.'}
     Assert-PCClockDevice $g.Clock $g.Clock.UUID
-    if($g.Device.UUID -ne $g.Clock.UUID -or $null -eq (Convert-PCWatts $g.Device.Current) -or [long](ConvertTo-PCClockInteger $g.TargetCore) -ne ([long]$g.Clock.CoreMHz+15)){throw 'Saved core trial metadata is invalid.'}
+    if($g.Device.UUID -ne $g.Clock.UUID -or $null -eq (Convert-PCWatts $g.Device.Current)){throw 'Saved core trial metadata is invalid.'}
+    if($g.ScanMode){Assert-PCGpuAutoScan $g}
+    elseif([long](ConvertTo-PCClockInteger $g.TargetCore) -ne ([long]$g.Clock.CoreMHz+15)){throw 'Saved core trial target is invalid.'}
     $g
 }
 function Assert-PCClockGuideLive($Guide,[int]$Core){
@@ -57,6 +60,10 @@ function Stop-PCClockGuide($Guide,[string]$Journal,[string]$Path,[string]$Reason
 function Apply-PCClockGuide($Guide,[string]$Journal,[string]$Path){
     if($Guide.Phase -ne 'Review'){throw 'Complete a fresh baseline first.'}
     Assert-PCClockGuideBatch $Guide $Guide.Before $Guide.Clock.CoreMHz
+    if($Guide.ScanMode){
+        Assert-PCGpuAutoScan $Guide;Assert-PCGpuScanBatch $Guide $Guide.Before
+        if($Guide.TargetCore -ne ([int]$Guide.Clock.CoreMHz+15) -or @($Guide.ScanResults).Count){throw 'Start a fresh scan baseline before applying its first step.'}
+    }
     if(Test-Path -LiteralPath $Journal){throw 'An existing clock recovery record blocks this trial.'}
     $clock=Assert-PCClockGuideLive $Guide $Guide.Clock.CoreMHz
     $Guide.Phase='Applying';Save-PCClockGuide $Guide $Path

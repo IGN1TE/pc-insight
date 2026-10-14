@@ -1,3 +1,7 @@
+﻿# 0.32.0 development checkpoint
+
+Based on published v0.31.0 (392bc15). Source branch: release/v0.32.0-gpu-auto-scan. GpuAutoTune.ps1 adds bounded core scanning to the existing guided-clock state machine and recovery journal. The UI chains repeatgpu workers only while RunningAfter. Successful completion returns to original settings; applying the measured candidate is a separate reviewed action. New suites cover scanner transactions and actual UI handler dispatch with mocked controls/hardware. Physical GPU validation stays pending until the user confirms it.
+
 # Published 0.31.0 checkpoint — 2026-10-10
 
 The published v0.31.0 source is `392bc15e707ba68b95f5874e6cc4357c6ffcd8b6`. Windows run 38065051650 passed all 45 suites and package checks. The public latest update feed and ZIP matched the CI artifacts byte-for-byte. Release synchronization into `main` preserves the existing commit history; the tagged release remains the reproducible build source.

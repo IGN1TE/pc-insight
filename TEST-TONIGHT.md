@@ -1,4 +1,15 @@
-﻿# PC Insight 0.31.0 — report check
+﻿# PC Insight 0.32.0 — automatic scan acceptance
+
+1. Update through the app and confirm About shows 0.32.0. Restore any pending saved tuning changes. Reopen as administrator, Scan PC, then Detect clock support on Tuning. Save work and close games/other tuning utilities.
+2. Select **Automatic scan baseline**. Three baseline runs should finish without changing clocks. Cancel the next review once and confirm no clocks changed.
+3. Select **2. Review and retest**, read the three proposed offsets and confirm. It should test +15, +30 and +45 MHz above the starting core offset automatically (three runs each). The memory offset must stay unchanged. Cancel remains available.
+4. When finished, confirm the app says starting offsets restored. Detect clock support and check those exact original values. Read the per-step measurements. A no-recommendation result is valid; do not force a higher offset.
+5. If there is a recommendation, choose **Review recommended offset** and cancel once. If you then choose to apply it, verify readback and use Restore to return to your starting settings. Later game/endurance testing is separate; a completed scan does not prove stability.
+6. In a fresh scan, Cancel during a retest. Check the original offsets are restored. Do not deliberately crash or kill the app during a hardware write. If recovery fails, retain the recovery record and use Restore original.
+
+These physical checks are pending; automated tests use simulated GPU writes.
+
+# PC Insight 0.31.0 — report check
 
 Select a saved result under Test results and choose **Save readable result**. Cancel once to confirm nothing is saved, then save the HTML and open it in your browser. Check its note, session identity, sensor coverage and event evidence against the app. Try browser Print → Save as PDF if you want a document to share. Test a stopped endurance result and an older result with no event evidence. No second result is needed.
 

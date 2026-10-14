@@ -1,4 +1,14 @@
-﻿# v0.31.0 — readable single-result reports
+﻿# v0.32.0 — bounded automatic GPU core scan
+
+- Adds Automatic scan baseline and Review recommended offset on Tuning, beside the existing single trial.
+- Records three baseline runs. Explicit review authorizes only +15/+30/+45 MHz above the saved starting core offset, with three runs per step. Memory remains unchanged.
+- Preserves the first original-offset journal across steps. Normal completion restores and reads back both offsets before offering a recommendation. Cancel, failed tests and failed next-worker startup attempt restoration; failed recovery keeps the journal. Restart never resumes an interrupted scan.
+- Recommends the highest measured median only when all three candidate scores exceed the baseline range and both batches have at most 5% spread. Noisy/regressed steps stop early without a recommendation. Missing or >=80 C sampled GPU peaks prevent advancing after a batch; existing live workload checks remain in effect.
+- Applying a recommendation is a separate reviewed action, revalidated against saved measurements and current GPU identity/settings. Keep and Restore remain explicit. No maximum-overclock search, memory/voltage tuning or startup application.
+
+Automated coverage includes three-step sequencing, best-candidate selection, overlapping/noisy results, Cancel, restart recovery, failed tests/writes/restoration and UI worker failures. Windows PowerShell 5.1/WPF and package validation must pass before publication. Physical GPU acceptance remains pending: short shader tests cannot certify stability or game FPS, and a crash can prevent restoration.
+
+# v0.31.0 — readable single-result reports
 
 - Adds Save readable result beside JSON/CSV export. A second session is not required.
 - Standalone, printable HTML includes the saved note, existing summary and event evidence, sensor min/average/peak/coverage, and recorded hardware context. Missing readings and old sessions without evidence stay explicit.

@@ -186,10 +186,10 @@
      <WrapPanel><Button Name="ApplyClocks" Content="Review and apply offsets" IsEnabled="False"/><Button Name="RestoreClocks" Content="Restore saved clock offsets" Background="#28233D" IsEnabled="False"/></WrapPanel>
      <TextBlock Name="ClockStatus" Text="No clock changes made. Changes may remain after closing the app; restore is explicit." Foreground="#B195FF"/>
     </StackPanel></Border>
-    <Border Style="{StaticResource Card}"><StackPanel><TextBlock Text="Guided core trial" FontSize="20"/>
-    <TextBlock Text="Three baseline runs, one reviewed +15 MHz core change, then three retests. Memory stays unchanged. This measures one candidate; it does not scan for a maximum overclock or certify stability." Foreground="#B0B5CC"/>
-    <WrapPanel><Button Name="CoreTrialStart" Content="1. Record baseline"/><Button Name="CoreTrialApply" Content="2. Review and retest" IsEnabled="False"/></WrapPanel>
-    <WrapPanel><Button Name="CoreTrialKeep" Content="Keep trial offsets" IsEnabled="False"/><Button Name="CoreTrialRestore" Content="Restore original offsets" IsEnabled="False" Background="#28233D"/><Button Name="CoreTrialCancel" Content="Cancel / restore" IsEnabled="False" Background="#28233D"/></WrapPanel>
+    <Border Style="{StaticResource Card}"><StackPanel><TextBlock Text="GPU core tuning" FontSize="20"/>
+    <TextBlock Text="Choose a single +15 MHz trial or a bounded automatic scan of +15 / +30 / +45 MHz above the starting core offset. Both record a baseline before review. The scan restores starting settings and recommends a candidate only when measured results support it. Memory stays unchanged. This is not a maximum-overclock search or stability certification." Foreground="#B0B5CC"/>
+    <WrapPanel><Button Name="CoreTrialStart" Content="Single trial baseline"/><Button Name="GpuScanStart" Content="Automatic scan baseline"/><Button Name="CoreTrialApply" Content="2. Review and retest" IsEnabled="False"/></WrapPanel>
+    <WrapPanel><Button Name="GpuScanApply" Content="Review recommended offset" IsEnabled="False"/><Button Name="CoreTrialKeep" Content="Keep trial offsets" IsEnabled="False"/><Button Name="CoreTrialRestore" Content="Restore original offsets" IsEnabled="False" Background="#28233D"/><Button Name="CoreTrialCancel" Content="Cancel / restore" IsEnabled="False" Background="#28233D"/></WrapPanel>
     <TextBlock Name="CoreTrialStatus" Text="Start with Scan PC and Detect clock support." Foreground="#B195FF"/>
     </StackPanel></Border>
     <Border Style="{StaticResource Card}"><StackPanel><TextBlock Text="Before / after" FontSize="20"/><TextBlock Name="BaselineResult" Text="Save a baseline containing a complete three-run batch. Repeat the same batch after a reviewed change. Comparisons require three matching successful runs on each side."/></StackPanel></Border>
